@@ -1,0 +1,131 @@
+{
+  "handoff_id": "H-20260927-vmixlaptop2x6-001",
+  "kind": "quota",
+  "simulated": false,
+  "state": "ACTIVE",
+  "reason": "Session usage 97%",
+  "trigger": {
+    "window": "session",
+    "percent": 97,
+    "resetAt": "2026-09-27T09:59:00.000Z",
+    "windows": [
+      {
+        "window": "session",
+        "percent": 97
+      }
+    ],
+    "reason": "Session usage 97%",
+    "key": "claude:.claude:8aa17a70@vmixlaptop2x6|REAL"
+  },
+  "quota": {
+    "provider": "claude",
+    "account": "claude:.claude:8aa17a70@vmixlaptop2x6",
+    "state": "OK",
+    "session_used_percent": 97,
+    "weekly_used_percent": 78,
+    "session_reset_at": "2026-09-27T09:59:00.000Z",
+    "weekly_reset_at": "2026-09-27T17:59:00.000Z",
+    "session_reset_label": "Sep 27, 2:59am",
+    "weekly_reset_label": "Sep 27, 10:59am",
+    "measurement_source": "statusline-cache (/api/oauth/usage or /usage)",
+    "measurement_confidence": "high",
+    "timestamp": "2026-09-27T08:23:13.608Z",
+    "simulated": false
+  },
+  "source_user": "ndi2",
+  "source_machine": "vmixlaptop2x6",
+  "source_account": "claude:.claude:8aa17a70@vmixlaptop2x6",
+  "source_account_uuid": "8aa17a70-3c66-4e64-a3a1-d867c7e49608",
+  "created_at": "2026-09-27T08:23:23.968Z",
+  "sessions": [
+    {
+      "source_session_id": "363ae667-aa19-46d1-bd32-c4922b51386a",
+      "model": "claude-opus-5-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Ecomm run setup on vmixer via dsh",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_30bea663-67a4-43ba-a37a-d52d3ff90587",
+        "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+      },
+      "package": "sessions/363ae667-aa19-46d1-bd32-c4922b51386a/continuation.md",
+      "archive": "archive/363ae667-aa19-46d1-bd32-c4922b51386a.jsonl.gz"
+    },
+    {
+      "source_session_id": "ac49e8ee-da4c-4ba8-a020-9870e6a9581e",
+      "model": "claude-opus-5-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue quota handoff v2 receiver",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_3a7fcd9f-e696-41dc-ae9d-fa28ae16f6a7",
+        "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+      },
+      "package": "sessions/ac49e8ee-da4c-4ba8-a020-9870e6a9581e/continuation.md",
+      "archive": "archive/ac49e8ee-da4c-4ba8-a020-9870e6a9581e.jsonl.gz"
+    },
+    {
+      "source_session_id": "f519fe4a-98bc-4a43-93a8-2b0e5d07d72b",
+      "model": "claude-opus-5-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue DSH runs management",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_67bb0334-c9c9-4c4a-90df-6ea5f4712590",
+        "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+      },
+      "package": "sessions/f519fe4a-98bc-4a43-93a8-2b0e5d07d72b/continuation.md",
+      "archive": "archive/f519fe4a-98bc-4a43-93a8-2b0e5d07d72b.jsonl.gz"
+    }
+  ],
+  "history": [
+    {
+      "from": "NORMAL",
+      "to": "PREPARING",
+      "at": "2026-09-27T08:23:23.968Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6"
+    },
+    {
+      "from": "PREPARING",
+      "to": "SNAPSHOTTING",
+      "at": "2026-09-27T08:23:23.968Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6",
+      "detail": "3 active session(s)"
+    },
+    {
+      "from": "SNAPSHOTTING",
+      "to": "READY",
+      "at": "2026-09-27T08:23:23.968Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6"
+    },
+    {
+      "from": "READY",
+      "to": "CLAIMED",
+      "at": "2026-09-27T08:52:10.174Z",
+      "by": "vMixer@vmixer2o2"
+    },
+    {
+      "from": "CLAIMED",
+      "to": "RESTORING",
+      "at": "2026-09-27T08:52:10.174Z",
+      "by": "vMixer@vmixer2o2"
+    },
+    {
+      "from": "RESTORING",
+      "to": "ACTIVE",
+      "at": "2026-09-28T00:22:05.376Z",
+      "by": "vMixer@vmixer2o2",
+      "detail": "3 session(s) confirmed running"
+    }
+  ],
+  "session_count": 3
+}

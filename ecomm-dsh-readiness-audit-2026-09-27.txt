@@ -1,0 +1,560 @@
+
+=== audit:roster-capacity
+Claude Opus 5.5 did a read-only audit. Nothing was edited, built or run. Only this host's code (HEAD 92cdcade3b) and its ~/.dsh/settings.yaml were read. vmixer2o2's facts come from the 2026-09-27 01:05 handoff, as relayed by its executor.
+
+(1) The pre-written units are not honoured as a graph. The swarm and pipeline tools take no graph input. The swarm stage always asks one non-free planner seat to split the query again. The pasted LOCAL-SEAT JSON reaches that planner only as request text. provider='llama-local' then means little in any mode that writes files. Under fastest, free seats are removed, so llama-local drops out. Under economy, every eligible free seat competes on every unit, whatever the unit names. Only the 'user' profile honours the named seat, and it stages no files. The 13 pre-written units also lack files and acceptance. Economy validation rejects them for that, and a unit with no files stages nothing to commit.
+
+(2) Limits:
+- At most 32 units per run.
+- Per-call caps: 600 s for llama-local, 420 s for kimi and deepseek, and a 180 s run default for any seat without its own cap.
+- There is no per-unit or per-run deadline.
+- Every unit in a wave runs at the same time. swarmRoster.maxConcurrent is accepted by the settings schema but silently dropped.
+- Failed calls are not retried automatically. A failed unit fails everything that depends on it.
+- Dead seats are probed and left out before the run. A quota or credit failure parks the pipeline, keeping finished units.
+- The work goes to the repo only when every unit succeeds, so one failed unit holds back the whole commit.
+
+(3) A llama-local code seat needs only these settings: swarmRoster enabled with wide kinds including 'any', and model Qwen3.6-35B-A3B-UD-Q4_K_M. The 600 s cap, 300 s idle limit, enable_thinking false, local, free and the :8090 address are fixed in code and cannot be set. This host's llama-local is off in both blocks, and its model is DeepSeek-Coder-V2-Lite, which has an 8192-token context.
+
+(4) swarmRoster: kinds [] takes nothing; kinds absent takes every kind including 'any'; enabled absent follows the council seat. On this host, 8 seats accept code; fastest leaves only openai, claude-work and cheaperinference.
+
+(5) One run cannot cover three repos. submit_to names one writer repo. File paths lose which repo they came from. Two units writing the same path abort the commit. DSH holds one pipeline at a time. So the answer is one run per repo, run one after another: users, then canna, then commerce, not canna and commerce in parallel.
+
+Separately, the commit step refuses package.json and .env.* and aborts the whole change set when it sees one. All three repos are greenfield with no package.json.
+- [blocker] B1: Only the economy and fastest profiles produce files; 'user' or unset produces text only, so submit_to has nothing to commit
+   EVID: index.ts:2060-2061 maps swarmProfile 'user' (this host settings.yaml:1773) to an undefined profile. With no profile, units only ask their seat once (swarm.ts:543-588), nothing is staged (index.ts:2224), and submission then throws 'No unit produced a candidate file' (index.ts:1017-1019).
+   FIX(preset-text): Start the run as pipeline mode 'economy' or 'fastest' with stages council,swarm,review. The preset's mode field carries this (index.ts:589-595). Never use mode 'council', which runs only the council stage (index.ts:2071).
+- [blocker] B2: The 'llama-local lane' cannot happen as the briefs assume
+   EVID: fastest removes free seats (swarm.ts:382), and llama-local is free (seats.ts:384). economy makes every eligible free seat a proposer on every unit, regardless of the named provider (swarm-contest.ts:69). On vmixer2o2, llama-local has no council-seat entry, so it defaults to off (seats.ts:393, roster.ts:284); its code roster is kimi + deepseek (per the 2026-09-27 01:05 handoff).
+   FIX(vmixer2o2): Choose one. (a) fastest on kimi + deepseek and drop the local lane: local units then go to the paid seats. (b) economy with swarmRoster.llama-local enabled plus at least one more live free seat with matching kinds. Under (b), llama-local competes on every unit it accepts at once; nothing makes it one serial lane of 4 units. Keep council.seats.llama-local.enabled false either way, so it stays out of the council and propose stages.
+- [blocker] B3: economy's requirements are not met on vmixer2o2
+   EVID: economy needs at least 2 enabled free seats accepting each unit's inferred kind (swarm.ts:429-433, swarm-contest.ts:70), acceptance on every unit (decompose.ts:198), and a non-free planner (swarm.ts:399-404). vmixer2o2's swarm code roster is kimi + deepseek, both metered, with every agy seat disabled (handoff 2026-09-27 01:05, relayed by the executor, not read directly).
+   FIX(vmixer2o2): For economy: enable and live-probe at least two free seats with kinds including 'any' (llama-local plus openrouter-free or free-claude) in vmixer2o2's swarmRoster. Otherwise use fastest.
+- [blocker] B4: Units inferred as 'any' are left unassigned unless some enabled worker declares 'any'
+   EVID: roster.ts:102-104 and roster.ts:175-176 route 'any' units only to workers that declare 'any'. 4 of the 13 pre-written units infer as 'any' (scratchpad run of the roster.ts:86-94 regex). Paid units whose text mentions checkout, verify, spec or test infer as review or tests. This host's roster entries list explicit kinds with no 'any' (settings.yaml:1667-1738). A unit nobody takes blocks the run (swarm.ts:493-507).
+   FIX(vmixer2o2): On vmixer2o2, give every code seat the full kinds list [code, tests, docs, research, review, any], or leave kinds out entirely (the default includes any).
+- [blocker] B5: The commit step refuses package.json and .env.*, and the repos are greenfield with no package.json
+   EVID: host-commit.ts:70-72 and host-commit.ts:96-99 deny these names, and host-commit.ts:252-253 rejects the whole change set if any file is denied. The three .env.example local units (users/canna/commerce) target a denied name. The repos track only .gitignore, BUILD-BRIEF.md and README.md (git ls-files).
+   FIX(vmixlaptop2x6): Before re-bundling, commit package.json and any lockfile/workspace scaffolding into each repo on this host. Change the .env.example units' target to an allowed name such as docs/ENV.md, or drop those units. Tell the planner in the query never to emit package.json or .env*.
+- [blocker] B6: One pipeline run covers exactly one repo; canna and commerce cannot run in parallel on one DSH
+   EVID: submit_to resolves one writer repo (index.ts:1006-1028, submit-work.ts:64-81). File keys have no repo prefix (files.ts:174-180). The same path from two units throws (candidate-submit.ts:90-95); both canna and commerce have README.md, .env.example and src/lib/orderStates.ts. There is one swarm stage per run (pipeline.ts:78-84) and one pipeline slot per DSH (index.ts:2059).
+   FIX(preset-text): Use three presets or runs, one after another: users (submit_to users), a manual Phase-0 gate check, then canna, then commerce. Set fileRoots to the single target repo for each run. vmixer2o2's writer.repos needs keys users, canna and commerce.
+- [blocker] B7: fileRoots on vmixer2o2 is the harness only, so contest units that list files fail
+   EVID: swarm-contest.ts:74-80 fails with 'Candidate files require approved workspace staging and source roots' unless roots are non-empty. Relative paths resolve against the first root (files.ts:174-176). Per the handoff, vmixer2o2's fileRoots is the harness only and council.writer is absent.
+   FIX(vmixer2o2): Set council.fileRoots on vmixer2o2 to the target repo path (only or first root) for each run, and add writer.repos plus an absolute queueScript. The repos must first exist on vmixer2o2; that clone was denied earlier per the handoff.
+- [blocker] B8: The pre-written unit JSON has no files, acceptance or tier fields
+   EVID: Keys are only id|title|detail|dependsOn|provider (scratchpad parse). economy rejects units without acceptance (decompose.ts:198). A unit without files stages nothing (swarm-contest.ts:74, 97) and contributes nothing to the commit (candidate-submit.ts:66). The graph is re-planned anyway (swarm.ts:413-415), so verbatim survival is not guaranteed.
+   FIX(preset-text): Rewrite each unit in the briefs with files: [exact repo-relative path], acceptance: [verifiable conditions] and tier: 'general'. Also state in the query that the planner must copy these units unchanged.
+- [risk] R1: llama-local calls are likely to hit the 600 s cap: prompt size plus concurrent requests
+   EVID: The brain index (55.8 KB) and digest are prepended to every llama-local prompt (seats.ts:1440-1445, index.ts:896-944), plus the whole overall request (swarm.ts:218-219). The brief measured prefill at about 81 tok/s at 8k and a 41-52 s cold load. The 600 s cap is fixed (seats.ts:390); no per-seat concurrency limit exists (roster.ts:152-153, 270-292); every unit of a wave runs at once (swarm.ts:533-596). Whether llama.cpp sends headers before prefill finishes, which would start the 300 s idle timer early, was inferred, not measured.
+   FIX(vmixer2o2): If the local lane is used: keep the query short (reference the brief rather than pasting it), consider council.brainIndex: false and memoryDigest: false on vmixer2o2 (this affects all seats), or set council.sequential: true (the loader reads it once, so a DSH relaunch is needed; inferred from index.ts:2230).
+- [risk] R2: One failed unit withholds the entire repo's commit
+   EVID: Submission happens only on phase 'full' (index.ts:2268-2270). Any failed unit makes the stage 'partial' (swarm.ts:600-609) and blocks the pipeline (pipeline.ts:377-396). This applies to local units too, even though nothing depends on them.
+   FIX(preset-text): Keep flaky or local work out of the build runs, or plan to resume until every unit passes. Resume skips successful units (swarm.ts:527-532).
+- [risk] R3: A unit that failed review fails the same way on every resume of the same pipeline
+   EVID: The journal records successful replies, including 'ACCEPT: no' reviews, keyed by seat plus prompt (journal.ts:82-85, 159-161). It is kept until 'done' or restart (index.ts:2189, 2460). Unit and review prompts are deterministic for the same upstream (swarm.ts:196-224, swarm-contest.ts:131-132). This is inferred from reading the code, not reproduced.
+   FIX(user): If a unit is stuck on review rejection, restart the run. restart discards the journal but re-plans everything and needs fresh approval.
+- [risk] R4: Model override copied from this host would make llama-local exceed its context
+   EVID: This host has model DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M (settings.yaml:373). The vmixer2o2 target record gives that model contextTokens 8192 (relay/llm-targets/vmixer2o2.json), below the roughly 14k-token memory prefix alone.
+   FIX(vmixer2o2): On vmixer2o2 use model Qwen3.6-35B-A3B-UD-Q4_K_M, or leave it empty for the code default.
+- [risk] R5: Paid code seats on vmixer2o2 run through this host's relay and a $5.26 OpenRouter balance
+   EVID: Per the handoff, kimi and deepseek on vmixer2o2 use the relay at 10.0.0.241:8080 (this host). openRouterRemainingUsd is 5.259 (settings.yaml:1871). Every openrouter-transport call carries the roughly 14k-token memory prefix (seats.ts:1440-1445). An 'insufficient credits' error parks the pipeline in repeating 30-minute holds (quota-hold.ts:20, 37-46).
+   FIX(user): Check the gate estimate against the balance before approving. Keep vmixlaptop2x6 and its relay up for the whole run. Consider brainIndex: false to cut the per-call prefix.
+- [risk] R6: Scope caps against canna and commerce size; exact path matching
+   EVID: At most 32 units (decompose.ts:46). 6 files, 20,000 characters per file and 60,000 per unit (writes.ts:30-34). Seat-written paths must string-match task.files exactly (swarm-contest.ts:99-101); an absolute path or './' prefix fails.
+   FIX(preset-text): Ask the planner for repo-relative, unprefixed paths and at most 6 files per unit, and split the canna/commerce build steps accordingly.
+- [risk] R7: The run itself proves nothing about whether the code works
+   EVID: No verifyUnit is wired (index.ts:1850-1873, 2217-2239). The only execution is writer.repos checks at submit (submit-work.ts:27-29). This host's harness checks run pnpm typecheck, which fails with no package.json. The users Phase-0 gate (JWKS, token verify, revocation) cannot be enforced inside a run.
+   FIX(vmixer2o2): Set per-repo checks only once package.json exists (see B5). Verify the Phase-0 gate by hand or by an agent between the users run and the canna/commerce runs.
+- [risk] R8: Keyword-based kind inference routes units to the wrong kind
+   EVID: roster.ts:86-94: 'checkout' matches review, 'spec' or 'test' match tests, and 'readme' or 'comment' match docs, before code is ever tested.
+   FIX(vmixer2o2): Covered by giving every code seat all kinds including 'any' (B4).
+- [note] N1: How many calls hit llama-local at once is set by wave width, not the roster
+   EVID: maxConcurrent is dropped (swarm.ts:47-50, roster.ts:270-292). The planner call gets one attempt (swarm.ts:353-365); if it fails, calling pipeline again re-plans.
+   FIX(vmixer2o2): Don't rely on maxConcurrent. Use sequential, or keep llama-local out.
+- [note] N2: The stray council.openai block has no effect
+   EVID: settings.yaml:1739-1742 sits outside swarmRoster, so openai keeps swarmRoster kinds code..review (settings.yaml:1716-1723). vmixer2o2 has the same stray block per the handoff.
+   FIX(vmixer2o2): If openai is meant to review only, move that block under swarmRoster.openai.
+- [note] N3: A possible pre-seeded-graph route exists but is untested and bypasses the approval gate
+   EVID: With autoApprove true and a running pipeline, the stored pipelineTasks is used without re-planning (index.ts:2062, 2087, 2154, 2237). readStoredTasks checks only id, title and dependsOn (index.ts:2819-2824), and validateGraph still runs (swarm.ts:418-421). Inferred from the code, never exercised.
+   FIX(user): Not recommended. Mentioned only because it is the one way the code allows a hand-written graph.
+- [note] N4: vmixer2o2's build lacks submit_to; the swarm and roster logic is otherwise the same
+   EVID: git diff f55855f248..HEAD shows JSDoc-only changes in decompose, route-swarm, seats and swarm-contest; index.ts +73 lines (the submit_to seam) and llm-targets.ts changed.
+   FIX(vmixer2o2): vmixer2o2 must rebuild onto origin 111c359502 or later before any preset using submit_to (another audit area).
+CONFIG:
+# vmixer2o2 ~/.dsh/settings.yaml, council section. <VMX> = vmixer2o2 user home (differs from ndi2).
+# timeoutMs, idleMs, local, free and enable_thinking for llama-local are fixed in code (seats.ts:375-394, 924-927) and cannot be set here.
+council:
+  fileRoots: <VMX>\Documents\claudecode\users      # ONE target repo per run; switch to canna, then commerce, for the later runs
+  seats:
+    llama-local:
+      enabled: false                    # keep it OFF the council and propose stages (600 s calls would stall them)
+      args: []
+      model: Qwen3.6-35B-A3B-UD-Q4_K_M  # must appear on :8090 /v1/models and in relay/llm-targets/vmixer2o2.json
+    kimi:      { enabled: true, args: [] }
+    deepseek:  { enabled: true, args: [] }
+  swarmRoster:
+    kimi:      { enabled: true, kinds: [code, tests, docs, research, review, any] }
+    deepseek:  { enabled: true, kinds: [code, tests, docs, research, review, any] }
+    # ONLY with pipeline mode economy (fastest drops free seats): llama-local plus at least one more live free seat, same kinds
+    llama-local:     { enabled: true, kinds: [code, tests, docs, research, review, any] }
+    openrouter-free: { enabled: true, kinds: [code, tests, docs, research, review, any] }
+  # optional: shrinks every non-CLI prompt by the ~55.8 KB brain index (affects ALL seats)
+  # brainIndex: false
+  # memoryDigest: false
+  # optional, needs a DSH relaunch: serialises units (inferred from index.ts:2230)
+  # sequential: true
+  writer:
+    worktreeRoot: <VMX>\.dsh\worktrees
+    queueScript: <VMX>\.claude\shared-brain\.sync\gatekeeper\queue-build.mjs
+    repos:
+      users:    { path: <VMX>\Documents\claudecode\users,    target: main, setup: [], checks: [] }
+      canna:    { path: <VMX>\Documents\claudecode\canna,    target: main, setup: [], checks: [] }
+      commerce: { path: <VMX>\Documents\claudecode\commerce, target: main, setup: [], checks: [] }
+# Preset / tool call per run: mode economy|fastest, stages "council,swarm,review", submit_to users|canna|commerce.
+# The pipelinePresets schema has no submit_to field (index.ts:589-595): the query must tell the agent to pass submit_to.
+
+=== audit:build-health
+Claude Opus 5.5, read-only audit. Nothing was edited, built or launched.
+
+Rebuilding DSH on vmixer2o2 is low risk. Origin's 11 commits (f55855f248..111c359502) touch neither of the two files in vmixer2o2's local commit 56f2eddbf7: bin/agy-headless.mjs and tests/agy-headless.test.mjs. The pnpm-lock change only moves workspace links and removes duplicate entries. One correction to a brain fact: vmixer2o2 already has the swarm->commit seam today. candidate-submit.ts and submit_to arrived in d3f1f37e11, which is an ancestor of f55855f248. They did not arrive in 0d49b54f8b. So the rebase is optional for this run.
+
+The run as currently planned would not end in committed, buildable code. There are 8 blockers:
+1. queue-build.mjs refuses any origin that is not HTTPS GitHub. All three repos use local bare origins, so every submission ends as queue-failed.
+2. The repos have no package.json. The host refuses package.json and lockfiles from models, and it re-checks after setup, so no swarm unit can create the scaffold.
+3. Each brief has a unit that writes `.env.example`. The host refuses `.env.*` paths, and one refused path throws out the whole submission.
+4. Files are only staged when the run is in economy or fastest mode and the unit lists its `files`. The pasted local-unit JSON has no `files` and no `acceptance`, and the swarm profile on ndi2 (this host, vmixlaptop2x6) is `user`.
+5. vmixer2o2 has no users/canna/commerce repos and no writer entries, and its fileRoots do not include them.
+6. submit_to takes one repo, and there is one pipeline per host. Three repos cannot go in one preset, and canna and commerce cannot run in parallel.
+7. Porting `.github/workflows/deploy.yml` is refused.
+8. The users gate needs a running service, which DSH cannot start.
+
+Fixes: a trusted scaffold commit per repo, made on vmixer2o2. Three serial presets with mode economy or fastest. Explicit `files` and `acceptance` on every unit. Offline tests only. submit_to repeated on every pipeline call. A decision on queue-build for local origins.
+- [blocker] B1-queue-github-only: queue-build refuses the local bare origins, so every submit_to ends as queue-failed
+   EVID: queue-build.mjs:44-45 accepts only ^https://github.com/... as the origin push URL. users, canna and commerce push to C:/Users/ndi2/.dsh/remotes/<repo>.git (git remote -v). host-commit.ts:331-340 then returns queue-failed and keeps the commit on dsh/<model>/<runId> in ~/.dsh/worktrees/<repo>/<runId>. The next run branches from refs/remotes/origin/main (host-commit.ts:271) and never sees that commit.
+   FIX(user): The user picks one: (a) create private GitHub remotes for the three repos and repoint origin; (b) with user approval, extend queue-build.mjs to accept a local bare path origin and have the gatekeeper push to it; or (c) accept queue-failed as the end state, and after review a Claude Code session on vmixer2o2 fast-forwards the bare origin through the git-gatekeeper. Without one of these, Phase 1 cannot build on Phase 0's commit.
+- [blocker] B2-no-scaffold-manifest-denied: No package.json or lockfile exists, and no swarm unit is allowed to create one
+   EVID: The repos contain only .gitignore, README.md and BUILD-BRIEF.md. host-commit.ts:71-73 denies package.json, pnpm-lock.yaml, pnpm-workspace.yaml and .npmrc. :252-253 refuses them before writing, and :307-313 refuses them again if a setup command creates them. Setup `pnpm install --frozen-lockfile` fails without a committed lockfile. No brief says who scaffolds.
+   FIX(vmixer2o2): Before the run, make one trusted scaffold commit per repo on vmixer2o2 and push it to that repo's bare origin through the gatekeeper. It holds package.json with every dependency the brief needs; pnpm-lock.yaml generated with pnpm 11.7.0; tsconfig.json (strict, src/ layout, @/* -> src/*); vitest.config.ts (passWithNoTests); next.config.mjs; and prisma/schema.prisma containing only the generator and a mysql datasource. Scripts: typecheck = tsc --noEmit, test = vitest run. Proposed versions match billboard: next 14.2.35, react and react-dom 18.3.1, typescript, @types/node, @types/react, prisma and @prisma/client 5.17.0, zod, jose, vitest 1.6.0. commerce also gets stripe ^22.5.0 and @solana/web3.js ^1.98.4. Models cannot add dependencies later, so the list must be complete.
+- [blocker] B3-env-example-voids-commit: The .env.example units make the host refuse the entire submission
+   EVID: users/BUILD-BRIEF.md:176-181, canna/BUILD-BRIEF.md:178-183 and commerce/BUILD-BRIEF.md:152-157 each target `.env.example`. host-commit.ts:96 denies any basename starting with '.env.', and :252-253 throws for the whole request. The users env unit also invites a PEM placeholder, which trips the private-key pattern (host-commit.ts:79).
+   FIX(preset-text): In the preset query, retarget those three units to docs/ENV.md (or env.example without the leading dot). Forbid PEM headers, AKIA-style keys and token-shaped placeholders anywhere in the output.
+- [blocker] B4-files-mode-acceptance: Without economy/fastest mode and a files list per unit, nothing is staged
+   EVID: index.ts:2224 gives the swarm a staging workRoot only when the profile is economy or fastest. On ndi2 swarmProfile is 'user' (settings.yaml:1773), and vmixer2o2 was not read. swarm-contest.ts:74-79 stages only when task.files is non-empty. decompose.ts:198 requires acceptance in economy mode. swarm.ts:432 and swarm-contest.ts:70 require 2 free contestants and a reviewer. The pasted local-unit JSON in all three briefs has no files and no acceptance (users :168-196, canna :170-205, commerce :144-172).
+   FIX(preset-text): Set `mode: economy` (or fastest) on every preset. In the query, require every unit to carry files (exact repo-relative paths, at most 6, no path shared between units), acceptance (non-empty and checkable offline) and tier. Add files and acceptance to the 13 pasted local units.
+- [blocker] B5-vmixer-writer-roots-repos: vmixer2o2 has no users/canna/commerce repos, no writer.repos entries and no fileRoots for them
+   EVID: shared-agent-log.md 2026-09-27 01:02 and 01:05 ('users/canna/commerce missing', 'writer absent'). transfer/2026-09-26-ndi2-to-vmixer2o2/MANIFEST.md:14-16 gives the clone and bare-origin steps. prepareSubmission calls resolveWriter before the run (index.ts:1006-1008), which throws 'Unknown writer repo' (submit-work.ts:66-69). parseRoots needs comma-separated absolute paths with no ~ (files.ts:86-96).
+   FIX(vmixer2o2): On vmixer2o2: clone the three bundles, create ~/.dsh/remotes/<repo>.git and set upstream (MANIFEST). Add the repos, billboard-platform and green-energy-platform to council.fileRoots as absolute paths. Add writer.repos users, canna and commerce with setup `node <pnpm.cjs> install --frozen-lockfile` and checks `node <pnpm.cjs> run typecheck` and `run test` (see requiredConfig). Relaunch DSH so it reads the settings.
+- [blocker] B6-one-repo-per-run: One preset cannot cover three repos, and canna || commerce cannot run in parallel
+   EVID: submit_to takes a single writer key (index.ts:2049, 2216). A DSH host holds one pipeline: pipelineId, pipelineStage and related settings are single keys (index.ts:599-613). Each submission branches from origin/<target> (host-commit.ts:271).
+   FIX(preset-text): Write three presets: ecomm/users, ecomm/canna and ecomm/commerce, run in series. Only start canna and commerce after users' commit reaches the users bare origin. Put users' CONTRACT.md text into their queries, or list the users repo in fileRoots so seats can read it.
+- [blocker] B7-deploy-workflow-denied: The deploy-pipeline units target .github/workflows, which the host refuses
+   EVID: canna/BUILD-BRIEF.md:36 and commerce/BUILD-BRIEF.md:35 list .github/workflows/deploy.yml as a port source. canna §8 unit 8 and commerce §6 unit 7 are 'deploy pipeline'. host-commit.ts:95 denies CI workflows, and :252-253 voids the whole submission.
+   FIX(preset-text): Leave the deploy workflow out of the swarm in the preset query. A human adds it later.
+- [blocker] B8-users-gate-needs-running-service: The Phase 0 gate needs a running users service and a database, which the swarm cannot provide
+   EVID: users/BUILD-BRIEF.md:3-4 and :118-120 ('this service is running', JWKS serving, throwaway-client verify, revocation proven). Writer checks run once in a fresh worktree with a per-command timeout (host-commit.ts:301-304; submit-work.ts:75). Nothing in DSH starts services. No MySQL was verified on vmixer2o2.
+   FIX(preset-text): Restate the gate as a test that runs as a writer check: tests/contract.spec.ts generates an Ed25519 key at test time with jose generateKeyPair('EdDSA') (no PEM in the repo), mints a token, verifies it using only the public JWKS object with alg EdDSA, checks iss/aud/exp/jti/amr, and proves revocation against an in-memory store. Put persistence behind a repository interface with in-memory fakes, so neither typecheck nor test needs MySQL.
+- [risk] R1-submit-to-not-persisted: The approved swarm call may run without submit_to, leaving the files only in .dsh-staging
+   EVID: index.ts:2216 reads args.submit_to on the approved swarm call. The '[pipeline approved]' directive (index.ts:1132) and CONTINUE_PROMPT (PipelineControl.tsx:99) do not mention it. The preset schema has no field for it (index.ts:589-595).
+   FIX(preset-text): Open each preset query with: 'On EVERY pipeline tool call in this run, pass submit_to: `<repo>`.' When approving the swarm gate, type 'Continue the pipeline with submit_to <repo>' instead of pressing Continue. The files still land locally under <workspace>/.dsh-staging either way.
+- [risk] R2-checks-all-or-nothing: One failing unit's file discards the whole stage's commit
+   EVID: host-commit.ts:301-304 runs checks against all winners' files together. A StepError discards the worktree and branch (:324-326). Candidates stay in staging (candidate-submit.ts:14-19).
+   FIX(vmixer2o2): Start with typecheck plus `vitest run --passWithNoTests`. Require each unit's acceptance to include 'compiles under tsc --noEmit with only listed deps'. Keep lint out of checks for the first run.
+- [risk] R3-write-size-limits: Port files and schemas over 20,000 characters are refused
+   EVID: writes.ts:30-34 (6 files per seat, 20,000 characters per file, 60,000 per seat). billboard lib/paymentConfirm.js is 21,261 characters and schema.prisma is 62,925 (wc -c). decompose.ts:46 caps a run at 32 units.
+   FIX(preset-text): In the preset: split any port over 20,000 characters into two files, e.g. the paymentConfirm dispatcher plus rails. Keep the Prisma schema under 20,000 characters or use the prismaSchemaFolder preview on 5.17 with one file per unit. Ask for a Phase-0-sized scope per run, not the whole marketplace.
+- [risk] R4-llama-lane-mismatch: The briefs' llama-local lane design does not match economy or fastest routing
+   EVID: The briefs pin provider 'llama-local' and say 'one serial lane' (users :141-162). Pins only apply with no profile (swarm.ts:469), but staging needs a profile (index.ts:2224). Economy makes every eligible free seat, llama-local included, contest every unit of a matching kind (swarm-contest.ts:69; swarm.ts:478-481). Fastest drops free seats (swarm.ts:382). Every call also carries the memory digest and brain index (index.ts:921-933), and MEMORY.md is 48.3 KB, at about 81 tok/s prefill.
+   FIX(vmixer2o2): On vmixer2o2 either leave llama-local out of the swarm roster, or limit its kinds to ['docs'] so it only contests doc-type units. Do not rely on the pins. Consider brainIndex: false for this run so small prompts reach the local seat.
+- [risk] R5-orchestrator-on-local-qwen: If the DSH chat model on vmixer2o2 is local Qwen3.6, each turn costs minutes and could overflow its context
+   EVID: startPrompt puts the whole preset query into the chat turn (PipelineControl.tsx:86-92). vmixer2o2's default chat is Local Qwen3.6, with 503 s TTFT at a 34.6k-token prefill (shared-agent-log 2026-09-26 23:56). The context window was raised to 65536 but the relaunch was pending (handoff-2026-09-24-0020:76-92; handoff-2026-09-26-2250:22). The chat model and the llama-local seat share the one :8090 router.
+   FIX(vmixer2o2): Run the orchestrating DSH session on a hosted model. Keep each preset under about 20k characters by inlining only the repo's own brief. Relaunching after the rebuild also loads contextWindow 65536.
+- [risk] R6-human-gates: The run stops at each approval gate
+   EVID: autoApprove defaults to false (index.ts:621). The council plan and swarm gates need approval (index.ts:2239-2250). Submission and proposing require workspace-write plus 'go' (index.ts:1012-1013, 982). A propose stage waits for a human pick (PipelineControl.tsx:291-292).
+   FIX(user): Use stages council,swarm,review with no propose stage. Before pressing Run, select workspace-write in that session. Tell the user the pauses to expect: plan approve, swarm approve with submit_to, and the gatekeeper approval.
+- [risk] R7-untracked-files-rebase: vmixer2o2's 2 untracked harness files could block the rebase
+   EVID: shared-agent-log 2026-09-27 01:02 ('2 untracked'). Origin adds new files, for example runs-tool.ts, run-history-publisher.ts, pipeline-advance-to-swarm.spec.ts and PresetEditor.tsx (diffstat). git refuses a rebase that would overwrite untracked files.
+   FIX(vmixer2o2): On vmixer2o2 before rebasing, intersect `git ls-files --others --exclude-standard` with `git diff --name-only 56f2eddbf7 origin/feat/heterogeneous-teammates`. Then: fetch; rebase; `node --test packages/council/tool-council/tests/agy-headless.test.mjs` (expect 4/4); taskkill /T the DSH tree and confirm :3080 is free; Start-Process ~/.dsh/launch-dsh.cmd, which runs fleet build (install, build, marker); confirm .built-commit equals HEAD, :3080 returns 200 and the header shows the new SHA. Run `node scripts/install-agy-headless.mjs` only if agy seats are used. The rebase is optional because the seam is already in 56f2eddbf7; do not rebuild while a run is in progress.
+- [risk] R8-economy-free-seat-count: Economy needs 2 free contestants for every unit kind; vmixer2o2's roster is unknown
+   EVID: swarm.ts:432 and swarm-contest.ts:70. On ndi2 the enabled free workers are free-claude (needs FCC :8082), openrouter-free and agy-gpt-oss (settings.yaml:1660-1760). vmixer2o2's agy pool had 0 accounts signed in (handoff-2026-09-23-1230:117-120). vmixer2o2's swarmRoster was not read.
+   FIX(vmixer2o2): On vmixer2o2, confirm at least 2 healthy free seats per kind (code/tests/docs) plus a reviewer before pressing Run, or use fastest with paid seats.
+- [risk] R9-offline-tests: Tests and imports must work with no vendor keys, database or network
+   EVID: canna/BUILD-BRIEF.md:122-124 demands recorded fixtures and no live credentials, but users and commerce say nothing about this. Stripe, Solana devnet, Metrc, Dutchie, Treez, Distru and LeafLink calls would fail in checks. prisma generate downloads engines at install; on Windows a held query_engine-windows.dll.node gives EPERM (feedback_shared_workdir_collisions.md:15-19). Each submission uses a fresh worktree, which avoids the lock.
+   FIX(preset-text): Preset rule for all three repos: all HTTP goes through an injected fetch; tests use JSON fixtures under tests/fixtures; no test reads process.env secrets; Prisma sits behind interfaces with in-memory fakes.
+- [note] N1-port-reads-absolute: Port-source reads must use absolute paths
+   EVID: resolveWithinRoots resolves a relative path against the first fileRoot without checking that it exists (files.ts:169-181). The briefs cite billboard-platform/lib/*.js and green-energy-platform/middleware.js:41.
+   FIX(preset-text): In each preset, list the port sources as absolute vmixer2o2 paths, for example C:\Users\<VMX>\Documents\claudecode\billboard-platform\lib\auth.js.
+- [note] N2-next-env-dts: next build would create an unignored next-env.d.ts
+   EVID: The repo .gitignore lists .next/ but not next-env.d.ts (cat users/.gitignore). host-commit.ts:307 stages everything with git add -A.
+   FIX(vmixer2o2): Commit next-env.d.ts in the scaffold, and do not use `next build` as a writer check.
+CONFIG:
+# vmixer2o2 ~/.dsh/settings.yaml, council section (<VMX> = vmixer2o2 user dir; pnpm.cjs path inferred from ndi2's layout)
+council:
+  swarmProfile: economy            # or set mode on each preset; 'user' stages nothing (index.ts:2224)
+  fileRoots: C:\Users\<VMX>\Documents\claudecode\users,C:\Users\<VMX>\Documents\claudecode\canna,C:\Users\<VMX>\Documents\claudecode\commerce,C:\Users\<VMX>\Documents\claudecode\billboard-platform,C:\Users\<VMX>\Documents\claudecode\green-energy-platform
+  writer:
+    worktreeRoot: C:\Users\<VMX>\.dsh\worktrees
+    queueScript: C:\Users\<VMX>\.claude\shared-brain\.sync\gatekeeper\queue-build.mjs   # rejects non-GitHub origins until B1 is decided
+    commandTimeoutMs: 900000
+    repos:
+      users:
+        path: C:\Users\<VMX>\Documents\claudecode\users
+        target: main
+        setup:
+          - [node, C:\Users\<VMX>\AppData\Roaming\npm\node_modules\pnpm\bin\pnpm.cjs, install, --frozen-lockfile]
+        checks:
+          - [node, C:\Users\<VMX>\AppData\Roaming\npm\node_modules\pnpm\bin\pnpm.cjs, run, typecheck]
+          - [node, C:\Users\<VMX>\AppData\Roaming\npm\node_modules\pnpm\bin\pnpm.cjs, run, test]
+      canna:   { same shape, path ...\claudecode\canna, target: main }
+      commerce: { same shape, path ...\claudecode\commerce, target: main }
+  swarmRoster:
+    llama-local: { enabled: true, kinds: [docs] }   # optional; keeps the serial GPU lane off code units
+
+# Scaffold commit per repo (trusted, before the run; models cannot write these):
+# package.json scripts {"typecheck":"tsc --noEmit","test":"vitest run --passWithNoTests"}, packageManager pnpm@11.7.0,
+# deps: next 14.2.35, react/react-dom 18.3.1, prisma + @prisma/client 5.17.0, jose, zod; dev: typescript, @types/node, @types/react, vitest 1.6.0
+# commerce adds stripe ^22.5.0, @solana/web3.js ^1.98.4. Plus pnpm-lock.yaml, tsconfig.json (src/, @/*), vitest.config.ts, next.config.mjs, next-env.d.ts, prisma/schema.prisma (generator + mysql datasource only).
+
+# Presets: shared-brain/dsh-presets/ecomm/{users,canna,commerce}.yaml, run one after another
+    ecomm/users:
+      name: Ecomm 1/3 users (Phase 0)
+      mode: economy
+      stages: council,swarm,review
+      autoAdvance: false
+      query: |-
+        On EVERY pipeline tool call in this run pass submit_to: `users`.
+        Scaffold already exists on origin/main (package.json, lockfile, tsconfig, vitest, next config, prisma header). Never write package.json, pnpm-lock.yaml, .npmrc, .env*, .github/workflows/*, *.pem, *.key, and never emit PEM headers or key-shaped strings: one refusal voids the whole commit. Import only packages in package.json.
+        Every unit MUST have: files (exact repo-relative paths, max 6, each under 20,000 chars, no file shared between units), acceptance (non-empty, checkable offline, including "passes tsc --noEmit and vitest run"), tier.
+        Tests run with no network, no DB, no vendor keys: DB behind repository interfaces with in-memory fakes; HTTP through injected fetch with JSON fixtures; Ed25519 keys generated at test time via jose generateKeyPair('EdDSA').
+        Phase 0 gate = tests/contract.spec.ts: mint, verify with the public JWKS object only (alg EdDSA), check iss/aud/exp/jti/amr, prove revocation with an in-memory store.
+        Port sources (read by absolute path): C:\Users\<VMX>\Documents\claudecode\billboard-platform\lib\{auth,session,crypto,totp,googleAuth,metaAuth,passwordReset,rateLimit}.js; clientIpFor from ...\green-energy-platform\middleware.js:41.
+        Local units: .env.example becomes docs/ENV.md; add files/acceptance to each.
+        <inline users/BUILD-BRIEF.md sections 1-7>
+# canna/commerce presets: same header with submit_to canna/commerce, users CONTRACT.md text inlined, deploy workflow excluded, paymentConfirm port split in two (21,261 chars).
+
+=== audit:swarm-write-path
+Claude Opus 5.5 (read-only review; nothing was edited, built or launched). Every file is written by the DSH host process on whichever machine runs DSH. Seats only return text. The host parses the WRITE: blocks into <session workspace>\.dsh-staging\<runUUID>\<unit>\<seat>\<path>. When `submit_to` is given, it then copies the winning files into a fresh git worktree at <worktreeRoot>\<repoKey>\<runId> on branch dsh/<seat>/<runId>, and runs the setup commands, then the checks, then `git add -A` and `git commit` with hooks enabled. Last, it calls queue-build.mjs. Nothing in this path runs `git push`.
+
+vmixer2o2's current build already contains this path. candidate-submit.ts arrived in d3f1f37e11, not in 0d49b54f8b as the brief says. d3f1f37e11 is an ancestor of f55855f248. host-commit, candidate-submit, writes, staging and swarm have a 0-line diff between f55855f248 and origin 111c359502.
+
+Six things stop this plan from producing a working build as it stands:
+1. One run can submit to only one repo. `submit_to` is a single key, and file labels lose track of which repo they came from, so users -> (canna || commerce) has to be three runs, one after another.
+2. All three BUILD-BRIEFs include a `.env.example` unit. The host refuses `.env.*` paths, and one refused path cancels the commit for the whole run. The same applies to package.json, lockfiles, CI workflows and rule files.
+3. A model can never write package.json. So `pnpm install` as setup fails in these empty repos, and so would any check that needs installed packages. That leaves two choices: a person adds package.json first, or the build ships source only and uses a check that tolerates missing packages.
+4. vmixer2o2's settings.yaml needs writer.repos entries for users, canna and commerce, plus a matching fileRoots value. brain-sync does not carry these between machines.
+5. The saved run must use mode economy or fastest. This host's swarmProfile is `user`, which stages no files at all.
+6. The three repos must exist on vmixer2o2, and each one's origin must point somewhere permanent that has a `main` branch.
+
+The local bare origins do NOT satisfy queue-build: it only accepts an `https://github.com/...` push URL. So each submission ends as 'queue-failed', but the commit and its worktree are kept on vmixer2o2. The files are produced there; they just are not added to the push queue.
+
+This path has never run end to end on this host. There are no .dsh-staging folders, and none of the 20 stored council runs mentions staging or a submission. The only existing writer worktrees came from direct submit_work calls, not from a swarm.
+- [blocker] B1: One pipeline run can submit to one repo only, so users -> (canna || commerce) cannot land as a single run
+   EVID: `submit_to` is one repo key (index.ts:2049, 2216). candidateFilesJson merges every winning file into one map keyed by relative label (candidate-submit.ts:84-103). Labels do not record which fileRoot they came from (writes.ts:50-57; files.ts:169-183). A combined run would commit canna and commerce files into whichever repo submit_to names. There is one pipeline slot per DSH (pipelineId, index.ts:2059), so canna and commerce cannot run side by side in one DSH either.
+   FIX(preset-text): Use three saved runs, run one after another on vmixer2o2: users first, then canna, then commerce. Each run passes its own submit_to (users / canna / commerce). Set council.fileRoots with that run's repo FIRST, then the port sources. For canna and commerce, also list the users checkout so CONTRACT.md can be read. Before starting canna, fast-forward the users main checkout to users' dsh/<seat>/<runId> branch (a local merge, no push), because the commit lives only on that branch.
+- [blocker] B2: A `.env.example` unit, or any other refused path, cancels the commit for the whole run
+   EVID: All three briefs pre-write a `.env.example` local-lane unit (users/BUILD-BRIEF.md:177-178, canna/BUILD-BRIEF.md:179-180, commerce/BUILD-BRIEF.md:153-154). deniedPath refuses any name starting with `.env.` (host-commit.ts:96). submitWork throws before anything is written (host-commit.ts:252-253), and index.ts:1054-1055 turns that into 'not-submitted'. The same happens for package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, CLAUDE.md, AGENTS.md and .github/workflows/* (host-commit.ts:69-73, 95). The canna and commerce briefs list .github/workflows/deploy.yml as their deploy pattern (canna:36, commerce:35).
+   FIX(preset-text): In each saved run's text, rename the unit's target to `env.example` (no leading dot, so it is allowed), and add: 'No unit may target package.json, any lockfile, pnpm-workspace.yaml, .npmrc, any .env*, CLAUDE.md, AGENTS.md, .github/workflows/*, *.pem, *.key, .husky/, .githooks/ or lefthook.yml.'
+- [blocker] B3: A greenfield Node/Next.js repo can never get package.json from the swarm, so `pnpm install` setup and dependency-based checks fail and the output is not a runnable app
+   EVID: package.json and pnpm-lock.yaml are refused basenames (host-commit.ts:72, 99). Setup runs before the model's files are written (host-commit.ts:290 vs 292). The worktree holds only README.md, BUILD-BRIEF.md and .gitignore (git ls-files). A setup failure ends as 'check-failed' and removes the worktree and branch (host-commit.ts:273-280, 324-327). The exact pnpm error text is inferred, not executed.
+   FIX(user): First build: set `setup: []` and use the missing-package-tolerant TypeScript check in requiredConfig. It works on an empty repo and still fails on syntax errors, type errors between the repo's own files, and broken relative imports. For a runnable app, a person must commit package.json and pnpm-lock.yaml to each repo's origin/main (the swarm cannot). After that, switch to setup `[node, <pnpm.cjs>, install, --frozen-lockfile]` and checks `[node, <pnpm.cjs>, run, typecheck]` and `[node, <pnpm.cjs>, run, test]`.
+- [blocker] B4: vmixer2o2 has no writer.repos entries for users, canna or commerce, and brain-sync will not add them
+   EVID: This host's writer has only `harness` (~/.dsh/settings.yaml:401-418). brain-sync syncs only pipelinePresets and credentials (brain-sync.mjs:1364-1369). An unknown key makes the pipeline call throw 'Unknown writer repo' as soon as submit_to is given (submit-work.ts:68-69; index.ts:1008, 2216). A queueScript that is missing or not absolute throws as well (submit-work.ts:65-66).
+   FIX(vmixer2o2): Add the writer block from requiredConfig to vmixer2o2's ~/.dsh/settings.yaml, with every `~` replaced by the absolute vmixer2o2 home. DSH does not expand `~`.
+- [blocker] B5: Mode or fileRoots set wrong means zero files are produced
+   EVID: Staging and contest happen only for profile economy or fastest (swarm.ts:543-546; index.ts:2224). This host has swarmProfile `user` (settings.yaml:1773) and fileRoots set to the harness path only (settings.yaml:397). With a profile but no fileRoots, every unit that has files fails with 'Candidate files require approved workspace staging and source roots.' (swarm-contest.ts:74-79).
+   FIX(vmixer2o2): Give each saved run `mode: economy` or `mode: fastest`. The panel passes it on the first call (presets.ts:20; PipelineControl.tsx:86-93) and it is stored as pipelineProfile (index.ts:2197). Set vmixer2o2's council.fileRoots with the target repo first before each run.
+- [blocker] B6: The repos must exist on vmixer2o2 with a permanent origin that has `main`
+   EVID: host-commit runs `git -C <path> fetch origin <target>` and `worktree add ... refs/remotes/origin/<target>` (host-commit.ts:269-271). A failure there throws before the try block and becomes 'not-submitted'. vmixer2o2's fleet status lists no users/canna/commerce (fleet/status/vmixer2o2.json repos block). The repos arrive as bundles (MANIFEST.md:8-10), and a bundle-path origin stops working once the transfer folder is deleted (MANIFEST.md, last line).
+   FIX(vmixer2o2): On vmixer2o2, clone each bundle to ~/Documents/claudecode/<repo>, create a bare copy at ~/.dsh/remotes/<repo>.git, point origin at it, fetch, and confirm origin/main at 039842b0 (users), e54c9126 (canna) and 34701f74 (commerce), as the MANIFEST lays out.
+- [risk] R1: queue-build rejects local bare origins, so every submission reports 'queue-failed' even though the commit was made
+   EVID: queue-build.mjs:44-45 requires a push URL of https://github.com/<owner>/<repo>. The origin here is C:/.../.dsh/remotes/<repo>.git (`git remote -v`). host-commit keeps the commit and worktree on queue failure (host-commit.ts:336-340).
+   FIX(user): Treat 'queue-failed' as expected. The files sit committed at ~\.dsh\worktrees\<repo>\<runId> on dsh/<seat>/<runId> on vmixer2o2. Alternative (user decision only): set a GitHub HTTPS push URL on each repo (`remote set-url --push`) so the entry is queued. Only do that if private GitHub repos are wanted; the gatekeeper would still push only after approval.
+- [risk] R2: submit_to is not saved with the run, so a Continue call without it leaves the files in staging only
+   EVID: The saved run has no submit_to field (presets.ts:19-39). startPrompt and CONTINUE_PROMPT do not mention it (PipelineControl.tsx:86-93, 99). prepareSubmission reads it from each call's arguments (index.ts:2216). Submission happens only on the call where the swarm stage reaches 'full' (index.ts:2268-2270).
+   FIX(preset-text): Put this in each saved run's text: 'Pass submit_to as `users` (or canna / commerce) on EVERY pipeline tool call, including Continue calls.' Check the swarm stage report for a '### Submitted' section.
+- [risk] R3: One failed check, more than 100 files, more than 1 MB, or a secret-looking string sinks the whole run's commit
+   EVID: parseStagingFiles allows 1-100 files and at most 1,000,000 chars (staging.ts:39, 43). The secret patterns include a PEM PRIVATE KEY header (host-commit.ts:79, 254-255). Checks cover the whole change set together (host-commit.ts:301-304).
+   FIX(preset-text): Saved run text: at most 100 files per run; never embed PEM keys in tests (generate them at test time with crypto.generateKeyPairSync); split large repos into several runs. Staged copies survive any rejection; no code deletes them.
+- [risk] R4: Path mismatches fail units; relative READs of port sources miss
+   EVID: The WRITE path must equal the unit's `files` entry exactly (swarm-contest.ts:99-101). A relative READ resolves against the first fileRoot only (files.ts:174-181).
+   FIX(preset-text): Saved run text: 'unit files are paths relative to the target repo root, POSIX separators, no ./ prefix, no repo-name prefix; seats repeat them exactly; read port sources (billboard-platform, green-energy-platform, users) by absolute path.'
+- [risk] R5: No per-unit compile or test step: broken code passes the LLM review and only fails the single end-of-run check
+   EVID: No caller supplies verifyUnit (swarm.ts:118, 589; grep of index.ts). Contest acceptance is an LLM 'ACCEPT: yes' (swarm-contest.ts:131-134).
+   FIX(preset-text): Keep units small, with explicit acceptance conditions. Rely on the host check in requiredConfig to catch problems at submission.
+- [risk] R6: The session must be workspace-write + `go`, on a confined filesystem
+   EVID: index.ts:982 and 1012-1013 throw on the approved swarm call without workspace-write. sandboxWriteSeam refuses when sandboxMode is undefined or danger-full-access (staging.ts:23-24).
+   FIX(user): In vmixer2o2's DSH session, select workspace-write and send `go` before approving the swarm. Open the session with its workspace in the target repo, where .gitignore already excludes .dsh-staging/. The harness .gitignore does not (grep empty).
+- [risk] R7: The review stage and later runs read the main checkout, which the commit does not update
+   EVID: The review council reads fileRoots (index.ts:2388) plus the unit texts (index.ts:2366-2370). The commit exists only on dsh/<seat>/<runId> in the worktree (host-commit.ts:265-271).
+   FIX(vmixer2o2): After each run, fast-forward the repo's main checkout to the dsh/ branch locally before a dependent run reads it.
+- [risk] R8: Check leftovers: untracked output gets committed or trips the clean-tree test
+   EVID: `git add -A` runs after the checks (host-commit.ts:307), a second deny pass follows (310-322), and queue-build needs a clean tree (queue-build.mjs:43). .gitignore does not cover dist/.
+   FIX(vmixer2o2): Checks must not write files (tsc noEmit, no build).
+- [note] N1: A retry on the same seat reuses that seat's candidate folder; winningCandidates picks the first candidate matching that seat
+   EVID: unitCandidateRoot depends only on run, unit and seat (swarm-contest.ts:24-27, 81, 104). The economy fallback can re-run a seat that already proposed (swarm-contest.ts:138-142). candidate-submit.ts:65 uses find(). The fallback overwrites same-named files on disk, but a file only the first draft wrote could still be committed.
+   FIX(brain): Low impact. Mention it only if an economy run with only free seats commits an unexpected extra file.
+- [note] N2: The submit path has never run end to end on this host
+   EVID: No .dsh-staging folders exist; none of the 20 stored council runs mentions staging or Submitted. The existing worktrees came from direct submit_work (dsh/gpt-5.6-luna/*).
+   FIX(vmixer2o2): Before the full users run, do a one-unit dry run on vmixer2o2 (one file, mode fastest, submit_to users) and confirm the staging file, the worktree commit and the expected 'queue-failed'.
+CONFIG:
+IMPORTANT: DSH does not expand `~` (submit-work.ts:65, host-commit.ts:246, files.ts:86-96). Replace every `~` below with vmixer2o2's absolute home (e.g. C:\Users\<vmixer-user>) before writing it into vmixer2o2's ~/.dsh/settings.yaml, under `council:`. Keep vmixer2o2's existing `harness` repo entry unchanged.
+
+council:
+  # fileRoots is comma separated and the TARGET repo must come FIRST. Change it before each run:
+  #  run 1 users   : ~\Documents\claudecode\users,~\Documents\claudecode\billboard-platform,~\Documents\claudecode\green-energy-platform
+  #  run 2 canna   : ~\Documents\claudecode\canna,~\Documents\claudecode\users,~\Documents\claudecode\billboard-platform,~\Documents\claudecode\green-energy-platform
+  #  run 3 commerce: ~\Documents\claudecode\commerce,~\Documents\claudecode\users,~\Documents\claudecode\billboard-platform,~\Documents\claudecode\green-energy-platform
+  fileRoots: ~\Documents\claudecode\users,~\Documents\claudecode\billboard-platform,~\Documents\claudecode\green-energy-platform
+  writer:
+    worktreeRoot: ~\.dsh\worktrees
+    queueScript: ~\.claude\shared-brain\.sync\gatekeeper\queue-build.mjs
+    commandTimeoutMs: 600000
+    repos:
+      users:
+        path: ~\Documents\claudecode\users
+        target: main
+        setup: []
+        checks:
+          - [node, ~\.dsh\checks\greenfield-check.mjs]
+      canna:
+        path: ~\Documents\claudecode\canna
+        target: main
+        setup: []
+        checks:
+          - [node, ~\.dsh\checks\greenfield-check.mjs]
+      commerce:
+        path: ~\Documents\claudecode\commerce
+        target: main
+        setup: []
+        checks:
+          - [node, ~\.dsh\checks\greenfield-check.mjs]
+
+What greenfield-check.mjs must do (it does not exist yet; it is untested; it lives outside every repo so no model can change it; it runs with cwd = the new worktree, per host-commit.ts:282):
+- Find all *.ts, *.tsx, *.mts and *.cts files, skipping node_modules, .git, .next and .dsh-staging. If there are none, exit 0.
+- Load TypeScript from ~\Documents\claudecode\deepseek-harness\node_modules\typescript (6.0.3 on this host; on vmixer2o2 this path is inferred).
+- Create a program with: noEmit, strict, skipLibCheck, jsx=preserve, module=esnext, moduleResolution=bundler, target=es2022, types=[], resolveJsonModule, isolatedModules, paths {"@/*": ["./src/*"]}.
+- Collect the syntax and semantic errors. Ignore only two kinds:
+  - TS2307, TS7016 and TS2875 errors whose module name is a bare package (does not start with '.' or '/').
+  - TS7026 (JSX with no React types).
+- Print any other error as file:line and exit 1. That covers syntax errors, type errors between the repo's own files, and missing relative imports.
+- Write nothing to disk, so `git add -A` and queue-build's clean-tree check stay clean.
+
+Alternative that needs no script (also untested): a person first commits to each repo's origin/main a tsconfig.json (the options above, with include **/*.ts and **/*.tsx plus types/**/*.d.ts) and a types/external.d.ts containing `declare module '*';` and `declare namespace JSX { interface IntrinsicElements { [k: string]: any } }`. The check then becomes: [node, ~\Documents\claudecode\deepseek-harness\node_modules\typescript\lib\tsc.js, -p, tsconfig.json]. Caveats: a model is allowed to overwrite tsconfig.json, and it is not verified whether the wildcard declaration also hides missing relative imports.
+
+After a person has committed package.json and pnpm-lock.yaml: setup [[node, ~\AppData\Roaming\npm\node_modules\pnpm\bin\pnpm.cjs, install, --frozen-lockfile]]; checks [[node, <same pnpm.cjs>, run, typecheck], [node, <same pnpm.cjs>, run, test]]. The pnpm path on vmixer2o2 has not been checked.
+
+Each saved run needs: mode economy or fastest (never council or user); stages council,swarm,review (or council,propose,swarm,review). Its text must also say:
+- 'Pass submit_to as `<repo>` on every pipeline tool call.'
+- The file rules from B2 and R4.
+- `env.example` in place of `.env.example`.
+- At most 100 files per run, and no PEM blocks.
+
+=== audit:preset-launch
+Claude Opus 5.5, read-only. A saved run holds exactly five fields: name, query, stages, mode and autoAdvance. Its id is `area/name`. brain-sync carries it into vmixer2o2's `council.pipelinePresets` within about one 20-second listener tick on each host, and the preset code on vmixer2o2 (f55855f248+1) matches origin. It can go there without syncing the harness first.
+
+Four things stop this build from producing a working repo through a preset as it stands.
+1. The target repo cannot be named in the preset. `submit_to` is a per-call tool argument. It is never saved and never sent again on Continue.
+2. The host commit step refuses package.json, `.env.*` and similar files, and one refused file sinks the whole batch. The briefs themselves ask for `.env.example`.
+3. `mode` must be `economy` or `fastest`. Without it, units return text only and write no files.
+4. `fileRoots` is one global setting. It has to name the target repo first, then the port sources, and a preset cannot set it.
+
+Two more limits:
+- A brief pointed to by file path is cut off at 6,000 characters (the briefs are 11.6k to 14.6k), so each run needs its own brief pasted in.
+- DSH holds one pipeline at a time, so `canna` and `commerce` cannot run side by side. The run needs three presets run in order: users, then canna, then commerce.
+
+Each run passes 4 approval gates plus 1 version pick. Each gate needs Approve and then "go" within 15 minutes, and the session must have workspace-write.
+- [blocker] B1: The preset cannot name the repo, and submit_to is dropped on Continue
+   EVID: There is no submit field in PresetEntry or the Config schema (presets.ts:19-39; index.ts:589-595). submit_to is read only from the current call's args on the call that runs the swarm (index.ts:2216, 2268-2270). It is never saved (index.ts:583-619) and not included in CONTINUE_PROMPT (PipelineControl.tsx:99) or the '[pipeline approved]' directive (index.ts:1132). So the call that actually runs the approved swarm usually carries no submit_to, and files stay in staging.
+   FIX(vmixlaptop2x6): Either (a) add submitTo to PresetEntry, the Config schema and startPrompt, save it as a pipelineSubmitTo setting when the run starts, and read it in the swarm stage when args.submit_to is missing (a harness change, built on vmixlaptop2x6 and then synced to vmixer2o2); or (b) accept a staging-only run and apply the files afterwards. A line in the query saying 'pass submit_to as `users` on every pipeline call' is best effort only.
+- [blocker] B2: The host commit step refuses package.json and .env.example, and one refusal sinks the whole submission
+   EVID: The deny list includes package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, .env and .env.* (host-commit.ts:69-100). Any refused path throws for the entire batch (host-commit.ts:252-253). Each brief orders a .env.example unit (users:177, canna:179, commerce:153). A greenfield Next.js repo needs package.json. Result: a submit_to commit fails with 'Refused paths' and nothing lands in the repo.
+   FIX(preset-text): Choose one: (a) the preset text forbids the denied files and has the seats hand over their contents (for example as env.example or package.template.json, or in the review text) for a person to promote; or (b) a harness change adds a per-repo opt-in, such as writer.repos.<k>.allowManifests, for greenfield repos. Note that (b) weakens a deliberate safety gate, so that is the user's call.
+- [blocker] B3: mode must be economy or fastest, or no files are produced
+   EVID: An omitted mode falls back to swarmProfile (index.ts:2060-2061). This host's is 'user' (settings.yaml:1773), which gives no profile, which means text-only units and no staging (swarm.ts:543-588; index.ts:2224). mode 'council' collapses the run to the council stage only (index.ts:2071).
+   FIX(preset-text): Put `mode: economy` (or `fastest`) in the preset, spelled exactly. Anything outside the three allowed values fails schema validation of the whole council section.
+- [blocker] B4: fileRoots is global and currently points at the harness; the target repos are not on vmixer2o2 yet
+   EVID: fileRoots is one global setting, not a preset field (index.ts:399, 624). The propose stage is blocked when it is empty (propose.ts:123-124). Writes and relative READs resolve into the first root (files.ts:174-180), and this host's value is the harness only (settings.yaml:397). users, canna and commerce are missing from vmixer2o2 (not in fleet/status/vmixer2o2.json repos; handoff-2026-09-26-2250 'users/canna/commerce missing'); they exist only as bundles in transfer/2026-09-26-ndi2-to-vmixer2o2/.
+   FIX(vmixer2o2): On vmixer2o2: clone the three bundles. Before each run, set council.fileRoots to '<target repo>,<billboard-platform>,<green-energy-platform>' with the target repo FIRST. Open the DSH session with the target repo as its workspace, so .dsh-staging falls inside the first root and propose candidates can be read back by swarm seats.
+- [blocker] B5: A brief given by file path is cut off at 6,000 characters
+   EVID: Served files are capped at 6,000 characters each, 3 per seat and 8 per run (files.ts:28-34). The briefs are 12,757, 14,590 and 11,614 bytes, so seats would see less than half of each.
+   FIX(preset-text): Paste the target repo's own BUILD-BRIEF.md into that run's preset query (one preset per repo, about 3-4k tokens each). Do not rely on 'Read BUILD-BRIEF.md'.
+- [risk] R1: Home paths and ~ paths do not resolve on vmixer2o2
+   EVID: The brain rewrites C:\Users\ndi2|vMixer to ~ (brain-sync.mjs:139-147, 1525). A pull writes the text word for word (1568), and READ does not expand ~ (files.ts:169-183). A C:\Users\vMixer path in the preset can reach vmixer2o2 as ~ depending on which host's 20-s tick wins. The briefs cite port sources as ~/Documents/claudecode/billboard-platform (users:39, canna:25, commerce:23).
+   FIX(preset-text): Put no C:\Users\... paths in the preset. Tell seats to build absolute READ paths from the port-source roots listed in their prompt (readRequestSection prints the absolute roots), and to read the ~ paths in the brief as those roots.
+- [risk] R2: One pipeline at a time: canna and commerce cannot run in parallel, and an old run hides the presets
+   EVID: The pipeline state is a single set of keys (index.ts:292-339, 2059). Presets are shown only when no run is in progress (PipelineControl.tsx:536). A run still in progress continues its own query instead of the new one (index.ts:2069-2076).
+   FIX(vmixer2o2): Use three presets run one after another: ecomm/users-build, then ecomm/canna-build, then ecomm/commerce-build. Before starting, check vmixer2o2's settings.yaml pipelineId is empty, and press Stop if it is not.
+- [risk] R3: Neither mode fits the brief's mix of paid units plus a llama-local lane
+   EVID: fastest drops all free workers (swarm.ts:382). economy has every unit contested only by free seats, needing at least 2 (swarm-contest.ts:69-70; swarm.ts:432). Council and review exclude free seats in both modes (index.ts:2374). The brief expects paid-only contract units and a 4-unit llama-local lane (users/BUILD-BRIEF.md:141-230). Whether llama-local counts as a free seat was not checked here.
+   FIX(vmixer2o2): Whoever owns the roster confirms the seat cost classes on vmixer2o2. Use economy with at least 2 free seats and at least 1 paid reviewer or council seat enabled, or accept fastest without the local lane.
+- [risk] R4: The full query and plan go into every unit prompt, which the local lane will feel
+   EVID: swarm.ts:218-219 and swarmQuery (index.ts:2871-2893) put the query plus the agreed approach into each unit. The brief says local units stay under 3k tokens and never see the brief (users/BUILD-BRIEF.md:152-154). Prefill runs at about 81 tok/s (users/BUILD-BRIEF.md:146-147). vmixer2o2's DSH still has contextWindow 49152 until relaunch (handoff-2026-09-24-0020).
+   FIX(vmixer2o2): Keep each preset query to one pasted brief plus a short header. Relaunch DSH on vmixer2o2 so the 65536 context window takes effect.
+- [risk] R5: The chat model must repeat the whole query as the tool argument
+   EVID: The stored pipelineQuery is whatever the model passes as args.query (index.ts:2040, 2102, 2190-2192). A long query can come back truncated or paraphrased.
+   FIX(vmixer2o2): Use a large-context chat model for the vmixer2o2 session. After the first call, check that the pipelineQuery length in vmixer2o2's settings.yaml matches the preset.
+- [risk] R6: Four gates plus a pick, each with a 15-minute window
+   EVID: Plan gates expire 15 minutes after they are issued (approval.ts:36; GateStrip.tsx:56, 126-132). A run with council,propose,swarm,review has 4 Approve+go gates and 1 pick (index.ts:2240-2406; GateStrip.tsx:320-329). An expired gate means a new planning call.
+   FIX(user): The user needs to be present for each gate, or a person turns on council.autoApprove on vmixer2o2 (index.ts:357-362) for this run. 'Alert me when to run it' covers only pressing Run.
+- [risk] R7: Staging needs a confined sandbox and workspace-write
+   EVID: The staging writer throws unless the session mode is workspace-write and fs.sandboxMode is set and not danger-full-access (staging.ts:23-27). proposalWorkspace throws without workspace-write (index.ts:982).
+   FIX(vmixer2o2): Check vmixer2o2's DSH sandbox mode before the run. Select workspace-write in the session's permission control and send 'go' before approving propose and swarm.
+- [risk] R8: Without a working submit_to there is no assembled repo
+   EVID: Candidates stay in separate per-unit, per-seat trees (swarm-contest.ts:23-26, 104). Only candidateFilesJson plus submitWork assemble the winners into one tree (candidate-submit.ts:84-104; host-commit.ts:288-323).
+   FIX(vmixlaptop2x6): Tied to B1 and B2. Plan an assembly or apply step, or fix the submit route.
+- [risk] R9: A malformed preset chunk breaks settings loading or loops in sync
+   EVID: The schema is strict on types: stages must be a string and mode must be one of the three values (index.ts:589-595; vendor/schemastery/src/index.ts:608-616, 765-775). The settings loader fails at boot, or keeps the last good document on reload (settings-file/src/index.ts:232-236, 298-311). The id line must equal the file path, or the preset keeps re-pushing and re-pulling (brain-sync.mjs:1463-1466, 1531).
+   FIX(preset-text): The brain file's first line is exactly '    ecomm/<name>:'; stages is a comma string; no YAML comments; every query line is indented 8 spaces.
+- [note] N1: No harness sync is needed for the preset mechanics
+   EVID: f55855f248 already has the same preset schema, pipeline tool, submit_to, candidate-submit and startPrompt (verified with git show). 111c359502 only adds the runs tool and preset editor UI.
+   FIX(vmixer2o2): none
+- [note] N2: The preset also lands on this host
+   EVID: The pull runs on every host with a DSH home (brain-sync.mjs:1423, 874). Pressing it on vmixlaptop2x6 would run the build here.
+   FIX(user): Press it only in vmixer2o2's DSH, or name the host in the button label.
+- [note] N3: The pick message gets no directive
+   EVID: While a run is active and no gate is approved, the pre-step returns without injecting anything (index.ts:1121-1134). 'Build from the X version.' may be answered without calling the pipeline.
+   FIX(preset-text): Set autoAdvance: true (it sends Continue once the pick is written), or press Continue.
+CONFIG:
+# 1) One brain file per repo. Path: ~/.claude/shared-brain/dsh-presets/ecomm/users-build.yaml
+#    (repeat as canna-build.yaml and commerce-build.yaml, with the header numbers, repo name and pasted brief changed).
+#    The file body is the raw settings.yaml chunk: id line at 4 spaces, fields at 6, query text at 8.
+#    Rules: no C:\Users\... paths, no YAML comments inside the chunk, stages as one string.
+    ecomm/users-build:
+      name: Ecomm 1/3 users - greenfield build (vmixer2o2)
+      stages: council,propose,swarm,review
+      mode: economy
+      autoAdvance: true
+      query: |-
+        ECOMM GREENFIELD BUILD 1 of 3 - repository: users. canna and commerce are separate later runs that depend on this repo's frozen session-token contract.
+        TARGET: the FIRST directory in your granted file roots is the users repository. Write every file with a path relative to it (for example src/lib/auth.ts). Never write into any other root.
+        PORT SOURCES: the billboard-platform and green-energy-platform roots are also in your file roots. Read them only, with READ: <that root's absolute path as listed>\<file>. The ~/Documents/claudecode/... paths in the brief below mean those roots; a path starting with ~ will not resolve.
+        HOST-REFUSED FILES: do not write package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, .env or any .env.* file, CLAUDE.md, AGENTS.md, .github/workflows/*, .husky, .githooks, *.pem or *.key. Give their exact intended contents in the final review, or as env.example / package.template.json for a person to promote.
+        UNITS: every unit lists its target files; one unit owns each file; at most 6 files per unit; each file under 20,000 characters.
+        On every pipeline call for this run, pass submit_to as `users`.
+        Every seat names its own model in anything the user reads. No agent runs git push.
+
+        ===== BUILD-BRIEF.md for users (verbatim) =====
+        <paste ~/Documents/claudecode/users/BUILD-BRIEF.md here, every line indented 8 spaces>
+
+# 2) vmixer2o2 ~/.dsh/settings.yaml, council section, set before EACH run.
+#    Paths use the vMixer user; this is inferred from .sync/users.json, not read on vmixer2o2.
+council:
+  fileRoots: C:\Users\vMixer\Documents\claudecode\users,C:\Users\vMixer\Documents\claudecode\billboard-platform,C:\Users\vMixer\Documents\claudecode\green-energy-platform
+  # Only for the submit_to route. Keep the submit_to line in the query only if this key exists; see B1 and B2.
+  writer:
+    worktreeRoot: C:\Users\vMixer\.dsh\worktrees
+    queueScript: <absolute path to queue-build.mjs on vmixer2o2>
+    repos:
+      users:    { path: C:\Users\vMixer\Documents\claudecode\users,    target: main }
+      canna:    { path: C:\Users\vMixer\Documents\claudecode\canna,    target: main }
+      commerce: { path: C:\Users\vMixer\Documents\claudecode\commerce, target: main }
+# pipelineId must be "" before pressing Run. The DSH session workspace should be the target repo, with workspace-write selected.
+
+=== audit:advance-gate
+Claude Opus 5.5, read-only review. I did not run any tests; everything below comes from reading the code.
+
+(1) The council stage moves to swarm only when all of these hold:
+- A council plan has been issued (pendingPlanId).
+- The Approve click wrote approvedPlanId equal to that id, with approvedAt at or after pendingPlanIssuedAt.
+- A real user message arrived after the click.
+- All of that happened within 15 minutes of the plan being issued.
+- The approved full council then ends with terminalState 'completed', and none of its errors match the quota wording.
+The '-->' gate marker is not fragile. The client regex requires the closing '-->', so the UUID comes out exactly. The spec failure was a bug in the test's own regex.
+
+(2) 92cdcade3b only touches the spec. Origin 111c359502 behaves the same at runtime. pipeline, approval, quota-hold, journal, swarm and swarm-contest have the same code at f55855f248 and at origin (only doc comments changed). So vmixer2o2 already advances exactly as origin does.
+
+(3) There are live code paths that produce 'council does not go to swarm':
+- The default quorum needs at least 2 drafts. mode economy/fastest also removes every free seat from the council. With fewer than 2 working paid seats the council never decides, and the stage is blocked.
+- Once a council stage runs in full, its gate is cleared, so the Advance-to-swarm recovery can no longer be used.
+- A single quota-worded seat error puts an otherwise decided council on hold. After the hold it has to plan again and be approved again.
+- The standalone `council` tool uses the same gate slots and has no check for a running pipeline. If the model calls it (more likely with Council mode ON), it uses up the pipeline's approval.
+
+(4) If a paid seat runs out of quota mid-run, the stage is parked, not failed:
+- It waits 30 minutes by default, or until a stated reset time if that is 8 hours away or less.
+- It is released early if the cached Claude session reading is under 90%. The cache's age is not checked.
+- Only the open browser panel wakes it up again.
+
+(5) The worst stall risks for a multi-hour run:
+- Units are written to settings but never read back, so the review stage never sees the swarm's work. REWORK then loops, and each loop re-runs the swarm and submits again.
+- A swarm stage that is held or partial after 15 minutes is re-planned into a NEW graph and must be approved again.
+- Files are committed only when every unit succeeds. The host commit refuses package.json, lockfiles and .env* for the whole batch.
+
+Recommended settings: stages council,swarm; mode fastest; council.autoApprove true (your decision); councilMode false; minDrafts 1; brainIndex and memoryDigest false; the target repo first in fileRoots; one preset per repo, run one after another.
+- [blocker] B1: The review stage never sees the swarm's output. REWORK loops and submits again on every loop.
+   EVID: pipelineUnits is written (origin index.ts:2465) but never read back. The state rebuilt on every call (origin 2047-2076) restores plan, winner, tasks, candidates and hold, but not units; grep finds no reader of pipelineUnits. Review always runs in a separate call (one stage per call, pipeline.ts:11-14), so the review question carries only 'ORIGINAL REQUEST' plus `(input.units ?? [])`, which is empty (origin 2336-2344). Reviewers told to 'Use ACCEPTED only when all required artifacts exist' then return REWORK/BLOCKED. REWORK sends the stage back to swarm (pipeline.ts:399-407). With autoApprove the stored graph re-runs, the journal replays identical answers (seats.ts:1418), and every swarm completion calls runSubmission again (origin 2242-2244), so each loop files a new commit and queue entry. Auto-advance keeps it going (PipelineControl auto effect).
+   FIX(preset-text): Drop the review stage: set the preset `stages: council,swarm`. After the swarm completes, nextStage is undefined, so the run finishes as 'done' (pipeline.ts:441-447). Review the result by hand, or in a separate council run that points at the committed branch. The code fix (read pipelineUnits back into state) is a harness change for later and is not needed for this run.
+- [blocker] B2: The council never decides when fewer than 2 paid seats produce drafts. Stuck at council, with no advance recovery.
+   EVID: mode economy/fastest removes every free seat from both council stages: `seats: profile === undefined ? seatsNow : seatsNow.filter(seat => seat.free !== true)` (origin index.ts:2348). Free seats are free-claude, openrouter-free, llama-local and all agy-* (seats.ts:264,342,384,413-473). The default quorum is minDrafts = max(2, ceil(n/2)) and minReviews = max(1, ceil(n/3)) (council.ts:602-611). Fewer usable drafts gives terminalState 'partial' (council.ts:1182-1186). That means councilDecided=false and the problem 'The council did not decide' makes the stage blocked (origin 2402-2410). The full run already cleared pendingPlanId (origin 2383-2393), so advanceToSwarm and the panel's Advance button are unavailable (origin 2099-2103; PipelineControl canAdvanceToSwarm). The swarm planner must also be a non-free seat under a profile (swarm.ts:400-410).
+   FIX(vmixer2o2): In vmixer2o2 ~/.dsh/settings.yaml, set council.minDrafts: 1 and council.minReviews: 1 (schema keys at index.ts:565-566). These are read from the plugin config (origin 2351), not from live(), so a DSH relaunch may be needed (inferred). Make sure at least one paid seat (claude / claude-work / openai / kimi / deepseek / cheaperinference) is enabled and working on vmixer2o2 for the council and the planner.
+- [blocker] B3: No files are written unless the mode, fileRoots and session permission are set correctly
+   EVID: The staging workspace exists only when a profile is set and fileRoots is non-empty (origin index.ts:2198). The writing contest path runs only for economy/fastest (swarm.ts:543-546). Units without task.files write nothing (swarm-contest.ts:74-80). An approved stage throws unless the session is in workspace-write mode (index.ts:982, 1011-1014). fileRoots is split on commas and passed through path.resolve with no ~ expansion (files.ts:86-96). A relative write path always lands under the FIRST root (files.ts:169-182). This host's shape: swarmProfile: user (settings.yaml:1773), fileRoots = harness only (397), writer.repos has only 'harness' (401-404). vmixer2o2 is described as having the same shape; I did not read it from here.
+   FIX(vmixer2o2): On vmixer2o2, set council.fileRoots to absolute paths with the TARGET repo first, e.g. '<vmixer2o2 home>\Documents\claudecode\users,<home>\Documents\claudecode\billboard-platform,<home>\Documents\claudecode\green-energy-platform'. Change it before each per-repo run. Set council.swarmProfile: fastest as a fallback, and put mode: fastest in the preset. Add writer.repos entries users/canna/commerce (path, target, setup: [], checks: []). Before pressing Run, switch the session's permission control to workspace-write; that is a GUI step on vmixer2o2.
+- [blocker] B4: The host commit refuses package.json, lockfiles, .env*, AGENTS.md and CLAUDE.md, and one refusal throws away the whole submission
+   EVID: host-commit.ts:69-73 DENIED_BASENAMES includes package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, claude.md, agents.md, settings.yaml. deniedPath also refuses .env and .env.* (host-commit.ts:94). host-commit.ts:252-253 throws 'Refused paths: ...' if ANY file is refused. runSubmission catches it and only appends 'the run finished but its files were not submitted' (index.ts:1051-1056), so nothing is committed for a normal Node greenfield scaffold. The files do still exist in <session workspace>\.dsh-staging\<run>\<unit>\<seat>\ on vmixer2o2 (swarm-contest.ts:24-27, index.ts:984).
+   FIX(preset-text): Preset text: 'Never create or edit package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, any .env* file, AGENTS.md, CLAUDE.md or .github/workflows/*. Put required dependencies and scripts in DEPENDENCIES.md, and example variables in env.example.md.' Alternatively, seed package.json and pnpm-workspace.yaml into each repo's bootstrap commit before bundling; that is your decision, since the repos are 0/0 on this host.
+- [blocker] B5: The 15-minute approval TTL turns any held, partial or restarted swarm into a NEW graph that needs approving again and redoes all the work
+   EVID: PLAN_TTL_MS = 15 min, measured from issuance (approval.ts:36, 85-91). swarmApproved() checks it on every call (origin index.ts:2128-2137). A big swarm stage runs longer than 15 minutes, so any re-entry after a hold, a partial result (problems make it 'blocked', origin 2250-2253, pipeline.ts:377-397) or a DSH restart is unapproved. The stored tasks are then dropped (`input.tasks === undefined || !approved ? {} : { tasks }`, origin 2211), runSwarm decomposes again and a new gate is issued (origin 2214-2225). previousResults is always undefined because units are never reloaded (see B1), so the journal misses on the new prompts and everything is paid for again. Files are submitted only on phase 'full' (origin 2242-2244): one failed unit out of 32 means nothing is committed.
+   FIX(user): For an unattended run, set council.autoApprove: true on vmixer2o2 for the run window, and back to false afterwards. This bypasses every gate and TTL (origin 2117, 2128, 2139), so re-entries reuse the stored graph and replay finished units from the journal. It is a standing permission to spend, so it is your decision, and only a person may set it (index.ts:357-362). Without it, you must be at the vmixer2o2 UI within 15 minutes of every gate, and after every hold or partial result.
+- [risk] R1: Quota hold: one exhausted seat parks the whole stage, even one that already succeeded; only the browser wakes it up
+   EVID: pipeline.ts:361-375 checks detectQuotaHold before completion, so a decided council is thrown away. Council failures include plan and draft errors only, not review errors (origin 2424-2429). Holds: default 30 min, stated reset used only if 8 hours away or less (quota-hold.ts:20-23, 132-141). A weekly reset more than 8 hours away gives a 30-min retry cycle. Early release when the statusline sessionPercent is under 90 for ANY seat, with no cache-age check (quota-hold.ts:156-163; index.ts:1954-1965). The patterns are fixed strings (quota-hold.ts:38-55); CLI wording that does not match becomes a plain failure and the stage is blocked, not held. After a council hold the gate is already cleared, so the council plans again and needs approval again. The quota-guard integration exists only as uncommitted code on this host.
+   FIX(vmixer2o2): Before starting, disable in the council/swarm roster any seat near its session or weekly limit. With fastest, prefer metered paid seats over subscription seats for long swarms. Keep the vmixer2o2 DSH conversation open in a browser so the countdown resume fires. autoApprove (B5) makes resumes approval-free.
+- [risk] R2: The standalone council tool can consume the pipeline's council approval, especially with Council mode ON
+   EVID: The standalone `council` tool reads and clears the same pendingPlanId/approvedPlanId slots and never checks pipelineId (index.ts:1431-1441, 1592-1634; no pipelineId reference in 1380-1700). If the model calls it after Approve, it runs the council and clears the approval (1621-1633), and the pipeline stays at 'council'. This host has councilMode: true (settings.yaml:396), and COUNCIL_MODE_PROMPT stays in the system prompt (index.ts:77-83, 1065-1069).
+   FIX(vmixer2o2): Set council.councilMode: false on vmixer2o2 for the run session, or turn the composer's Council mode toggle off.
+- [risk] R3: Each unapproved pipeline call at the council stage plans again (and spends); auto-advance can fire before the first gate exists
+   EVID: The pipeline council stage calls runCouncil directly (origin 2346-2367). It has no short-circuit for an already-held plan, unlike the standalone tool (index.ts:1451-1489). pipelineId is written before the first stage spends (origin 2164-2179). PipelineControl's auto effect sends CONTINUE_PROMPT 1.5 s after running && pending==='' && stage not yet advanced, which can land while the first planning call is still in flight. Inferred: I did not verify whether conversation.send queues or rejects mid-turn. If it queues, a second planning round replaces the plan you are reading.
+   FIX(preset-text): Use autoApprove: true (no gates are issued, so a stray continue just advances). Otherwise set autoAdvance: false in the preset and press Continue by hand.
+- [risk] R4: Multi-repo limits: one global run slot, one submit_to per submission, first-root path resolution, 32-unit cap
+   EVID: Pipeline state is one global settings slot. While pipelineId is set, a new call ignores query and stages and continues the old run (origin 2033, 2043-2076); restart discards it. So canna and commerce cannot run as concurrent pipelines. submit_to is one writer repo key (index.ts:1006-1024), is taken only from the current call's args (origin 2190) and is not stored in state. Relative write labels resolve against the first root, which loses the repo identity (files.ts:169-182). Limits: validateGraph MAX_TASKS=32 (decompose.ts:46, 191-193); 6 files per seat per unit, 20,000 characters per file, 60,000 per seat (writes.ts:30-34); no two units may share a file (decompose.ts:201-205; candidate-submit.ts collision throw).
+   FIX(preset-text): Use three presets run one after another: ecomm/users, then ecomm/canna, then ecomm/commerce. Before each, set fileRoots with that repo first. Parallelism comes from each swarm's independent waves. Preset text: 'On EVERY pipeline tool call pass submit_to as `<repo>`. Write only repo-relative paths. At most 32 units; each unit lists its files (at most 6, each under 20000 chars) and its acceptance conditions; no file is owned by two units.'
+- [risk] R5: Brain-sync turns preset paths into '~' and needs a DSH relaunch on vmixer2o2
+   EVID: normalizeText rewrites X:\Users\<known user> to '~' (brain-sync.mjs:139-147). The pull writes that text verbatim into vmixer2o2 settings (brain-sync.mjs:1564-1568). The harness never expands '~' (files.ts:86-96, 169-182), so '~/Documents/...' writes would land as a subfolder of the first root. The pull log says '(DSH lists them from its next launch)' (brain-sync.mjs:884). Pulls rewrite the whole settings.yaml (read-modify-write), which could overwrite pipeline state written in between. Inferred race.
+   FIX(preset-text): Use only repo-relative paths in the preset query, never absolute ones. Relaunch DSH on vmixer2o2 after the preset arrives. Do not add or edit presets while the run is in progress.
+- [risk] R6: Seat prompts are bloated by the brain index; local seats time out
+   EVID: resolveMemory attaches the shared-brain MEMORY.md (currently 55,832 bytes) plus the memory digest to every seat call by default (index.ts:921-935; origin 2205, 2283, 2357). llama-local caps are 600 s overall and 300 s idle (seats.ts:384-391). Unit prompts grow with the outputs of earlier units (swarm-contest.ts:88; swarm.ts:551). A handoff measured about 61 tok/s prefill on the GTX 1070, so a large prompt runs past the idle ceiling, the unit errors and the swarm is partial (no submission).
+   FIX(vmixer2o2): On vmixer2o2 set council.brainIndex: false and council.memoryDigest: false for the run (schema at index.ts:664-665, read via live()). Keep the preset query short and point seats to BUILD-BRIEF.md with READ requests instead of pasting the brief.
+- [risk] R7: The conversation model must make every stage call, and tool reports pile up in its context
+   EVID: Each stage advance is a model tool call (index.ts:1063-1064), and the whole stage report is returned as tool output (origin 2476-2483). The swarm stage passes only council.plan (the planning text) forward, not the winning deliberated answer (origin 2416; council.ts:862-873, 1268-1276). Inferred: a local Qwen conversation model with 65536 context (handoff 2026-09-24) can overflow after the council and swarm reports.
+   FIX(vmixer2o2): Drive the run session on vmixer2o2 with a hosted model, not llama-local. Put the essential design in BUILD-BRIEF.md and the preset query, because the council's final answer does not reach decomposition.
+- [risk] R8: Writer setup and checks for new repos can reject the commit
+   EVID: The host commit runs the configured setup and checks and discards the change when they fail (host-commit.ts:322). This host's harness entry uses pnpm install --frozen-lockfile (settings.yaml:405-411), which cannot pass in a repo with no lockfile (and package.json is refused anyway, see B4).
+   FIX(vmixer2o2): Writer entries for users/canna/commerce on vmixer2o2 with setup: [] and checks: [], or a lint-free check such as 'git status'. queueScript must point at vmixer2o2's own queue-build.mjs.
+- [note] N1: No stall from restarts on the approval side
+   EVID: lastUserTurnAt lives in memory and resets to 0 on restart (index.ts:112-119). The next user message stamps it after approvedAt, so Approve followed by any message still works after a relaunch. restart:true clears it on purpose (origin 2162). The approval slots persist in settings.
+   FIX(preset-text): None needed.
+- [note] N2: Review verdict parse is strict (moot if review is dropped)
+   EVID: The first line of the collective answer must match /^ACCEPTED(?:\s|$)/ or /^REWORK REQUIRED/; anything else, such as '**ACCEPTED**' or 'Verdict: ACCEPTED', counts as BLOCKED and the review stage is blocked (origin 2395-2410).
+   FIX(preset-text): Addressed by B1 (stages council,swarm).
+CONFIG:
+vmixer2o2 ~/.dsh/settings.yaml, council section. Paths are placeholders for vmixer2o2's own user dir, which differs from ndi2.
+
+council:
+  councilMode: false
+  autoApprove: true          # YOUR decision: standing spend approval for this run window only; set back to false afterwards
+  swarmProfile: fastest      # fallback if the model omits mode (economy needs 2+ free seats per unit kind plus acceptance conditions, swarm.ts:427-433, decompose.ts:198)
+  minDrafts: 1               # read from plugin config; may need a DSH relaunch (inferred)
+  minReviews: 1
+  brainIndex: false
+  memoryDigest: false
+  fileRoots: <VMX_HOME>\Documents\claudecode\users,<VMX_HOME>\Documents\claudecode\billboard-platform,<VMX_HOME>\Documents\claudecode\green-energy-platform   # target repo FIRST; switch to canna / commerce first for those runs
+  writer:
+    worktreeRoot: <VMX_HOME>\.dsh\worktrees
+    queueScript: <VMX_HOME>\.claude\shared-brain\.sync\gatekeeper\queue-build.mjs
+    repos:
+      users:    { path: <VMX_HOME>\Documents\claudecode\users,    target: <branch>, setup: [], checks: [] }
+      canna:    { path: <VMX_HOME>\Documents\claudecode\canna,    target: <branch>, setup: [], checks: [] }
+      commerce: { path: <VMX_HOME>\Documents\claudecode\commerce, target: <branch>, setup: [], checks: [] }
+
+Preset: ~/.claude/shared-brain/dsh-presets/ecomm/users.yaml (same 4-space chunk format as dsh/pipeline-smoke.yaml). Make matching ecomm/canna and ecomm/commerce presets, run one after another after users:
+
+    ecomm/users:
+      name: Ecomm users build
+      mode: fastest
+      stages: council,swarm
+      autoAdvance: true
+      query: 'Build the users service described in BUILD-BRIEF.md (READ: BUILD-BRIEF.md first; port sources are the other file roots). On EVERY pipeline tool call pass submit_to as `users`. Write ONLY repo-relative paths inside the users repo, never absolute or ~ paths. Never create or edit package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, any .env* file, AGENTS.md, CLAUDE.md or .github/workflows/*; list dependencies and scripts in DEPENDENCIES.md and example variables in env.example.md. Decompose into at most 32 units; each unit names its files (at most 6, each under 20000 characters), lists acceptance conditions, and owns its files exclusively.'
+
+Session steps on vmixer2o2 before pressing Run:
+- Relaunch DSH after the preset is pulled (brain-sync.mjs:884).
+- Set the session permission control to workspace-write (index.ts:982, 1013).
+- Keep the conversation open in a browser, so auto-advance and hold resume can fire.
+- Use a hosted conversation model for the run session.

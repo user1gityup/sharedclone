@@ -1,0 +1,39 @@
+{
+  "handoff_id": "H-20260928-vmixer2o2-001",
+  "source_user": "vMixer",
+  "source_machine": "vmixer2o2",
+  "source_session_id": "48fc682c-7f8d-4594-84eb-a0be82aa1607",
+  "provider": "claude-code",
+  "model": "<synthetic>",
+  "project": "claudecode",
+  "repository": null,
+  "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode",
+  "branch": null,
+  "git_head": null,
+  "uncommitted_changes": [],
+  "task_objective": "Carry out item 5 of the USER-APPROVED ecomm plan on vmixer2o2. The user already said \"go\" on the whole plan (2026-09-27 04:25) — do not re-propose it, and do not ask them to run anything themselves.\nRead first, in this order:\n1. ~/.claude/shared-brain/resume-vmixer2o2.md\n2. ~/.claude/shared-brain/handoff-2026-09-27-0105-ecomm-dsh-run-vmixer.md (the whole file; item 5 in the USER-APPROVED PLAN section is your task, and the two indented paragraphs under it are the live facts you need)\nRead shared-agent-log.md only through tail or grep.\nTurn Remote Control on first (mcp__ccd_session_mgmt__set_remote_control, session_id \"self\"), then claim ownership in the handoff's Status line before editing anything.\nVerify against live state before trusting the note — that is house rule, and the note itself already contains one line that went stale.\nITEM 5: sequence users -> assemble -> canna -> assemble -> commerce -> assemble, then one end-to-end smoke where all three boot and canna/commerce verify a session token minted by users.\nWhat is already built and proven for you (do not rebuild any of it):\n- Desktop ASSEMBLE-ECOMM.cmd (engine ~/.dsh/assemble-ecomm.mjs) is the whole \"assemble\" half of ever ...[2442 more chars in archive]",
+  "latest_request": null,
+  "current_status": "You've hit your session limit · resets 6:10pm (America/Los_Angeles)",
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "Verify the last status against the repository, then continue the objective.",
+  "important_decisions": [
+    "See handoff note shared-brain/handoff-2026-09-27-0105-ecomm-dsh-run-vmixer.md"
+  ],
+  "relevant_files": [],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [],
+  "last_meaningful_session_state": "2026-09-28T02:57:04.548Z",
+  "transcript_records": 127,
+  "settings": {
+    "title": "Run the ecomm build sequence (plan item 5)",
+    "model": "claude-opus-5",
+    "effort": "xhigh",
+    "permission_mode": "auto",
+    "desktop_session_id": "local_e87b5ae1-553b-487e-8293-ebfd0ea36ee5",
+    "desktop_account": "a540ddf6-241c-4236-a29c-94d3b5d6b489"
+  },
+  "created_at": "2026-09-28T02:57:08.094Z",
+  "archive": "quota-handoffs/H-20260928-vmixer2o2-001/archive/48fc682c-7f8d-4594-84eb-a0be82aa1607.jsonl.gz"
+}

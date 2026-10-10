@@ -1,0 +1,17 @@
+{
+  "receiver": "ndi2@vmixlaptop2x6",
+  "sessions": {
+    "8b82335a-1c12-4fe8-b102-088852bef159": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-30T00:07:04.049Z",
+      "chip": {
+        "title": "Resume AWS seat build: multi-account quota-aws",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-004, source session 8b82335a-1c12-4fe8-b102-088852bef159. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-004--8b82335a-1c12-4fe8-b102-088852bef159.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    }
+  }
+}

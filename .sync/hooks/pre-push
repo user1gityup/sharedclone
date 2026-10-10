@@ -1,0 +1,5 @@
+#!/bin/sh
+# Check what this push would publish: no home paths in notes, no credentials,
+# no unresolved conflicts. Both gatekeepers run it; the PowerShell one refuses
+# a repository that has no pre-push hook at all.
+exec node "$(dirname "$0")/pre-push.mjs" "$@"

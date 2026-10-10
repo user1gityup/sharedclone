@@ -1,0 +1,40 @@
+diff --git a/packages/council/tool-council/src/index.ts b/packages/council/tool-council/src/index.ts
+index 6c999308ff..e6cc1fb865 100644
+--- a/packages/council/tool-council/src/index.ts
++++ b/packages/council/tool-council/src/index.ts
+@@ -1354,7 +1354,7 @@ export function apply(ctx: Context, config: Config = {}): void {
+       },
+     },
+     async execute(args, exec) {
+-      const apiKey = resolveOpenRouterKey({ variable: config.apiKeyEnv })
++      const apiKey = resolveOpenRouterKey({ variable: live().apiKeyEnv })
+       // ── amending a finished run ──
+       // Deliberately ahead of the approval gate. An amendment re-asks only the
+       // seats that failed in a run the user already approved and already paid
+@@ -1772,7 +1772,7 @@ export function apply(ctx: Context, config: Config = {}): void {
+       },
+     },
+     async execute(args, exec) {
+-      const apiKey = resolveOpenRouterKey({ variable: config.apiKeyEnv })
++      const apiKey = resolveOpenRouterKey({ variable: live().apiKeyEnv })
+       const settingsNow = live()
+       const approval = judgeApproval({
+         pendingPlan: settingsNow.pendingSwarmId === undefined || settingsNow.pendingSwarmId === '' ? undefined : {
+@@ -2054,7 +2054,7 @@ export function apply(ctx: Context, config: Config = {}): void {
+         [{ type: 'text' as const, text: value.report }],
+     },
+     async execute(args, exec) {
+-      const apiKey = resolveOpenRouterKey({ variable: config.apiKeyEnv })
++      const apiKey = resolveOpenRouterKey({ variable: live().apiKeyEnv })
+       const settingsNow = live()
+       const running = settingsNow.pipelineId !== undefined && settingsNow.pipelineId !== ''
+       const selectedProfile = running && args.restart !== true ? settingsNow.pipelineProfile : args.mode ?? settingsNow.swarmProfile
+@@ -2670,7 +2670,7 @@ export function apply(ctx: Context, config: Config = {}): void {
+       },
+     },
+     async execute(args, exec) {
+-      const apiKey = resolveOpenRouterKey({ variable: config.apiKeyEnv })
++      const apiKey = resolveOpenRouterKey({ variable: live().apiKeyEnv })
+       const settingsNow = live()
+       const approval = judgeApproval({
+         pendingPlan: settingsNow.pendingProposeId === undefined || settingsNow.pendingProposeId === '' ? undefined : {

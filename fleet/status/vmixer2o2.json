@@ -1,0 +1,98 @@
+{
+  "host": "vmixer2o2",
+  "brainKey": "present",
+  "dshCredentials": "synced",
+  "secrets": {
+    "fcc-.env": "same",
+    "billboard-platform-.env": "same",
+    "billboard-platform-.env.local": "same",
+    "billboard-platform-streaming-server-.env": "same",
+    "green-energy-platform-.env.local": "same",
+    "pm-remote-env": "same"
+  },
+  "repos": {
+    "deepseek-harness": {
+      "state": "diverged",
+      "branch": "feat/heterogeneous-teammates",
+      "head": "54a9807b8e",
+      "behind": 8,
+      "ahead": 2
+    },
+    "dsh-council-plugins": {
+      "state": "current",
+      "branch": "main",
+      "head": "4d5267383e",
+      "behind": 0,
+      "ahead": 0
+    },
+    "green-energy-platform": {
+      "state": "current",
+      "branch": "main",
+      "head": "d9b55334af",
+      "behind": 0,
+      "ahead": 0
+    },
+    "billboard-platform": {
+      "state": "other-branch",
+      "branch": "wp0-solar-sam",
+      "head": "60e560729a",
+      "behind": null,
+      "ahead": null
+    },
+    "free-claude-code": {
+      "state": "behind",
+      "branch": "main",
+      "head": "8ac3c6cd71",
+      "behind": 90,
+      "ahead": 0
+    }
+  },
+  "reposCheckedAt": "2026-10-10T23:46:58.044Z",
+  "dsh": null,
+  "apps": {
+    "role": "follower",
+    "versions": {
+      "claudeCode": "2.1.267",
+      "codex": "0.153.4",
+      "antigravity": "2.15.1"
+    },
+    "claudeDigest": "4579177b371b58e3",
+    "codexDigest": "1c68be1ca13a4f5b",
+    "codexCovers": true,
+    "items": {
+      "claudeCode": {
+        "state": "ahead-of-master",
+        "version": "2.1.267",
+        "target": "2.1.263"
+      },
+      "codex": {
+        "state": "same",
+        "version": "0.153.4"
+      },
+      "antigravity": {
+        "state": "ahead-of-master",
+        "version": "2.15.1",
+        "target": "2.15.0"
+      },
+      "claudeFiles": {
+        "state": "same"
+      },
+      "claudeSettings": {
+        "state": "same"
+      },
+      "codexConfig": {
+        "state": "same"
+      }
+    },
+    "at": "2026-10-10T23:09:53.932Z"
+  },
+  "tools": {
+    "node": "v24.19.0",
+    "git": true,
+    "pnpm": true,
+    "teamviewer": true,
+    "codexLogin": true,
+    "claudeLogin": true
+  },
+  "seen": "2026-10-10T23:47:15.917Z"
+}

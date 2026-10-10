@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Manager</title>
+<style>
+:root { --bg:#f4f6f8; --panel:#ffffff; --panel2:#f9fafb; --ink:#1b1f24; --muted:#5d6670; --line:#d8dde3; --accent:#2158c8; --accent-bg:#e8effc; --warn:#9a4a06; --warn-bg:#fff4e5; --ok:#19722f; --ok-bg:#e6f4ea; --bad:#b42318; --bad-bg:#fdeceb; --shadow:0 1px 2px rgba(16,24,40,.08); color-scheme:light; }
+:root[data-theme="dark"] { --bg:#0f1318; --panel:#171c22; --panel2:#1c222a; --ink:#e6e9ed; --muted:#9aa4af; --line:#2c343d; --accent:#7aa7ff; --accent-bg:#1b2a47; --warn:#ffb86b; --warn-bg:#33240f; --ok:#5fcb78; --ok-bg:#15301c; --bad:#ff8a80; --bad-bg:#3a1916; --shadow:none; color-scheme:dark; }
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body { font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+body.dense { font-size:12.5px; line-height:1.3; }
+button, input, select, textarea { font:inherit; color:inherit; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:5px 9px; }
+button { cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+button:hover { border-color:var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+:root[data-theme="dark"] button.primary { color:#0b1220; }
+button.danger { border-color:var(--bad); color:var(--bad); }
+button:disabled { opacity:.5; cursor:not-allowed; }
+button.sm { padding:2px 7px; font-size:12px; }
+a { color:var(--accent); }
+textarea { width:100%; min-height:80px; resize:vertical; }
+.ic { width:14px; height:14px; flex:none; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.muted { color:var(--muted); font-size:12px; }
+.hidden { display:none !important; }
+.mono { font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+
+/* layout */
+#app { display:grid; grid-template-columns:200px 1fr; grid-template-rows:auto auto 1fr; min-height:100vh; }
+header.top { grid-column:1 / -1; display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
+header.top h1 { font-size:15px; margin:0 8px 0 0; }
+#menuBtn { display:none; }
+.spacer { flex:1; }
+#globalSearch { min-width:160px; flex:0 1 260px; }
+#alertStrip { grid-column:1 / -1; }
+nav.side { background:var(--panel); border-right:1px solid var(--line); padding:10px 8px; position:sticky; top:49px; align-self:start; height:calc(100vh - 49px); overflow:auto; }
+nav.side button { width:100%; border:0; background:transparent; justify-content:flex-start; padding:7px 10px; border-radius:6px; }
+nav.side button.on { background:var(--accent-bg); color:var(--accent); font-weight:600; }
+nav.side button .cnt { margin-left:auto; }
+main { padding:14px 16px 60px; min-width:0; }
+section.block { margin-bottom:22px; }
+section.block > h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 8px; display:flex; gap:8px; align-items:center; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; box-shadow:var(--shadow); min-width:0; }
+.card h3 { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 6px; }
+.card .big { font-size:22px; font-weight:650; }
+.launch { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; }
+.launch .card { display:flex; flex-direction:column; gap:6px; }
+.launch .title { font-weight:600; overflow-wrap:anywhere; }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.bar { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+.bar > i { display:block; height:100%; background:var(--accent); }
+.bar.ok > i { background:var(--ok); } .bar.bad > i { background:var(--bad); }
+
+/* chips */
+.chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:650; letter-spacing:.03em; padding:1px 7px 1px 5px; border-radius:11px; border:1px solid currentColor; white-space:nowrap; }
+.chip .ic { width:11px; height:11px; }
+.tag { display:inline-block; font-size:11px; border:1px solid var(--line); border-radius:10px; padding:0 7px; color:var(--muted); background:var(--panel2); white-space:nowrap; }
+.tag.model { color:var(--ink); }
+
+/* alert strip */
+.alert { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:7px 16px; font-size:13px; border-bottom:1px solid var(--line); background:var(--ok-bg); color:var(--ok); }
+.alert.med { background:var(--warn-bg); color:var(--warn); }
+.alert.high { background:var(--bad-bg); color:var(--bad); }
+.alert.net { background:var(--bad-bg); color:var(--bad); font-weight:600; }
+.alert button { background:transparent; border-color:currentColor; }
+
+/* rows */
+.list { background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.item { border-bottom:1px solid var(--line); }
+.item:last-child { border-bottom:0; }
+.item .head { display:flex; gap:8px; align-items:center; padding:7px 10px; cursor:pointer; min-width:0; }
+body.dense .item .head { padding:3px 8px; }
+.item .head:hover { background:var(--panel2); }
+.item .head .t { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.item .more { padding:8px 12px 12px 30px; background:var(--panel2); border-top:1px dashed var(--line); }
+.item .more p { margin:4px 0; overflow-wrap:anywhere; }
+.twisty { width:14px; transition:transform .1s; }
+.item.open .twisty { transform:rotate(90deg); }
+.pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; }
+.toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.seg { display:inline-flex; } .seg button { border-radius:0; margin-left:-1px; } .seg button:first-child { border-radius:6px 0 0 6px; margin-left:0; } .seg button:last-child { border-radius:0 6px 6px 0; } .seg button.on { background:var(--accent-bg); color:var(--accent); border-color:var(--accent); position:relative; }
+.board { display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; align-items:flex-start; }
+.col { flex:0 0 250px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:6px; }
+.col > h4 { margin:2px 4px 6px; font-size:12px; display:flex; justify-content:space-between; }
+.bcard { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 8px; margin-bottom:6px; cursor:pointer; overflow-wrap:anywhere; }
+.bcard:hover { border-color:var(--accent); }
+.grouphead { padding:6px 10px; background:var(--panel2); border-bottom:1px solid var(--line); font-weight:600; display:flex; gap:8px; align-items:center; }
+.empty { padding:18px; text-align:center; color:var(--muted); }
+.err { color:var(--bad); white-space:pre-wrap; }
+
+/* detail panel + modal */
+aside#detail { position:fixed; top:0; right:0; bottom:0; width:min(620px,100%); background:var(--panel); border-left:1px solid var(--line); padding:14px 16px; overflow-y:auto; z-index:40; box-shadow:-8px 0 24px rgba(0,0,0,.15); }
+aside#detail h2 { margin:0 0 6px; font-size:16px; overflow-wrap:anywhere; }
+aside#detail h3 { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:16px 0 4px; }
+.cmt { border:1px solid var(--line); border-radius:6px; padding:6px 8px; margin:6px 0; overflow-wrap:anywhere; white-space:pre-wrap; }
+.cmt.instruction { border:2px solid var(--warn); background:var(--warn-bg); }
+.cmt .who { font-size:12px; color:var(--muted); }
+.conflict { border:2px solid var(--bad); border-radius:6px; padding:8px; margin:8px 0; }
+#scrim { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:50; display:flex; align-items:flex-start; justify-content:center; padding:8vh 12px 12px; overflow:auto; }
+.modal { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; width:min(520px,100%); box-shadow:0 12px 40px rgba(0,0,0,.3); }
+.modal h2 { margin:0 0 10px; font-size:16px; }
+.modal label { display:block; margin:8px 0 2px; font-size:12px; color:var(--muted); }
+.modal input, .modal select, .modal textarea { width:100%; }
+.modal .btns { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+#palette { width:min(560px,100%); }
+#palette ul { list-style:none; margin:8px 0 0; padding:0; max-height:50vh; overflow:auto; }
+#palette li { padding:7px 10px; border-radius:6px; cursor:pointer; display:flex; gap:8px; justify-content:space-between; }
+#palette li.sel, #palette li:hover { background:var(--accent-bg); }
+#toasts { position:fixed; bottom:12px; right:12px; z-index:60; display:flex; flex-direction:column; gap:6px; max-width:min(420px,calc(100% - 24px)); }
+.toast { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:6px; padding:8px 10px; box-shadow:0 4px 16px rgba(0,0,0,.2); overflow-wrap:anywhere; }
+.toast.bad { border-left-color:var(--bad); }
+
+/* responsive: drawer navigation */
+@media (max-width:860px) {
+  #app { grid-template-columns:1fr; }
+  #menuBtn { display:inline-flex; }
+  nav.side { position:fixed; top:0; left:0; bottom:0; height:auto; width:230px; z-index:45; transform:translateX(-105%); transition:transform .15s; box-shadow:4px 0 20px rgba(0,0,0,.2); padding-top:56px; }
+  nav.side.open { transform:none; }
+  main { padding:10px 10px 60px; }
+  .item .more { padding-left:12px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-block" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></symbol>
+<symbol id="i-cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7h18v4H3zM5 11v9h14v-9M10 15h4"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></symbol>
+<symbol id="i-machine" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+<symbol id="i-routine" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5l2 2M20 12a8 8 0 0 1-14 5l-2-2M20 4v5h-5M4 20v-5h5"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 1 1 10 4a7 7 0 0 0 10 10z"/></symbol>
+</defs></svg>
+
+<div id="app">
+  <header class="top">
+    <button id="menuBtn" data-act="menu" aria-label="Menu"><svg class="ic"><use href="#i-menu"/></svg></button>
+    <h1>Project Manager</h1>
+    <input id="globalSearch" type="search" placeholder="Search tasks (press /)" aria-label="Search tasks">
+    <button data-act="palette" title="Command palette (Ctrl+K)"><svg class="ic"><use href="#i-search"/></svg> Ctrl+K</button>
+    <button class="primary" data-act="new" id="newBtn"><svg class="ic"><use href="#i-plus"/></svg> New</button>
+    <span class="spacer"></span>
+    <label class="muted">Role <select id="roleSel" aria-label="Role"><option value="admin">Admin</option><option value="manager">Manager</option><option value="worker">Worker</option><option value="client">Client</option></select></label>
+    <label class="muted hidden" id="viewAsWrap">View as <select id="viewAsSel" aria-label="View as"><option value="">(me)</option><option value="manager">Manager</option><option value="worker">Worker</option><option value="client">Client</option></select></label>
+    <label class="muted">You <input id="actor" size="12" placeholder="your name" aria-label="Your name"></label>
+    <button data-act="density" id="densityBtn" title="Toggle dense mode">Dense</button>
+    <button data-act="theme" id="themeBtn" title="Switch light/dark"><svg class="ic"><use href="#i-moon"/></svg> <span id="themeLbl">Dark</span></button>
+  </header>
+  <div id="alertStrip"></div>
+  <nav class="side" id="sidenav" aria-label="Sections"></nav>
+  <main id="main" tabindex="-1"><div class="empty">Loading...</div></main>
+</div>
+<aside id="detail" class="hidden" aria-label="Detail"></aside>
+<div id="scrim" class="hidden"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+/*CORE-BEGIN*/
+// ui-core.mjs - pure logic for the Project Manager UI.
+// index.html inlines this file between the CORE-BEGIN / CORE-END markers with
+// the `export ` keywords removed; tests/ui.test.mjs checks the two stay equal.
+// No DOM, no fetch, no globals: everything here is testable in plain node.
+
+const LIFECYCLES = ['READY', 'RUNNING', 'PAUSED', 'WAITING', 'BLOCKED', 'FAILED', 'VERIFY', 'COMPLETE', 'ARCHIVED']
+const ROLES = ['admin', 'manager', 'worker', 'client']
+const ACTION_LIST = ['prepare', 'start', 'resume', 'continue', 'amend', 'stop', 'archive']
+const HIGH_IMPACT = ['stop', 'archive', 'amend', 'delete', 'reroute', 'release-force']
+
+// Every chip carries a text label AND an icon key, never colour alone.
+const CHIPS = {
+  READY: { colorVar: '--ok', icon: 'dot' },
+  RUNNING: { colorVar: '--accent', icon: 'play' },
+  PAUSED: { colorVar: '--warn', icon: 'pause' },
+  WAITING: { colorVar: '--muted', icon: 'clock' },
+  BLOCKED: { colorVar: '--bad', icon: 'block' },
+  FAILED: { colorVar: '--bad', icon: 'cross' },
+  VERIFY: { colorVar: '--accent', icon: 'eye' },
+  COMPLETE: { colorVar: '--ok', icon: 'check' },
+  ARCHIVED: { colorVar: '--muted', icon: 'box' },
+}
+
+// Storage status -> lifecycle, for rows that predate the lifecycle column.
+const STATUS_TO_LIFECYCLE = { todo: 'READY', in_progress: 'RUNNING', review: 'VERIFY', blocked: 'BLOCKED', uncertain: 'WAITING', done: 'COMPLETE' }
+// Run state -> lifecycle vocabulary.
+const RUN_TO_LIFECYCLE = { requested: 'WAITING', starting: 'RUNNING', running: 'RUNNING', held: 'PAUSED', done: 'COMPLETE', failed: 'FAILED', cancelled: 'ARCHIVED' }
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+}
+
+/** Lifecycle of a task row: its lifecycle column, else derived from status. */
+function taskLifecycle(task) {
+  const lc = String(task?.lifecycle ?? '').toUpperCase()
+  if (CHIPS[lc]) return lc
+  return STATUS_TO_LIFECYCLE[task?.status] ?? 'READY'
+}
+
+/** Lifecycle equivalent of a run state. */
+function runLifecycle(run) {
+  return RUN_TO_LIFECYCLE[String(run?.state ?? '').toLowerCase()] ?? 'WAITING'
+}
+
+/** Chip for any lifecycle word (case-insensitive). Unknown words keep their text and get the muted look. */
+function mapStatusToChip(status) {
+  const key = String(status ?? '').toUpperCase()
+  const known = CHIPS[key]
+  const base = known ?? { colorVar: '--muted', icon: 'dot' }
+  return { label: known ? key : (key || 'UNKNOWN'), colorVar: base.colorVar, icon: base.icon, known: Boolean(known) }
+}
+
+const taskChip = (task) => mapStatusToChip(taskLifecycle(task))
+const runChip = (run) => mapStatusToChip(runLifecycle(run))
+
+const norm = (s) => String(s ?? '').toLowerCase()
+
+/** filters: { project, status (lifecycle), claimed_by, machine, assignee, q } - empty values are ignored. */
+function filterTasks(tasks, filters = {}) {
+  const q = norm(filters.q).trim()
+  const status = filters.status ? String(filters.status).toUpperCase() : ''
+  return (tasks || []).filter((t) => {
+    if (filters.project && t.project_id !== filters.project) return false
+    if (status && taskLifecycle(t) !== status) return false
+    if (filters.claimed_by && t.claimed_by !== filters.claimed_by) return false
+    if (filters.assignee && t.assignee !== filters.assignee) return false
+    if (filters.machine && t.execution_machine !== filters.machine) return false
+    if (q && !(norm(t.title).includes(q) || norm(t.body).includes(q) || norm(t.id).includes(q))) return false
+    return true
+  })
+}
+
+/** Stable sort on a field; null/undefined always last; *_at fields compare as dates. */
+function sortTasks(tasks, sortBy = 'updated_at', direction = 'desc') {
+  const dir = direction === 'asc' ? 1 : -1
+  const val = (t) => {
+    const v = sortBy === 'lifecycle' ? LIFECYCLES.indexOf(taskLifecycle(t)) : t?.[sortBy]
+    if (v === null || v === undefined || v === '') return null
+    if (sortBy.endsWith('_at')) { const n = Date.parse(v); return Number.isNaN(n) ? null : n }
+    return typeof v === 'string' ? v.toLowerCase() : v
+  }
+  return (tasks || []).map((t, i) => [t, i]).sort(([a, ia], [b, ib]) => {
+    const va = val(a), vb = val(b)
+    if (va === null && vb === null) return ia - ib
+    if (va === null) return 1
+    if (vb === null) return -1
+    if (va < vb) return -dir
+    if (va > vb) return dir
+    return ia - ib
+  }).map(([t]) => t)
+}
+
+/** Group into [{ key, items }] - groups in first-seen order, except lifecycle which follows the vocabulary order. */
+function groupTasks(tasks, groupBy = 'lifecycle') {
+  const map = new Map()
+  for (const t of tasks || []) {
+    const raw = groupBy === 'lifecycle' ? taskLifecycle(t) : t?.[groupBy]
+    const key = raw === null || raw === undefined || raw === '' ? 'none' : String(raw)
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(t)
+  }
+  let keys = [...map.keys()]
+  if (groupBy === 'lifecycle') keys = LIFECYCLES.filter((k) => map.has(k)).concat(keys.filter((k) => !LIFECYCLES.includes(k)))
+  return keys.map((key) => ({ key, items: map.get(key) }))
+}
+
+/** Online (seen within staleMs), Busy (online with a live run), else Offline. */
+function machineHealth(machine, runners, runs, nowMs = Date.now(), staleMs = 120000) {
+  const names = machine.aliases ?? [machine.name]
+  const mine = (runners || []).filter((r) => names.includes(r.machine))
+  const seen = mine.map((r) => Date.parse(r.last_seen)).filter((n) => !Number.isNaN(n))
+  const online = seen.some((n) => nowMs - n <= staleMs)
+  const live = (runs || []).filter((r) => names.includes(r.machine) && ['starting', 'running'].includes(r.state))
+  if (live.length) return { state: 'Busy', liveRuns: live.length }
+  return { state: online ? 'Online' : 'Offline', liveRuns: 0 }
+}
+
+/** Machines seen in tasks, runs and runners, folding known aliases together. */
+function collectMachines(tasks, runs, runners, aliasGroups = [['ndi2', 'vmixlaptop2x6']]) {
+  const names = new Set()
+  for (const t of tasks || []) { if (t.execution_machine) names.add(t.execution_machine); if (t.origin_machine) names.add(t.origin_machine) }
+  for (const r of runs || []) if (r.machine) names.add(r.machine)
+  for (const r of runners || []) if (r.machine) names.add(r.machine)
+  const out = []
+  const used = new Set()
+  for (const n of [...names].sort()) {
+    if (used.has(n)) continue
+    const group = aliasGroups.find((g) => g.includes(n)) ?? [n]
+    const aliases = [...new Set([...group.filter((g) => names.has(g)), n])]
+    aliases.forEach((a) => used.add(a))
+    out.push({ name: aliases[0], aliases })
+  }
+  return out
+}
+
+/** Things that need a human: failed/blocked/waiting tasks and failed runs, most severe first. */
+function attentionItems(tasks, runs) {
+  const items = []
+  for (const t of tasks || []) {
+    const lc = taskLifecycle(t)
+    if (lc === 'FAILED') items.push({ severity: 'high', kind: 'task', id: t.id, title: t.title, lifecycle: lc, why: t.blockers || t.checkpoint || 'task failed' })
+    else if (lc === 'BLOCKED') items.push({ severity: 'high', kind: 'task', id: t.id, title: t.title, lifecycle: lc, why: t.blockers || 'task blocked' })
+    else if (lc === 'WAITING') items.push({ severity: 'medium', kind: 'task', id: t.id, title: t.title, lifecycle: lc, why: t.next_action || 'waiting for input' })
+    else if (lc === 'VERIFY') items.push({ severity: 'low', kind: 'task', id: t.id, title: t.title, lifecycle: lc, why: 'ready to verify' })
+  }
+  for (const r of runs || []) {
+    if (r.state === 'failed') items.push({ severity: 'high', kind: 'run', id: r.id, task_id: r.task_id, title: `${r.kind} run on ${r.machine}`, lifecycle: 'FAILED', why: r.last_checkpoint || 'run failed' })
+  }
+  const rank = { high: 0, medium: 1, low: 2 }
+  return items.sort((a, b) => rank[a.severity] - rank[b.severity])
+}
+
+function attentionSummary(items) {
+  const s = { high: 0, medium: 0, low: 0, total: (items || []).length }
+  for (const i of items || []) s[i.severity] += 1
+  return s
+}
+
+/** Latest-touched tasks that are live or resumable, for "Continue Where You Left Off". */
+function continueCandidates(tasks, limit = 6) {
+  const live = (tasks || []).filter((t) => ['RUNNING', 'PAUSED', 'WAITING', 'VERIFY', 'FAILED'].includes(taskLifecycle(t)) || t.claimed_by || t.run_ref)
+  return sortTasks(live, 'updated_at', 'desc').slice(0, limit)
+}
+
+/** Primary button for a task row from the server's /actions list (only allowed ones count). */
+function primaryAction(actions) {
+  const ok = (actions || []).filter((a) => a.allowed).map((a) => a.action)
+  for (const pick of ['resume', 'continue', 'start', 'prepare']) if (ok.includes(pick)) return pick
+  return null
+}
+
+function needsConfirm(action, policy = {}) {
+  if (policy[action] === 'never') return false
+  if (policy[action] === 'always') return true
+  return HIGH_IMPACT.includes(action)
+}
+
+const ROLE_ALLOW = {
+  admin: ['*'],
+  manager: ['prepare', 'start', 'resume', 'continue', 'amend', 'stop', 'archive', 'create', 'comment', 'edit'],
+  worker: ['resume', 'continue', 'comment', 'edit', 'create'],
+  client: [],
+}
+function roleCan(role, verb) {
+  const list = ROLE_ALLOW[role] ?? []
+  return list.includes('*') || list.includes(verb)
+}
+
+/** Commands for the palette; `q` filters by label (all words must appear). */
+function matchCommands(commands, q) {
+  const words = norm(q).split(/\s+/).filter(Boolean)
+  return (commands || []).filter((c) => words.every((w) => norm(c.label).includes(w) || norm(c.hint).includes(w)))
+}
+
+/** Query string from an object; empty/null values dropped, values encoded. */
+function buildQuery(params = {}) {
+  const parts = Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+  return parts.length ? '?' + parts.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&') : ''
+}
+
+/** Headers for every API call. `get` is a storage getter (localStorage.getItem-shaped); actor may be overridden. */
+function buildApiHeaders(get, actorOverride) {
+  const headers = { 'content-type': 'application/json' }
+  const actor = String(actorOverride ?? get('pm.actor') ?? '').trim()
+  if (actor) headers['x-pm-actor'] = actor
+  const token = get('pm.token')
+  if (token) headers.authorization = 'Bearer ' + token
+  return headers
+}
+
+const csv = (v) => Array.isArray(v) ? v.filter(Boolean) : String(v ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+
+/** Request body for each create form. type: project | task | run | comment | release | action. */
+function buildApiBody(form = {}, type) {
+  switch (type) {
+    case 'project':
+      return { name: String(form.name ?? '').trim(), description: form.description ?? '' }
+    case 'task': {
+      const body = { project: form.project, title: String(form.title ?? '').trim(), body: form.body ?? '', priority: Number(form.priority) || 2 }
+      if (form.assignee) body.assignee = form.assignee
+      return body
+    }
+    case 'run': // POST /api/tasks/:id/prepare - builds a run; pm never picks seats
+      return { request: String(form.request ?? '').trim(), stages: form.stages ?? '', mode: form.mode ?? '', cwd: form.cwd || undefined, roster: { council: csv(form.council), swarm: csv(form.swarm) } }
+    case 'comment':
+      return { body: String(form.body ?? '').trim(), kind: form.kind === 'instruction' ? 'instruction' : 'comment' }
+    case 'release':
+      return { status: form.status || undefined, brief: form.brief || undefined, force: Boolean(form.force) }
+    case 'action':
+      return { ...(form.fix ? { fix: form.fix } : {}), ...(form.note ? { note: form.note } : {}) }
+    default:
+      throw new Error(`Unknown body type: ${type}`)
+  }
+}
+
+/** Compact "3m ago" style age. */
+function ago(iso, nowMs = Date.now()) {
+  const t = Date.parse(iso)
+  if (Number.isNaN(t)) return ''
+  const s = Math.max(0, Math.round((nowMs - t) / 1000))
+  if (s < 60) return s + 's ago'
+  if (s < 3600) return Math.floor(s / 60) + 'm ago'
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago'
+  return Math.floor(s / 86400) + 'd ago'
+}
+/*CORE-END*/
+
+// ---------- app ----------
+const store = { get: (k) => { try { return localStorage.getItem(k) } catch { return null } }, set: (k, v) => { try { localStorage.setItem(k, v) } catch {} } };
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const icon = (name, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const chipHtml = (c) => `<span class="chip" style="color:var(${c.colorVar})" title="${escapeHtml(c.label)}">${icon(c.icon)}${escapeHtml(c.label)}</span>`;
+const taskChipHtml = (t) => chipHtml(taskChip(t));
+const runChipHtml = (r) => chipHtml(runChip(r));
+const ALIASES = [['ndi2', 'vmixlaptop2x6']];
+
+const S = {
+  projects: [], tasks: [], runs: [], runners: [], actions: {}, lastEvent: 0, online: true, loaded: false, loadError: '',
+  view: 'home', expanded: new Set(), detailId: null, detailRunId: null,
+  actor: store.get('pm.actor') || '',
+  role: store.get('pm.role') || 'admin', viewAs: '',
+  theme: store.get('pm.theme') || '', dense: store.get('pm.dense') === '1',
+  projMode: store.get('pm.projMode') || 'rows',
+  taskMode: store.get('pm.taskMode') || 'list',
+  filters: { project: '', status: '', machine: '', q: '' }, sort: 'updated_at', dir: 'desc', group: 'lifecycle',
+  policy: safeJson(store.get('pm.policy'), {}),
+  views: safeJson(store.get('pm.views'), []),
+};
+function safeJson(s, d) { try { return s ? JSON.parse(s) : d } catch { return d } }
+const effRole = () => S.viewAs || S.role;
+const can = (verb) => roleCan(effRole(), verb);
+
+// ---------- api ----------
+async function api(method, path, body, retry = true) {
+  let res;
+  try {
+    res = await fetch(path, { method, headers: buildApiHeaders(store.get, S.actor), body: body === undefined ? undefined : JSON.stringify(body) });
+  } catch (e) {
+    setOnline(false);
+    const err = new Error('Network error: pm is unreachable (' + e.message + ')'); err.status = 0; throw err;
+  }
+  setOnline(true);
+  let data = null;
+  try { data = await res.json() } catch {}
+  if (res.status === 401 && retry) {
+    const v = await ask({ title: 'Access token required', fields: [{ name: 'token', label: 'Access token for this server', type: 'password' }], ok: 'Save token' });
+    if (v && v.token) { store.set('pm.token', v.token.trim()); return api(method, path, body, false) }
+  }
+  if (!res.ok) {
+    const err = new Error((data && data.error) || ('HTTP ' + res.status));
+    err.status = res.status; err.data = data || {}; throw err;
+  }
+  return data;
+}
+function setOnline(v) { if (S.online !== v) { S.online = v; renderStrip() } }
+function toast(msg, bad) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (bad ? ' bad' : '');
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), bad ? 9000 : 4500);
+}
+function fail(e, what) {
+  let msg = (what ? what + ': ' : '') + (e.message || e);
+  if (e.status === 409 && e.data && Array.isArray(e.data.reasons)) msg += '\n- ' + e.data.reasons.join('\n- ');
+  toast(msg, true);
+}
+function needActor() {
+  if (S.actor) return true;
+  toast('Enter your name (top right) first: every change is attributed.', true);
+  $('#actor').focus();
+  return false;
+}
+
+// ---------- modal ----------
+// ask({title, text, fields:[{name,label,type,value,options,rows}], ok, danger}) -> values object or null
+function ask(spec) {
+  return new Promise((resolve) => {
+    const scrim = $('#scrim');
+    const fields = (spec.fields || []).map((f, i) => {
+      const id = 'mf' + i, v = f.value ?? '';
+      let input;
+      if (f.type === 'select') input = `<select id="${id}" name="${f.name}">${(f.options || []).map((o) => { const ov = typeof o === 'string' ? o : o.value, ol = typeof o === 'string' ? o : o.label; return `<option value="${escapeHtml(ov)}"${ov === v ? ' selected' : ''}>${escapeHtml(ol)}</option>` }).join('')}</select>`;
+      else if (f.type === 'textarea') input = `<textarea id="${id}" name="${f.name}" rows="${f.rows || 4}">${escapeHtml(v)}</textarea>`;
+      else if (f.type === 'checkbox') input = `<input type="checkbox" id="${id}" name="${f.name}"${v ? ' checked' : ''} style="width:auto">`;
+      else input = `<input id="${id}" name="${f.name}" type="${f.type || 'text'}" value="${escapeHtml(v)}" autocomplete="off">`;
+      return `<label for="${id}">${escapeHtml(f.label || f.name)}</label>${input}`;
+    }).join('');
+    scrim.innerHTML = `<form class="modal" role="dialog" aria-modal="true"><h2>${escapeHtml(spec.title || '')}</h2>${spec.text ? `<p>${escapeHtml(spec.text)}</p>` : ''}${fields}<div class="btns"><button type="button" data-x="cancel">Cancel</button><button type="submit" class="${spec.danger ? 'danger' : 'primary'}">${escapeHtml(spec.ok || 'OK')}</button></div></form>`;
+    scrim.classList.remove('hidden');
+    const form = $('form', scrim);
+    const done = (val) => { scrim.classList.add('hidden'); scrim.innerHTML = ''; document.removeEventListener('keydown', onKey, true); resolve(val) };
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); done(null) } };
+    document.addEventListener('keydown', onKey, true);
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const out = {};
+      (spec.fields || []).forEach((f, i) => { const el = $('#mf' + i, scrim); out[f.name] = f.type === 'checkbox' ? el.checked : el.value });
+      done(out);
+    };
+    $('[data-x=cancel]', scrim).onclick = () => done(null);
+    const first = $('input:not([type=checkbox]),select,textarea', scrim) || $('button[type=submit]', scrim);
+    if (first) first.focus();
+  });
+}
+const confirmAction = (title, text, ok) => ask({ title, text, ok: ok || 'Confirm', danger: true }).then(Boolean);
+
+// ---------- data ----------
+const projName = (id) => (S.projects.find((p) => p.id === id) || {}).name || id || '';
+async function refresh() {
+  try {
+    const [projects, tasks, runs, runners] = await Promise.all([
+      api('GET', '/api/projects'), api('GET', '/api/tasks' + buildQuery({ limit: 5000 })),
+      api('GET', '/api/runs' + buildQuery({ limit: 1000 })), api('GET', '/api/runners'),
+    ]);
+    Object.assign(S, { projects, tasks, runs, runners, loaded: true, loadError: '' });
+  } catch (e) { S.loadError = e.message }
+  // Bridge mailbox counts; absent when the bridge is off (PM_BRIDGE=0) or the token lacks read.
+  try { S.bridge = await api('GET', '/api/bridge/delivery') } catch { S.bridge = null }
+  render();
+  prefetchActions();
+}
+async function loadActions(id) {
+  try { S.actions[id] = await api('GET', `/api/tasks/${encodeURIComponent(id)}/actions`) } catch { S.actions[id] = S.actions[id] || [] }
+  return S.actions[id];
+}
+async function prefetchActions() {
+  const ids = continueCandidates(S.tasks).map((t) => t.id).filter((id) => !S.actions[id]);
+  if (!ids.length) return;
+  await Promise.all(ids.map(loadActions));
+  if (S.view === 'home') renderMain();
+}
+async function poll() {
+  try {
+    const ev = await api('GET', '/api/events' + buildQuery({ since: S.lastEvent, limit: 500 }));
+    if (Array.isArray(ev) && ev.length) {
+      S.lastEvent = ev[ev.length - 1].id;
+      S.actions = {};
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName) && $('#detail') && $('#detail').contains(document.activeElement);
+      await refresh();
+      if (S.detailId && !typing) openTask(S.detailId, true);
+    }
+  } catch { /* offline state already shown by api() */ }
+}
+
+// ---------- rendering ----------
+const NAV = [['home', 'Home', 'home'], ['attention', 'Attention', 'alert'], ['projects', 'Projects', 'folder'], ['tasks', 'Tasks', 'list'], ['runs', 'Runs', 'play'], ['machines', 'Machines', 'machine'], ['routines', 'Routines', 'routine']];
+function visibleTasks() { return S.tasks.filter((t) => effRole() !== 'client' || true) }
+function render() { renderChrome(); renderStrip(); renderMain(); }
+function renderChrome() {
+  document.documentElement.dataset.theme = S.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.body.classList.toggle('dense', S.dense);
+  $('#themeLbl').textContent = document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark';
+  $('#densityBtn').classList.toggle('primary', S.dense);
+  $('#roleSel').value = S.role;
+  $('#viewAsWrap').classList.toggle('hidden', !['admin', 'manager'].includes(S.role));
+  $('#newBtn').disabled = !can('create');
+  const att = attentionItems(S.tasks, S.runs);
+  $('#sidenav').innerHTML = NAV.filter(([k]) => effRole() !== 'client' || !['machines', 'routines'].includes(k))
+    .map(([k, label, ic]) => `<button data-act="nav" data-v="${k}" class="${S.view === k ? 'on' : ''}">${icon(ic)} ${label}${k === 'attention' && att.length ? `<span class="tag cnt">${att.length}</span>` : ''}</button>`).join('')
+    + `<div class="muted" style="padding:10px">Role: ${escapeHtml(effRole())}${S.viewAs ? ' (view as)' : ''}</div>`
+    + (S.role === 'admin' ? `<button data-act="policy">Confirmation policy</button>` : '');
+}
+function renderStrip() {
+  const el = $('#alertStrip');
+  if (!S.online) { el.innerHTML = `<div class="alert net">${icon('alert')} pm is unreachable. Showing the last data loaded. Retrying every 5 seconds.</div>`; return }
+  if (S.loadError) { el.innerHTML = `<div class="alert high">${icon('alert')} ${escapeHtml(S.loadError)}</div>`; return }
+  const sum = attentionSummary(attentionItems(S.tasks, S.runs));
+  const cls = sum.high ? 'high' : (sum.medium ? 'med' : '');
+  el.innerHTML = `<div class="alert ${cls}">${icon(sum.total ? 'alert' : 'check')} <strong>${sum.total ? sum.total + ' need attention' : 'Nothing needs attention'}</strong>${sum.total ? `<span>${sum.high} high</span><span>${sum.medium} medium</span><span>${sum.low} low</span>` : ''}<span class="spacer"></span><button class="sm" data-act="nav" data-v="attention">Open Attention panel</button></div>`;
+}
+function renderMain() {
+  const m = $('#main');
+  if (!S.loaded) { m.innerHTML = S.loadError ? `<div class="empty err">${escapeHtml(S.loadError)}<br><br><button data-act="refresh">Retry</button></div>` : '<div class="empty">Loading...</div>'; return }
+  const v = { home: viewHome, attention: viewAttention, projects: viewProjects, tasks: viewTasks, runs: viewRuns, machines: viewMachines, routines: viewRoutines }[S.view] || viewHome;
+  m.innerHTML = v();
+}
+
+function machineBadge(name) {
+  if (!name) return '<span class="tag">no machine</span>';
+  const mach = collectMachines(S.tasks, S.runs, S.runners, ALIASES).find((x) => x.aliases.includes(name)) || { name, aliases: [name] };
+  const h = machineHealth(mach, S.runners, S.runs);
+  const ic = h.state === 'Offline' ? 'cross' : (h.state === 'Busy' ? 'play' : 'check');
+  return `<span class="tag" title="Machine ${escapeHtml(name)}: ${h.state}">${icon('machine')} ${escapeHtml(name)} ${icon(ic)} ${h.state}</span>`;
+}
+function agentBadge(t) {
+  if (!t.agent && !t.provider && !t.model_id && !t.claimed_by) return '';
+  const bits = [t.agent || t.claimed_by, t.provider, t.model_id || t.claim_model].filter(Boolean);
+  return `<span class="tag model" title="Agent / provider / model">${escapeHtml(bits.join(' / '))}</span>`;
+}
+function actionButtons(t, compact) {
+  const acts = S.actions[t.id];
+  if (!acts) return `<button class="sm" data-act="loadActions" data-id="${escapeHtml(t.id)}">Load actions</button>`;
+  return acts.map((a) => {
+    const off = !a.allowed || !can(a.action);
+    const why = !can(a.action) ? `Not permitted for role ${effRole()}` : a.reasons.join('; ');
+    if (compact && off) return '';
+    return `<button class="sm ${['stop', 'archive'].includes(a.action) ? 'danger' : ''}" data-act="do" data-id="${escapeHtml(t.id)}" data-a="${a.action}" ${off ? 'disabled' : ''} title="${escapeHtml(why)}">${a.action}</button>`;
+  }).join('');
+}
+
+function viewHome() {
+  const att = attentionItems(S.tasks, S.runs);
+  const cands = continueCandidates(S.tasks);
+  const launch = cands.length ? `<div class="launch">${cands.map((t) => {
+    const acts = S.actions[t.id];
+    const primary = acts ? primaryAction(acts) : null;
+    const btn = acts
+      ? (primary ? `<button class="primary sm" data-act="do" data-id="${escapeHtml(t.id)}" data-a="${primary}" ${can(primary) ? '' : 'disabled'}>${icon('play')} ${primary === 'prepare' ? 'Launch (prepare)' : primary[0].toUpperCase() + primary.slice(1)}</button>` : '<span class="muted">no action available</span>')
+      : `<button class="sm" data-act="loadActions" data-id="${escapeHtml(t.id)}">Load actions</button>`;
+    return `<div class="card"><div class="row">${taskChipHtml(t)}<span class="muted">${escapeHtml(projName(t.project_id))}</span><span class="spacer"></span><span class="muted">${ago(t.updated_at)}</span></div>
+      <div class="title">${escapeHtml(t.title)}</div>
+      <div class="row">${machineBadge(t.execution_machine)}${agentBadge(t)}</div>
+      ${t.next_action ? `<div class="muted">Next: ${escapeHtml(String(t.next_action).slice(0, 160))}</div>` : ''}
+      <div class="row">${btn}<button class="sm" data-act="open" data-id="${escapeHtml(t.id)}">Open</button></div></div>`;
+  }).join('')}</div>` : '<div class="card empty">No live or resumable work.</div>';
+  return `<section class="block"><h2>Continue where you left off</h2>${launch}</section>
+  <section class="block"><h2>Resources and system</h2>${resourceCards(att)}</section>
+  <section class="block"><h2>Projects ${projToggle()}</h2>${projectsList()}</section>
+  <section class="block"><h2>Tasks</h2>${taskToolbar()}${taskBody(S.taskMode === 'list' ? filteredSorted().slice(0, 60) : filteredSorted())}${S.taskMode === 'list' && filteredSorted().length > 60 ? `<div class="muted" style="padding:6px">Showing 60 of ${filteredSorted().length}. <a href="#" data-act="nav" data-v="tasks">Open the full Tasks view</a></div>` : ''}</section>
+  <section class="block"><h2>Routines</h2>${routinesHtml()}</section>`;
+}
+function resourceCards(att) {
+  const machines = collectMachines(S.tasks, S.runs, S.runners, ALIASES);
+  const live = S.runs.filter((r) => ['starting', 'running'].includes(r.state));
+  const total = S.tasks.length || 1;
+  const done = S.tasks.filter((t) => ['COMPLETE', 'ARCHIVED'].includes(taskLifecycle(t))).length;
+  const finished = S.runs.filter((r) => ['done', 'failed'].includes(r.state));
+  const okRuns = finished.filter((r) => r.state === 'done').length;
+  const crit = att.filter((a) => a.severity === 'high');
+  const mrows = machines.map((m) => { const h = machineHealth(m, S.runners, S.runs); return `<div class="row">${icon('machine')} <strong>${escapeHtml(m.name)}</strong> <span class="tag">${h.state}</span>${h.liveRuns ? `<span class="muted">${h.liveRuns} live</span>` : ''}</div>` }).join('') || '<div class="muted">No machines reported.</div>';
+  return `<div class="cards">
+    <div class="card"><h3>Machines</h3>${mrows}<div class="muted">Runners registered: ${S.runners.length}</div></div>
+    <div class="card"><h3>Runs in flight</h3><div class="big">${live.length}</div><div class="muted">${S.runs.length} runs recorded</div>${live.slice(0, 3).map((r) => `<div class="muted">${escapeHtml(r.kind)} on ${escapeHtml(r.machine)}</div>`).join('')}</div>
+    <div class="card"><h3>Quota / resource</h3><div class="row"><span>Tasks complete</span><span class="spacer"></span><strong>${Math.round(done / total * 100)}%</strong></div><div class="bar ok"><i style="width:${Math.round(done / total * 100)}%"></i></div>
+      <div class="row" style="margin-top:6px"><span>Run success</span><span class="spacer"></span><strong>${finished.length ? Math.round(okRuns / finished.length * 100) + '%' : 'n/a'}</strong></div><div class="bar ${finished.length && okRuns / finished.length < .5 ? 'bad' : 'ok'}"><i style="width:${finished.length ? Math.round(okRuns / finished.length * 100) : 0}%"></i></div>
+      <div class="muted" style="margin-top:6px">Budget and cost figures are not reported by the pm API.</div></div>
+    <div class="card"><h3>Critical state</h3>${crit.length ? `<div class="big" style="color:var(--bad)">${crit.length}</div>${crit.slice(0, 4).map((c) => `<div><a href="#" data-act="${c.kind === 'run' ? 'openRun' : 'open'}" data-id="${escapeHtml(c.kind === 'run' ? c.id : c.id)}">${escapeHtml(c.title.slice(0, 60))}</a> ${chipHtml(mapStatusToChip(c.lifecycle))}</div>`).join('')}` : `<div class="big" style="color:var(--ok)">0</div><div class="muted">No failed or blocked work.</div>`}</div>
+  </div>`;
+}
+
+function projToggle() { return `<span class="seg"><button data-act="projMode" data-v="rows" class="sm ${S.projMode === 'rows' ? 'on' : ''}">Rows</button><button data-act="projMode" data-v="cards" class="sm ${S.projMode === 'cards' ? 'on' : ''}">Cards</button></span>`; }
+function projectsList() {
+  if (!S.projects.length) return '<div class="card empty">No projects yet. Use + New to create one.</div>';
+  const stat = (p) => {
+    const ts = S.tasks.filter((t) => t.project_id === p.id), by = {};
+    ts.forEach((t) => { const k = taskLifecycle(t); by[k] = (by[k] || 0) + 1 });
+    return { ts, by };
+  };
+  if (S.projMode === 'cards') return `<div class="pgrid">${S.projects.map((p) => { const { ts, by } = stat(p); return `<div class="card" data-act="filterProject" data-id="${escapeHtml(p.id)}" style="cursor:pointer"><strong>${escapeHtml(p.name)}</strong><div class="muted">${ts.length} tasks, ${p.done_count} done</div><div class="row" style="margin-top:4px">${Object.entries(by).map(([k, n]) => `<span class="tag">${k} ${n}</span>`).join('')}</div></div>` }).join('')}</div>`;
+  return `<div class="list">${S.projects.map((p) => {
+    const { ts, by } = stat(p), open = S.expanded.has('p:' + p.id);
+    return `<div class="item ${open ? 'open' : ''}"><div class="head" data-act="toggle" data-k="p:${escapeHtml(p.id)}">${icon('chev', 'twisty')}<span class="t">${escapeHtml(p.name)}</span><span class="tag">${ts.length} tasks</span><span class="tag">${p.done_count} done</span></div>
+      ${open ? `<div class="more"><p>${escapeHtml(p.description || 'No description.')}</p><div class="row">${Object.entries(by).map(([k, n]) => `<span class="tag">${k} ${n}</span>`).join('') || '<span class="muted">no tasks</span>'}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="filterProject" data-id="${escapeHtml(p.id)}">Show its tasks</button><button class="sm" data-act="newTaskIn" data-id="${escapeHtml(p.id)}" ${can('create') ? '' : 'disabled'}>+ Task</button><span class="muted mono">${escapeHtml(p.id)}</span></div></div>` : ''}</div>`;
+  }).join('')}</div>`;
+}
+function viewProjects() { return `<section class="block"><h2>Projects ${projToggle()}</h2>${projectsList()}</section>`; }
+
+function filteredSorted() { return sortTasks(filterTasks(visibleTasks(), S.filters), S.sort, S.dir) }
+function taskToolbar() {
+  const f = S.filters;
+  const sel = (id, val, opts, label) => `<select data-f="${id}" aria-label="${label}"><option value="">${label}: all</option>${opts.map(([v, l]) => `<option value="${escapeHtml(v)}"${v === val ? ' selected' : ''}>${escapeHtml(l)}</option>`).join('')}</select>`;
+  const machines = collectMachines(S.tasks, S.runs, S.runners, ALIASES);
+  return `<div class="toolbar">
+    <input data-f="q" type="search" placeholder="Filter text" value="${escapeHtml(f.q)}" aria-label="Filter text">
+    ${sel('project', f.project, S.projects.map((p) => [p.id, p.name]), 'Project')}
+    ${sel('status', f.status, LIFECYCLES.map((l) => [l, l]), 'Status')}
+    ${sel('machine', f.machine, machines.flatMap((m) => m.aliases.map((a) => [a, a])), 'Machine')}
+    <select data-f="sort" aria-label="Sort by">${[['updated_at', 'Updated'], ['created_at', 'Created'], ['priority', 'Priority'], ['title', 'Title'], ['lifecycle', 'Status']].map(([v, l]) => `<option value="${v}"${S.sort === v ? ' selected' : ''}>Sort: ${l}</option>`).join('')}</select>
+    <button class="sm" data-act="dir" title="Toggle sort direction">${S.dir === 'asc' ? 'Asc' : 'Desc'}</button>
+    <select data-f="group" aria-label="Group by">${[['lifecycle', 'Status'], ['project_id', 'Project'], ['execution_machine', 'Machine'], ['assignee', 'Assignee'], ['claimed_by', 'Claimed by']].map(([v, l]) => `<option value="${v}"${S.group === v ? ' selected' : ''}>Group: ${l}</option>`).join('')}</select>
+    <span class="seg"><button class="sm ${S.taskMode === 'list' ? 'on' : ''}" data-act="taskMode" data-v="list">List</button><button class="sm ${S.taskMode === 'grouped' ? 'on' : ''}" data-act="taskMode" data-v="grouped">Grouped</button><button class="sm ${S.taskMode === 'board' ? 'on' : ''}" data-act="taskMode" data-v="board">Board</button></span>
+    <button class="sm" data-act="clearFilters">Clear</button>
+    <select data-f="savedView" aria-label="Saved views"><option value="">Saved views...</option>${S.views.map((v, i) => `<option value="${i}">${escapeHtml(v.name)}</option>`).join('')}</select>
+    <button class="sm" data-act="saveView">Save view</button>${S.views.length ? '<button class="sm" data-act="delView">Delete view</button>' : ''}
+  </div>`;
+}
+function taskRow(t) {
+  const open = S.expanded.has('t:' + t.id);
+  return `<div class="item ${open ? 'open' : ''}"><div class="head" data-act="toggle" data-k="t:${escapeHtml(t.id)}" data-id="${escapeHtml(t.id)}">${icon('chev', 'twisty')}${taskChipHtml(t)}<span class="t" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</span><span class="tag">p${t.priority ?? '-'}</span>${t.execution_machine ? `<span class="tag">${escapeHtml(t.execution_machine)}</span>` : ''}</div>
+    ${open ? `<div class="more"><p class="muted">${escapeHtml(projName(t.project_id))} &middot; ${escapeHtml(t.id)} &middot; updated ${ago(t.updated_at)}</p><div class="row">${machineBadge(t.execution_machine)}${agentBadge(t)}${t.assignee ? `<span class="tag">for ${escapeHtml(t.assignee)}</span>` : ''}</div>${t.body ? `<p>${escapeHtml(String(t.body).slice(0, 500))}${t.body.length > 500 ? '...' : ''}</p>` : ''}${t.checkpoint ? `<p><strong>Checkpoint:</strong> ${escapeHtml(String(t.checkpoint).slice(0, 300))}</p>` : ''}${t.next_action ? `<p><strong>Next:</strong> ${escapeHtml(String(t.next_action).slice(0, 300))}</p>` : ''}
+      <div class="row">${actionButtons(t, true)}<button class="sm" data-act="open" data-id="${escapeHtml(t.id)}">Full detail</button></div>${routineShortcuts(t)}</div>` : ''}</div>`;
+}
+function taskBody(tasks) {
+  if (!tasks.length) return '<div class="list"><div class="empty">No tasks match these filters.</div></div>';
+  if (S.taskMode === 'board') {
+    const groups = groupTasks(tasks, 'lifecycle');
+    return `<div class="board">${LIFECYCLES.map((l) => { const g = groups.find((x) => x.key === l); const items = g ? g.items : []; return `<div class="col"><h4>${chipHtml(mapStatusToChip(l))}<span class="muted">${items.length}</span></h4>${items.slice(0, 40).map((t) => `<div class="bcard" data-act="open" data-id="${escapeHtml(t.id)}">${escapeHtml(t.title)}<div class="muted">${escapeHtml(projName(t.project_id))}${t.execution_machine ? ' &middot; ' + escapeHtml(t.execution_machine) : ''}</div></div>`).join('')}${items.length > 40 ? `<div class="muted">+${items.length - 40} more</div>` : ''}</div>` }).join('')}</div>`;
+  }
+  if (S.taskMode === 'grouped') {
+    return `<div class="list">${groupTasks(tasks, S.group).map((g) => `<div class="grouphead">${S.group === 'lifecycle' ? chipHtml(mapStatusToChip(g.key)) : escapeHtml(S.group === 'project_id' ? projName(g.key) : g.key)}<span class="muted">${g.items.length}</span></div>${g.items.slice(0, 100).map(taskRow).join('')}`).join('')}</div>`;
+  }
+  return `<div class="list">${tasks.map(taskRow).join('')}</div>`;
+}
+function viewTasks() { return `<section class="block"><h2>Tasks (${filteredSorted().length} of ${S.tasks.length})</h2>${taskToolbar()}${taskBody(filteredSorted())}</section>`; }
+
+function viewRuns() {
+  const rows = [...S.runs].sort((a, b) => String(b.started_at).localeCompare(String(a.started_at)));
+  return `<section class="block"><h2>Runs (${rows.length})</h2>${rows.length ? `<div class="list">${rows.slice(0, 200).map((r) => {
+    const t = S.tasks.find((x) => x.id === r.task_id);
+    const open = S.expanded.has('r:' + r.id);
+    const live = ['starting', 'running', 'requested', 'held'].includes(r.state);
+    return `<div class="item ${open ? 'open' : ''}"><div class="head" data-act="toggle" data-k="r:${escapeHtml(r.id)}">${icon('chev', 'twisty')}${runChipHtml(r)}<span class="t">${escapeHtml(t ? t.title : r.task_id)}</span><span class="tag">${escapeHtml(r.kind)}</span><span class="tag">${escapeHtml(r.machine)}</span><span class="muted">${ago(r.started_at)}</span></div>
+      ${open ? `<div class="more"><p class="muted mono">${escapeHtml(r.id)} &middot; external ${escapeHtml(r.external_id || 'none')} &middot; owner ${escapeHtml(r.owner || 'none')}</p><p>${escapeHtml(String(r.last_checkpoint || 'no checkpoint recorded').slice(0, 600))}</p><div class="row">${t ? `<button class="sm" data-act="open" data-id="${escapeHtml(t.id)}">Open task</button>` : ''}<button class="sm" data-act="openRun" data-id="${escapeHtml(r.id)}">Run detail</button>${live && can('stop') ? `<button class="sm danger" data-act="cancelRun" data-id="${escapeHtml(r.id)}">Cancel run</button>` : ''}</div>${t ? routineShortcuts(t) : ''}</div>` : ''}</div>`;
+  }).join('')}</div>` : '<div class="card empty">No runs recorded.</div>'}</section>`;
+}
+
+function viewMachines() {
+  const machines = collectMachines(S.tasks, S.runs, S.runners, ALIASES);
+  if (!machines.length) return '<section class="block"><h2>Machines</h2><div class="card empty">No machines reported.</div></section>';
+  return `<section class="block"><h2>Machines</h2><div class="cards">${machines.map((m) => {
+    const h = machineHealth(m, S.runners, S.runs);
+    const ts = S.tasks.filter((t) => m.aliases.includes(t.execution_machine));
+    const active = ts.filter((t) => !['COMPLETE', 'ARCHIVED'].includes(taskLifecycle(t)));
+    const rs = S.runners.filter((r) => m.aliases.includes(r.machine));
+    const pct = ts.length ? Math.round((ts.length - active.length) / ts.length * 100) : 0;
+    return `<div class="card"><h3>${icon('machine')} ${escapeHtml(m.name)}${m.aliases.length > 1 ? ' <span class="muted">(' + m.aliases.filter((a) => a !== m.name).map(escapeHtml).join(', ') + ')</span>' : ''}</h3><div class="big">${h.state}</div>
+      <div class="muted">${active.length} open of ${ts.length} tasks, ${h.liveRuns} live runs</div><div class="bar ok"><i style="width:${pct}%"></i></div>
+      <div class="muted" style="margin-top:6px">${rs.length ? rs.map((r) => escapeHtml(r.id) + ' seen ' + ago(r.last_seen)).join('<br>') : 'No runner registered on this machine.'}</div></div>`;
+  }).join('')}</div></section>`;
+}
+
+function viewAttention() {
+  const items = attentionItems(S.tasks, S.runs), sum = attentionSummary(items);
+  return `<section class="block"><h2>Attention (${sum.total}: ${sum.high} high, ${sum.medium} medium, ${sum.low} low)</h2>${items.length ? `<div class="list">${items.map((i) => `<div class="item"><div class="head" data-act="${i.kind === 'run' ? 'openRun' : 'open'}" data-id="${escapeHtml(i.id)}"><span class="tag">${i.severity}</span>${chipHtml(mapStatusToChip(i.lifecycle))}<span class="t">${escapeHtml(i.title)}</span><span class="muted">${escapeHtml(String(i.why).slice(0, 90))}</span></div></div>`).join('')}</div>` : '<div class="card empty">Nothing needs attention.</div>'}</section>${bridgeMailboxesHtml()}`;
+}
+function bridgeMailboxesHtml() {
+  const b = S.bridge;
+  if (!b || !b.pending) return '';
+  const rows = Object.entries(b.pending).filter(([, v]) => v.unacked || v.awaiting_response);
+  const when = (t) => t ? escapeHtml(String(t).replace('T', ' ').slice(0, 16)) : 'never';
+  return `<section class="block"><h2>Bridge mailboxes (${escapeHtml(b.machine || '')})</h2>${rows.length ? `<div class="list">${rows.map(([agent, v]) => {
+    const sev = v.failed || (v.overdue && v.high) ? 'high' : (v.overdue ? 'medium' : 'low');
+    return `<div class="item"><div class="head"><span class="tag">${sev}</span><span class="t">${escapeHtml(agent)}</span><span class="muted">${v.unacked} unacknowledged (${v.undelivered || 0} not yet retrieved, ${v.overdue || 0} overdue, ${v.failed || 0} failed${v.high ? `, ${v.high} high` : ''})${v.awaiting_response ? `, ${v.awaiting_response} awaiting reply` : ''}; oldest seq ${v.oldest_seq ?? '-'}; last seen ${when(v.last_seen_at)}</span></div></div>`;
+  }).join('')}</div>` : '<div class="card empty">Every bridge message has been acknowledged.</div>'}<p class="muted">Ack timeout ${b.policy ? b.policy.ack_timeout_seconds : '?'}s, response timeout ${b.policy ? b.policy.response_timeout_seconds : '?'}s. A pull-only agent such as ChatGPT sees its mail only when its user starts a turn.</p></section>`;
+}
+
+// ---------- routines ----------
+const ROUTINES = [
+  { id: 'quota', label: 'Quota handoff', desc: 'Post an instruction telling the owner to write a handoff note and stop.', needsTask: true },
+  { id: 'checkpoint', label: 'Checkpoint / archive', desc: 'Record a checkpoint comment, then optionally archive the task.', needsTask: true },
+  { id: 'recovery', label: 'Recovery (amend in place)', desc: 'Tell a stalled run what to fix; it carries on from where it stands.', needsTask: true },
+  { id: 'sync', label: 'Sync now', desc: 'Re-read projects, tasks, runs and runners from pm.', needsTask: false },
+];
+function routinesHtml() {
+  return `<div class="cards">${ROUTINES.map((r) => `<div class="card"><h3>${escapeHtml(r.label)}</h3><p class="muted">${escapeHtml(r.desc)}</p><button class="sm" data-act="routine" data-r="${r.id}" ${(r.needsTask && !can('comment')) ? 'disabled' : ''}>${r.needsTask ? 'Choose task and run' : 'Run'}</button></div>`).join('')}</div>`;
+}
+function viewRoutines() { return `<section class="block"><h2>Routines</h2>${routinesHtml()}</section>`; }
+function routineShortcuts(t) {
+  if (!can('comment')) return '';
+  return `<div class="row" style="margin-top:6px"><span class="muted">Routines:</span>${ROUTINES.filter((r) => r.needsTask).map((r) => `<button class="sm" data-act="routine" data-r="${r.id}" data-id="${escapeHtml(t.id)}">${escapeHtml(r.label)}</button>`).join('')}</div>`;
+}
+async function runRoutine(rid, taskId) {
+  const r = ROUTINES.find((x) => x.id === rid);
+  if (!r) return;
+  if (rid === 'sync') { await refresh(); toast('Synced with pm.'); return }
+  if (!needActor()) return;
+  if (!taskId) {
+    const opts = sortTasks(S.tasks.filter((t) => taskLifecycle(t) !== 'ARCHIVED'), 'updated_at', 'desc').slice(0, 200).map((t) => ({ value: t.id, label: `${taskLifecycle(t)} - ${t.title.slice(0, 70)}` }));
+    const v = await ask({ title: r.label, text: r.desc, fields: [{ name: 'task', label: 'Task', type: 'select', options: opts }], ok: 'Continue' });
+    if (!v) return;
+    taskId = v.task;
+  }
+  try {
+    if (rid === 'quota') {
+      const v = await ask({ title: 'Quota handoff', fields: [{ name: 'body', label: 'Instruction', type: 'textarea', value: 'Quota handoff: finish the current atomic step, write or refresh the handoff note in the shared brain, then stop.' }], ok: 'Post instruction' });
+      if (!v) return;
+      await api('POST', `/api/tasks/${taskId}/comments`, buildApiBody({ body: v.body, kind: 'instruction' }, 'comment'));
+      toast('Instruction posted.');
+    } else if (rid === 'checkpoint') {
+      const v = await ask({ title: 'Checkpoint', fields: [{ name: 'body', label: 'Checkpoint note', type: 'textarea' }, { name: 'archive', label: 'Also archive this task', type: 'checkbox' }], ok: 'Record' });
+      if (!v || !v.body.trim()) return;
+      await api('POST', `/api/tasks/${taskId}/comments`, buildApiBody({ body: 'Checkpoint: ' + v.body }, 'comment'));
+      if (v.archive) { if (await confirmAction('Archive task?', 'Archiving ends work on this task.', 'Archive')) await api('POST', `/api/tasks/${taskId}/archive`, {}) }
+      toast('Checkpoint recorded.');
+    } else if (rid === 'recovery') {
+      await doAction(taskId, 'amend');
+      return;
+    }
+    await refresh();
+  } catch (e) { fail(e, r.label) }
+}
+
+// ---------- actions ----------
+async function doAction(id, action) {
+  if (!can(action)) { toast(`Role ${effRole()} cannot ${action}.`, true); return }
+  if (!needActor()) return;
+  const t = S.tasks.find((x) => x.id === id) || { id, title: id };
+  let form = {};
+  if (needsConfirm(action, S.policy)) {
+    if (!await confirmAction(`${action[0].toUpperCase() + action.slice(1)} task?`, `${t.title}`, action[0].toUpperCase() + action.slice(1))) return;
+  }
+  if (action === 'prepare') {
+    const v = await ask({ title: 'Prepare a run', text: 'pm prepares the run and does not start it. Seats are yours to choose; blank rosters stay empty.', fields: [
+      { name: 'request', label: 'Request', type: 'textarea', rows: 5, value: t.next_action || t.title },
+      { name: 'stages', label: 'Stages (optional)' }, { name: 'mode', label: 'Mode (optional)' },
+      { name: 'council', label: 'Council seats (comma separated)' }, { name: 'swarm', label: 'Swarm seats (comma separated)' }], ok: 'Prepare' });
+    if (!v) return;
+    form = v;
+  } else if (action === 'amend') {
+    const v = await ask({ title: 'Amend run in place', text: 'Tell the run what to fix so it carries on from where it stalled. It is not restarted.', fields: [{ name: 'fix', label: 'Fix', type: 'textarea', rows: 4 }], ok: 'Amend' });
+    if (!v || !v.fix.trim()) return;
+    form = v;
+  }
+  const body = action === 'prepare' ? buildApiBody(form, 'run') : buildApiBody(form, 'action');
+  try {
+    const res = await api('POST', `/api/tasks/${encodeURIComponent(id)}/${action}`, body);
+    toast(res && res.question ? `${action} done. ${res.question}` : `${action} done.`);
+    delete S.actions[id];
+    await refresh();
+    if (S.detailId === id) openTask(id, true);
+  } catch (e) { fail(e, action); }
+}
+
+async function cancelRun(id) {
+  if (!needActor()) return;
+  if (!await confirmAction('Cancel run?', 'The owner is asked to stop this run.', 'Cancel run')) return;
+  try { await api('POST', `/api/runs/${id}/cancel`, { reason: 'cancelled from the pm UI by ' + S.actor }); toast('Cancel requested.'); await refresh() } catch (e) { fail(e, 'cancel run') }
+}
+
+// ---------- detail panel ----------
+async function openTask(id, quiet) {
+  const panel = $('#detail');
+  let t;
+  try { t = await api('GET', `/api/tasks/${encodeURIComponent(id)}`) } catch (e) { fail(e, 'load task'); return }
+  S.detailId = id; S.detailRunId = null;
+  const acts = await loadActions(id);
+  const keep = quiet ? { c: ($('#cText', panel) || {}).value } : {};
+  panel.classList.remove('hidden');
+  panel.innerHTML = `<div class="row"><h2 style="flex:1">${escapeHtml(t.title)}</h2><button data-act="closeDetail" aria-label="Close">${icon('cross')} Close</button></div>
+    <div class="row">${taskChipHtml(t)}<span class="tag">${escapeHtml((t.project || {}).name || t.project_id)}</span><span class="tag">p${t.priority}</span><span class="tag">rev ${t.rev}</span>${machineBadge(t.execution_machine)}${agentBadge(t)}</div>
+    <p class="muted mono">${escapeHtml(t.id)} &middot; origin ${escapeHtml(t.origin_machine || '-')} &middot; storage status ${escapeHtml(t.status)}${t.lease_until ? ' &middot; lease until ' + escapeHtml(t.lease_until) : ''}</p>
+    <div class="row">${actionButtons(Object.assign({}, t), false)}</div>${routineShortcuts(t)}
+    <h3>Properties</h3>
+    <div id="conflict"></div>
+    <div class="modal" style="box-shadow:none;width:100%;padding:8px 10px">
+      <label for="eTitle">Title</label><input id="eTitle" value="${escapeHtml(t.title)}" ${can('edit') ? '' : 'disabled'}>
+      <label for="eBody">Body</label><textarea id="eBody" rows="6" ${can('edit') ? '' : 'disabled'}>${escapeHtml(t.body)}</textarea>
+      <div class="row"><label>Priority <select id="ePrio" ${can('edit') ? '' : 'disabled'}>${[1, 2, 3, 4].map((n) => `<option${n === t.priority ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label>Status <select id="eStatus" ${can('edit') ? '' : 'disabled'}>${['todo', 'in_progress', 'review', 'blocked', 'uncertain', 'done'].map((s) => `<option${s === t.status ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
+      <label>Assignee <input id="eAssignee" value="${escapeHtml(t.assignee || '')}" size="14" ${can('edit') ? '' : 'disabled'}></label>
+      <span class="spacer"></span><button class="primary" data-act="saveTask" data-id="${escapeHtml(t.id)}" data-rev="${t.rev}" ${can('edit') ? '' : 'disabled'}>Save</button></div></div>
+    ${t.checkpoint ? `<h3>Checkpoint</h3><div class="cmt">${escapeHtml(t.checkpoint)}</div>` : ''}${t.next_action ? `<h3>Next action</h3><div class="cmt">${escapeHtml(t.next_action)}</div>` : ''}${t.blockers ? `<h3>Blockers</h3><div class="cmt">${escapeHtml(t.blockers)}</div>` : ''}
+    <h3>Runs (${t.runs.length})</h3>${t.runs.map((r) => `<div class="cmt"><div class="row">${runChipHtml(r)}<span class="tag">${escapeHtml(r.kind)}</span><span class="tag">${escapeHtml(r.machine)}</span><span class="muted">${ago(r.started_at)}</span><span class="spacer"></span><button class="sm" data-act="openRun" data-id="${escapeHtml(r.id)}">Detail</button></div>${r.last_checkpoint ? `<div class="muted">${escapeHtml(String(r.last_checkpoint).slice(0, 300))}</div>` : ''}</div>`).join('') || '<div class="muted">No runs.</div>'}
+    <h3>Comments (${t.comments.length})</h3>${t.comments.map((c) => `<div class="cmt ${c.kind}"><div class="who">${c.kind === 'instruction' ? '<strong>INSTRUCTION</strong> ' : ''}${escapeHtml(c.actor)}${c.model ? ' (' + escapeHtml(c.model) + ')' : ''} &middot; ${ago(c.created_at)}${c.acked_by ? ' &middot; acknowledged by ' + escapeHtml(c.acked_by) : ''}</div>${escapeHtml(c.body)}${c.kind === 'instruction' && !c.acked_by && can('comment') ? `<div><button class="sm" data-act="ack" data-id="${c.id}" data-task="${escapeHtml(t.id)}">Acknowledge</button></div>` : ''}</div>`).join('') || '<div class="muted">No comments.</div>'}
+    <textarea id="cText" placeholder="Add a comment..." aria-label="New comment" ${can('comment') ? '' : 'disabled'}>${escapeHtml(keep.c || '')}</textarea>
+    <div class="row"><label><input type="checkbox" id="cInstr"> Post as instruction (owner must acknowledge)</label><span class="spacer"></span><button class="primary" data-act="addComment" data-id="${escapeHtml(t.id)}" ${can('comment') ? '' : 'disabled'}>Comment</button></div>
+    <h3>Artifacts (${t.artifacts.length})</h3>${t.artifacts.map((a) => `<div class="cmt"><span class="tag">${escapeHtml(a.kind)}</span> <span class="mono">${escapeHtml(a.ref)}</span><div class="muted">${escapeHtml(a.note)} &middot; ${escapeHtml(a.actor)}</div></div>`).join('') || '<div class="muted">No artifacts.</div>'}
+    ${can('comment') ? `<div class="row"><input id="aKind" placeholder="kind" size="8" value="link" aria-label="Artifact kind"><input id="aRef" placeholder="ref (path, URL, id)" style="flex:1" aria-label="Artifact ref"><button data-act="addArtifact" data-id="${escapeHtml(t.id)}">Add artifact</button></div>` : ''}
+    <h3>Claim</h3><div class="row"><span class="muted">${t.claimed_by ? 'Claimed by ' + escapeHtml(t.claimed_by) : 'Unclaimed'}</span><span class="spacer"></span>${t.claimed_by ? `<button class="sm" data-act="release" data-id="${escapeHtml(t.id)}" data-by="${escapeHtml(t.claimed_by)}" ${can('edit') ? '' : 'disabled'}>Release</button>` : `<button class="sm" data-act="claim" data-id="${escapeHtml(t.id)}" ${can('edit') ? '' : 'disabled'}>Claim</button>`}</div>
+    <h3>History</h3>${(t.history || []).slice(-15).reverse().map((h) => `<div class="muted">${ago(h.at)} &middot; ${escapeHtml(h.actor)} &middot; ${escapeHtml(h.action)}</div>`).join('')}`;
+  if (!quiet) panel.scrollTop = 0;
+}
+async function openRun(id) {
+  let r;
+  try { r = await api('GET', `/api/runs/${encodeURIComponent(id)}`) } catch (e) { fail(e, 'load run'); return }
+  S.detailRunId = id; S.detailId = null;
+  const panel = $('#detail'); panel.classList.remove('hidden');
+  const live = ['starting', 'running', 'requested', 'held'].includes(r.state);
+  panel.innerHTML = `<div class="row"><h2 style="flex:1">Run ${escapeHtml(r.id)}</h2><button data-act="closeDetail">${icon('cross')} Close</button></div>
+    <div class="row">${runChipHtml(r)}<span class="tag">${escapeHtml(r.kind)}</span>${machineBadge(r.machine)}</div>
+    <p class="muted mono">task ${escapeHtml(r.task_id)} &middot; external ${escapeHtml(r.external_id || 'none')} &middot; owner ${escapeHtml(r.owner || 'none')} &middot; started ${escapeHtml(r.started_at || '-')}${r.ended_at ? ' &middot; ended ' + escapeHtml(r.ended_at) : ''}</p>
+    <div class="row"><button data-act="open" data-id="${escapeHtml(r.task_id)}">Open task</button>${live && can('stop') ? `<button class="danger" data-act="cancelRun" data-id="${escapeHtml(r.id)}">Cancel run</button>` : ''}</div>
+    <h3>Last checkpoint</h3><div class="cmt">${escapeHtml(r.last_checkpoint || 'none')}</div>
+    <h3>Detail</h3><pre class="cmt mono" style="max-height:50vh;overflow:auto">${escapeHtml(JSON.stringify(r.detail || {}, null, 2).slice(0, 8000))}</pre>`;
+}
+function closeDetail() { S.detailId = null; S.detailRunId = null; $('#detail').classList.add('hidden'); $('#detail').innerHTML = '' }
+
+async function saveTask(id, rev) {
+  if (!needActor()) return;
+  const body = { rev: Number(rev), title: $('#eTitle').value.trim(), body: $('#eBody').value, priority: Number($('#ePrio').value), status: $('#eStatus').value, assignee: $('#eAssignee').value.trim() || null };
+  try { await api('PATCH', `/api/tasks/${id}`, body); toast('Saved.'); await refresh(); openTask(id, true) }
+  catch (e) {
+    if (e.status === 409 && e.data && e.data.current) {
+      $('#conflict').innerHTML = `<div class="conflict"><strong>Edit conflict.</strong> This task changed since revision ${escapeHtml(rev)} (now ${e.data.current.rev}). Your rejected edit is kept in the fields above; reload to see the current values.<div class="row"><button class="sm" data-act="reloadTask" data-id="${escapeHtml(id)}">Reload current values</button></div></div>`;
+    } else fail(e, 'save task');
+  }
+}
+
+// ---------- create ----------
+async function createFlow(kind) {
+  if (!can('create')) { toast('Role ' + effRole() + ' cannot create.', true); return }
+  if (!needActor()) return;
+  const projectOpts = S.projects.map((p) => ({ value: p.id, label: p.name }));
+  const curProject = S.filters.project || (projectOpts[0] || {}).value || '';
+  try {
+    if (!kind) {
+      const v = await ask({ title: 'Create', fields: [{ name: 'kind', label: 'What do you want to create?', type: 'select', options: [{ value: 'task', label: 'Task' }, { value: 'project', label: 'Project' }, { value: 'run', label: 'Run (prepare on a task)' }] }], ok: 'Next' });
+      if (!v) return; kind = v.kind;
+    }
+    if (kind === 'project') {
+      const v = await ask({ title: 'New project', fields: [{ name: 'name', label: 'Name' }, { name: 'description', label: 'Description', type: 'textarea' }], ok: 'Create project' });
+      if (!v || !v.name.trim()) return;
+      const p = await api('POST', '/api/projects', buildApiBody(v, 'project'));
+      S.filters.project = p.id; toast('Project created.');
+    } else if (kind === 'task') {
+      if (!projectOpts.length) { toast('Create a project first.', true); return }
+      const v = await ask({ title: 'New task', fields: [{ name: 'project', label: 'Project', type: 'select', options: projectOpts, value: curProject }, { name: 'title', label: 'Title' }, { name: 'body', label: 'Body (optional)', type: 'textarea' }, { name: 'priority', label: 'Priority (1 highest)', type: 'select', options: ['1', '2', '3', '4'], value: '2' }, { name: 'assignee', label: 'Assignee (optional)' }], ok: 'Create task' });
+      if (!v || !v.title.trim()) return;
+      const t = await api('POST', '/api/tasks', buildApiBody(v, 'task'));
+      toast('Task created.'); await refresh(); openTask(t.id); return;
+    } else if (kind === 'run') {
+      const tasks = S.tasks.filter((t) => ['READY', 'WAITING', 'PAUSED', 'FAILED'].includes(taskLifecycle(t)));
+      const opts = sortTasks(tasks, 'updated_at', 'desc').slice(0, 300).map((t) => ({ value: t.id, label: `${taskLifecycle(t)} - ${t.title.slice(0, 70)}` }));
+      if (!opts.length) { toast('No task can have a run prepared right now.', true); return }
+      const v = await ask({ title: 'New run', text: 'Runs are prepared on an existing task.', fields: [{ name: 'task', label: 'Task', type: 'select', options: opts }], ok: 'Next' });
+      if (!v) return;
+      await doAction(v.task, 'prepare'); return;
+    }
+    await refresh();
+  } catch (e) { fail(e, 'create') }
+}
+
+// ---------- command palette ----------
+function paletteCommands() {
+  const go = (v) => () => { S.view = v; render() };
+  return [
+    { label: 'New task', hint: 'create', run: () => createFlow('task') }, { label: 'New project', hint: 'create', run: () => createFlow('project') }, { label: 'New run', hint: 'create prepare', run: () => createFlow('run') },
+    { label: 'Go to Home', hint: 'nav', run: go('home') }, { label: 'Go to Attention', hint: 'nav alerts', run: go('attention') }, { label: 'Go to Projects', hint: 'nav', run: go('projects') },
+    { label: 'Go to Tasks', hint: 'nav', run: go('tasks') }, { label: 'Go to Runs', hint: 'nav', run: go('runs') }, { label: 'Go to Machines', hint: 'nav health', run: go('machines') }, { label: 'Go to Routines', hint: 'nav', run: go('routines') },
+    { label: 'Toggle theme', hint: 'light dark', run: toggleTheme }, { label: 'Toggle dense mode', hint: 'density', run: toggleDense },
+    { label: 'Board view', hint: 'tasks', run: () => setTaskMode('board') }, { label: 'List view', hint: 'tasks', run: () => setTaskMode('list') }, { label: 'Grouped view', hint: 'tasks', run: () => setTaskMode('grouped') },
+    { label: 'Sync now', hint: 'refresh', run: () => refresh() },
+    ...S.views.map((v, i) => ({ label: 'Saved view: ' + v.name, hint: 'view', run: () => applyView(i) })),
+    ...S.projects.map((p) => ({ label: 'Project: ' + p.name, hint: 'filter', run: () => { S.filters.project = p.id; S.view = 'tasks'; render() } })),
+  ];
+}
+function openPalette() {
+  const scrim = $('#scrim');
+  scrim.innerHTML = `<div class="modal" id="palette" role="dialog" aria-modal="true" aria-label="Command palette"><input id="pIn" placeholder="Type a command, project or task..." aria-label="Command"><ul id="pList"></ul></div>`;
+  scrim.classList.remove('hidden');
+  let sel = 0, items = [];
+  const paint = () => {
+    const q = $('#pIn').value;
+    const cmds = matchCommands(paletteCommands(), q).slice(0, 12);
+    const tasks = q.trim().length > 1 ? filterTasks(S.tasks, { q }).slice(0, 8).map((t) => ({ label: 'Task: ' + t.title, hint: taskLifecycle(t), run: () => openTask(t.id) })) : [];
+    items = cmds.concat(tasks);
+    if (sel >= items.length) sel = 0;
+    $('#pList').innerHTML = items.map((c, i) => `<li class="${i === sel ? 'sel' : ''}" data-i="${i}"><span>${escapeHtml(c.label)}</span><span class="muted">${escapeHtml(c.hint || '')}</span></li>`).join('') || '<li class="muted">No match</li>';
+  };
+  const close = () => { scrim.classList.add('hidden'); scrim.innerHTML = ''; document.removeEventListener('keydown', onKey, true) };
+  const run = (i) => { const c = items[i]; if (!c) return; close(); c.run() };
+  const onKey = (e) => {
+    if (e.key === 'Escape') { e.stopPropagation(); close() }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); paint() }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); paint() }
+    else if (e.key === 'Enter') { e.preventDefault(); run(sel) }
+  };
+  document.addEventListener('keydown', onKey, true);
+  $('#pIn').oninput = () => { sel = 0; paint() };
+  $('#pList').onclick = (e) => { const li = e.target.closest('li[data-i]'); if (li) run(Number(li.dataset.i)) };
+  paint(); $('#pIn').focus();
+}
+
+// ---------- settings helpers ----------
+function toggleTheme() { const cur = document.documentElement.dataset.theme; S.theme = cur === 'dark' ? 'light' : 'dark'; store.set('pm.theme', S.theme); renderChrome() }
+function toggleDense() { S.dense = !S.dense; store.set('pm.dense', S.dense ? '1' : '0'); renderChrome() }
+function setTaskMode(m) { S.taskMode = m; store.set('pm.taskMode', m); renderMain() }
+function applyView(i) { const v = S.views[i]; if (!v) return; Object.assign(S.filters, { project: '', status: '', machine: '', q: '' }, v.filters); S.sort = v.sort; S.dir = v.dir; S.group = v.group; S.taskMode = v.mode; S.view = 'tasks'; render() }
+async function saveView() {
+  const v = await ask({ title: 'Save current view', fields: [{ name: 'name', label: 'Name' }], ok: 'Save' });
+  if (!v || !v.name.trim()) return;
+  S.views.push({ name: v.name.trim(), filters: { ...S.filters }, sort: S.sort, dir: S.dir, group: S.group, mode: S.taskMode });
+  store.set('pm.views', JSON.stringify(S.views)); renderMain();
+}
+async function delView() {
+  const v = await ask({ title: 'Delete saved view', fields: [{ name: 'i', label: 'View', type: 'select', options: S.views.map((x, i) => ({ value: String(i), label: x.name })) }], ok: 'Delete', danger: true });
+  if (!v) return;
+  S.views.splice(Number(v.i), 1); store.set('pm.views', JSON.stringify(S.views)); renderMain();
+}
+async function editPolicy() {
+  const opts = [{ value: 'default', label: 'default' }, { value: 'always', label: 'always confirm' }, { value: 'never', label: 'never confirm' }];
+  const v = await ask({ title: 'Confirmation policy', text: 'Default: stop, archive and amend confirm; everything else runs immediately.', fields: ACTION_LIST.map((a) => ({ name: a, label: a, type: 'select', options: opts, value: S.policy[a] || 'default' })), ok: 'Save policy' });
+  if (!v) return;
+  S.policy = {}; ACTION_LIST.forEach((a) => { if (v[a] !== 'default') S.policy[a] = v[a] });
+  store.set('pm.policy', JSON.stringify(S.policy)); toast('Policy saved.');
+}
+
+// ---------- events ----------
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if (act === 'nav' || act === 'open' || act === 'openRun') e.preventDefault();
+  switch (act) {
+    case 'menu': $('#sidenav').classList.toggle('open'); break;
+    case 'nav': S.view = el.dataset.v; $('#sidenav').classList.remove('open'); closeDetail(); render(); $('#main').focus(); break;
+    case 'new': createFlow(); break;
+    case 'palette': openPalette(); break;
+    case 'theme': toggleTheme(); break;
+    case 'density': toggleDense(); break;
+    case 'refresh': refresh(); break;
+    case 'toggle': { const k = el.dataset.k; if (S.expanded.has(k)) S.expanded.delete(k); else { S.expanded.add(k); if (id && !S.actions[id]) loadActions(id).then(renderMain) } renderMain(); break }
+    case 'open': openTask(id); break;
+    case 'openRun': openRun(id); break;
+    case 'closeDetail': closeDetail(); break;
+    case 'loadActions': await loadActions(id); renderMain(); if (S.detailId === id) openTask(id, true); break;
+    case 'do': doAction(id, el.dataset.a); break;
+    case 'cancelRun': cancelRun(id); break;
+    case 'projMode': S.projMode = el.dataset.v; store.set('pm.projMode', S.projMode); renderMain(); break;
+    case 'taskMode': setTaskMode(el.dataset.v); break;
+    case 'filterProject': S.filters.project = id; S.view = 'tasks'; render(); break;
+    case 'newTaskIn': S.filters.project = id; createFlow('task'); break;
+    case 'dir': S.dir = S.dir === 'asc' ? 'desc' : 'asc'; renderMain(); break;
+    case 'clearFilters': S.filters = { project: '', status: '', machine: '', q: '' }; renderMain(); break;
+    case 'saveView': saveView(); break;
+    case 'delView': delView(); break;
+    case 'policy': editPolicy(); break;
+    case 'routine': runRoutine(el.dataset.r, id); break;
+    case 'saveTask': saveTask(id, el.dataset.rev); break;
+    case 'reloadTask': openTask(id); break;
+    case 'addComment': {
+      if (!needActor()) break;
+      const body = $('#cText').value;
+      if (!body.trim()) break;
+      try { await api('POST', `/api/tasks/${id}/comments`, buildApiBody({ body, kind: $('#cInstr').checked ? 'instruction' : 'comment' }, 'comment')); await openTask(id, false); refresh() } catch (err) { fail(err, 'comment') }
+      break;
+    }
+    case 'addArtifact': {
+      if (!needActor()) break;
+      const ref = $('#aRef').value.trim(); if (!ref) break;
+      try { await api('POST', `/api/tasks/${id}/artifacts`, { kind: $('#aKind').value.trim() || 'link', ref, note: '' }); openTask(id, false) } catch (err) { fail(err, 'artifact') }
+      break;
+    }
+    case 'ack': if (needActor()) { try { await api('POST', `/api/comments/${id}/ack`, {}); openTask(el.dataset.task, true) } catch (err) { fail(err, 'acknowledge') } } break;
+    case 'claim': if (needActor()) { try { await api('POST', `/api/tasks/${id}/claim`, { leaseSeconds: 3600 }); await refresh(); openTask(id, true) } catch (err) { fail(err, 'claim') } } break;
+    case 'release': {
+      if (!needActor()) break;
+      const force = el.dataset.by !== S.actor;
+      if (force && !await confirmAction('Take back claim?', `Claimed by ${el.dataset.by}. Forcing the release takes it from them.`, 'Force release')) break;
+      try { await api('POST', `/api/tasks/${id}/release`, buildApiBody({ force }, 'release')); await refresh(); openTask(id, true) } catch (err) { fail(err, 'release') }
+      break;
+    }
+  }
+});
+document.addEventListener('change', (e) => {
+  const f = e.target.dataset && e.target.dataset.f;
+  if (!f) return;
+  if (f === 'savedView') { if (e.target.value !== '') applyView(Number(e.target.value)); return }
+  if (f === 'sort') S.sort = e.target.value; else if (f === 'group') S.group = e.target.value; else S.filters[f] = e.target.value;
+  renderMain();
+});
+let typingTimer;
+document.addEventListener('input', (e) => {
+  if (e.target.dataset && e.target.dataset.f === 'q') {
+    S.filters.q = e.target.value; clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => { renderMain(); const el = $('[data-f=q]'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) } }, 200);
+  }
+});
+$('#globalSearch').addEventListener('input', (e) => {
+  S.filters.q = e.target.value; if (S.view !== 'tasks' && S.view !== 'home') S.view = 'tasks';
+  clearTimeout(typingTimer); typingTimer = setTimeout(() => { renderMain(); renderChrome() }, 200);
+});
+$('#actor').value = S.actor;
+$('#actor').addEventListener('change', (e) => { S.actor = e.target.value.trim(); store.set('pm.actor', S.actor) });
+$('#roleSel').addEventListener('change', (e) => { S.role = e.target.value; S.viewAs = ''; $('#viewAsSel').value = ''; store.set('pm.role', S.role); render() });
+$('#viewAsSel').addEventListener('change', (e) => { S.viewAs = e.target.value; render() });
+document.addEventListener('keydown', (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette() }
+  else if (e.key === '/' && !typing) { e.preventDefault(); $('#globalSearch').focus() }
+  else if (e.key === 'Escape' && $('#scrim').classList.contains('hidden') && (S.detailId !== null || S.detailRunId !== null)) closeDetail();
+});
+
+refresh().then(async () => {
+  try { let ev; do { ev = await api('GET', '/api/events' + buildQuery({ since: S.lastEvent, limit: 2000 })); if (ev.length) S.lastEvent = ev[ev.length - 1].id } while (ev.length === 2000) } catch {}
+  setInterval(poll, 5000);
+});
+</script>
+</body>
+</html>

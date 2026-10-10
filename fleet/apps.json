@@ -1,0 +1,183 @@
+{
+  "master": "vmixlaptop2x6",
+  "versions": {
+    "claudeCode": "2.1.263",
+    "codex": "0.153.4",
+    "antigravity": "2.15.0"
+  },
+  "claudeSettings": {
+    "permissions": {
+      "allow": [
+        "Bash(git push:*)",
+        "PowerShell(git push:*)"
+      ],
+      "defaultMode": "auto"
+    },
+    "hooks": {
+      "SessionStart": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"{{HOME}}\\\\.claude\\\\hooks\\\\usage-panel-chip.mjs\"",
+              "timeout": 10
+            },
+            {
+              "type": "command",
+              "command": "node \"{{HOME}}\\\\.claude\\\\hooks\\\\dsh-memory-index.mjs\"",
+              "timeout": 45
+            }
+          ]
+        }
+      ],
+      "PreToolUse": [
+        {
+          "matcher": "Bash",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"{{HOME}}\\\\.claude\\\\hooks\\\\usage-panel-budget.mjs\"",
+              "timeout": 10
+            }
+          ]
+        }
+      ],
+      "UserPromptSubmit": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"{{HOME}}/.claude/hooks/quota-handoff.mjs\"",
+              "timeout": 10
+            }
+          ]
+        }
+      ],
+      "PostToolUse": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"{{HOME}}/.claude/hooks/quota-handoff.mjs\"",
+              "timeout": 10
+            }
+          ]
+        }
+      ]
+    },
+    "statusLine": {
+      "type": "command",
+      "command": "node \"{{HOME}}\\\\.claude\\\\statusline\\\\statusline.mjs\"",
+      "padding": 0
+    },
+    "autoUpdatesChannel": "latest",
+    "theme": "auto",
+    "autoMode": {
+      "soft_deny": [
+        "$defaults",
+        "Bash(npx:*) in ./ — high-frequency non-standard CLI (17 uses) but scope to interactive/build subcommands only, not npx exec of unpinned remote packages",
+        "Writes to .env / .env.example / config_vault.enc paths listed under Sensitive-looking paths — treat as Secret-Store Writes even for local files"
+      ],
+      "environment": [
+        "### Org-wide",
+        "**Organization**: None configured",
+        "**Cloud provider(s)**: Google Cloud Platform (Google Maps Platform / Google Cloud Pay-As-You-Go project referenced in ./CLAUDE.md)",
+        "**Repository visibility**: assume private unless the remote host and repo name indicate otherwise, or a visibility check in the transcript shows public — not queryable here (no git remote configured for this repo)",
+        "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+        "**Secrets management**: Local .env files and an AES-256-GCM encrypted local vault (config_vault.enc) per ./CLAUDE.md; admin portal default password admin123 unless overridden via ADMIN_PASSWORD — treat as sensitive, not a shared secrets service",
+        "**Default / protected branches**: unknown — origin/HEAD unset, no remote configured, not queryable via gh",
+        "**CI/CD deploy targets**: None configured",
+        "**Network posture**: None configured",
+        "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine with open internet",
+        "**Source control**: The trusted repo ({{HOME}}\\Documents\\claudecode, no remote configured) only — no additional orgs configured",
+        "**Trusted internal domains**: None configured",
+        "**Trusted cloud buckets**: None configured",
+        "**Key internal services**: Local admin portal at http://localhost:3000/admin and visualizer matrix at http://localhost:3000/matrix (per ./CLAUDE.md) — local-only, not a shared internal service",
+        "**Internal package registry**: None configured",
+        "**Sensitive data locations & audiences**: .env / .env.example files across billboard-platform, free-claude-code, gep-pivot, green-energy-platform, location-prospecting-tracking-app subpaths; deepseek-harness credentials.md / credentials.i18n.yaml / credentials.zh.md / credentials.cordis.snapshot.yml; local config_vault.enc key vault — share only with audiences cleared at the [named+specifics] bar",
+        "**Data retention / declassification**: None configured",
+        "**Sensitive remote targets**: any namespace, host, or container whose name carries prod or production as a whole word or name segment",
+        "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
+        "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries prod or production as a whole word or name segment",
+        "### User-specific",
+        "**Primary use of Claude Code**: software development (Node.js/geospatial Google Maps Platform integration, per ./CLAUDE.md)",
+        "**Trusted repo**: The git repository the agent started in ({{HOME}}\\Documents\\claudecode — no remote configured) and its configured remote(s), if any",
+        "**Org-specific CLIs**: None configured",
+        "routine under ~/Documents/claudecode/ prefix qualifiers apply per the personal multi-project layout described in ~/.claude/CLAUDE.md, but only this project's transcripts and config were scanned per the just-this-project scope"
+      ]
+    }
+  },
+  "claudeDigest": "4579177b371b58e3",
+  "codexConfig": {
+    "top": [
+      "project_doc_max_bytes = 65536"
+    ],
+    "tables": [
+      {
+        "name": "desktop",
+        "text": "[desktop]\nfollowUpQueueMode = \"steer\"\nconversationDetailMode = \"STEPS_PROSE\"\nsansFontSize = 14\ncodeFontSize = 13\nambient-suggestions-enabled = false"
+      },
+      {
+        "name": "desktop.open-in-target-preferences",
+        "text": "[desktop.open-in-target-preferences]\nglobal = \"systemDefault\""
+      },
+      {
+        "name": "plugins.\"codex-app-tools@openai-bundled\"",
+        "text": "[plugins.\"codex-app-tools@openai-bundled\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"browser@openai-bundled\"",
+        "text": "[plugins.\"browser@openai-bundled\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"unified-computer-use@openai-bundled\"",
+        "text": "[plugins.\"unified-computer-use@openai-bundled\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"visualize@openai-bundled\"",
+        "text": "[plugins.\"visualize@openai-bundled\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"computer-use@openai-bundled\"",
+        "text": "[plugins.\"computer-use@openai-bundled\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"documents@openai-primary-runtime\"",
+        "text": "[plugins.\"documents@openai-primary-runtime\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"pdf@openai-primary-runtime\"",
+        "text": "[plugins.\"pdf@openai-primary-runtime\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"spreadsheets@openai-primary-runtime\"",
+        "text": "[plugins.\"spreadsheets@openai-primary-runtime\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"presentations@openai-primary-runtime\"",
+        "text": "[plugins.\"presentations@openai-primary-runtime\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"template-creator@openai-primary-runtime\"",
+        "text": "[plugins.\"template-creator@openai-primary-runtime\"]\nenabled = true"
+      },
+      {
+        "name": "plugins.\"code-review@openai-bundled\"",
+        "text": "[plugins.\"code-review@openai-bundled\"]\nenabled = true"
+      },
+      {
+        "name": "windows",
+        "text": "[windows]\nsandbox = \"elevated\""
+      }
+    ]
+  },
+  "codexDigest": "1c68be1ca13a4f5b",
+  "claudeFiles": {
+    "hooks/usage-panel-chip.mjs": "a855b5374de3ba64",
+    "hooks/usage-panel-budget.mjs": "0057843354f12c53",
+    "statusline/statusline.mjs": "b9fdc9d545a668ed",
+    "statusline/usage-cache.mjs": "6c39302d30aa2e95",
+    "statusline/usage-panel.mjs": "7e796506e89b91af"
+  },
+  "recorded": "2026-10-01T08:23:00.814Z"
+}

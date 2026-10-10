@@ -1,0 +1,53 @@
+{
+  "receiver": "vMixer@vmixer2o2",
+  "sessions": {
+    "363ae667-aa19-46d1-bd32-c4922b51386a": {
+      "state": "RESTORED",
+      "attempts": 2,
+      "at": "2026-09-27T08:59:23.973Z",
+      "chip": {
+        "title": "Ecomm run setup on vmixer via dsh",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260927-vmixlaptop2x6-001, source session 363ae667-aa19-46d1-bd32-c4922b51386a. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260927-vmixlaptop2x6-001--363ae667-aa19-46d1-bd32-c4922b51386a.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode absent here; launched in C:\\Users\\vMixer",
+      "receiver_session_id": "6262ad59-5f31-406f-a2e1-e85129ce4418",
+      "confirmed_at": "2026-09-27T09:01:37.319Z",
+      "settings_applied_at": "2026-09-27T09:01:59.954Z"
+    },
+    "ac49e8ee-da4c-4ba8-a020-9870e6a9581e": {
+      "state": "RESTORED",
+      "attempts": 2,
+      "at": "2026-09-27T08:59:23.973Z",
+      "chip": {
+        "title": "Continue quota handoff v2 receiver",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260927-vmixlaptop2x6-001, source session ac49e8ee-da4c-4ba8-a020-9870e6a9581e. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260927-vmixlaptop2x6-001--ac49e8ee-da4c-4ba8-a020-9870e6a9581e.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode absent here; launched in C:\\Users\\vMixer",
+      "receiver_session_id": "4fe44853-6612-44ca-8858-9159cd5d06e2",
+      "confirmed_at": "2026-09-28T00:22:05.376Z",
+      "settings_applied_at": "2026-09-28T00:23:15.109Z"
+    },
+    "f519fe4a-98bc-4a43-93a8-2b0e5d07d72b": {
+      "state": "RESTORED",
+      "attempts": 2,
+      "at": "2026-09-27T08:59:23.973Z",
+      "chip": {
+        "title": "Continue DSH runs management",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260927-vmixlaptop2x6-001, source session f519fe4a-98bc-4a43-93a8-2b0e5d07d72b. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260927-vmixlaptop2x6-001--f519fe4a-98bc-4a43-93a8-2b0e5d07d72b.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode absent here; launched in C:\\Users\\vMixer",
+      "receiver_session_id": "24f20ed5-7890-4625-a080-ac9651d37637",
+      "confirmed_at": "2026-09-27T09:01:06.394Z",
+      "settings_applied_at": "2026-09-27T09:01:50.152Z"
+    }
+  }
+}

@@ -1,0 +1,209 @@
+﻿<!-- Index of the shared brain. One line per note. Content lives in the note files. -->
+<!-- Real path: ~/.claude/shared-brain/ - both agents, all projects. -->
+## Shared operation
+- [vmixer pm bridge update](handoff-2026-10-09-0856-vmixer-pm-bridge-update.md) - CLOSED 10:10 Opus 5.5 [86b2b8]: pm pid 336 on seq 225 code; push at session end
+- [Bridge reliable messaging](handoff-2026-10-08-1742-bridge-reliable-messaging.md) - Opus 5.5 [a9e5c1] 10-09 08:54: built+tested; ndi2 pm down, restart; check seq 229 reply
+- [vmixer RC standby](handoff-2026-10-08-1650-vmixer-remote-standby.md) - Opus 5.5 16:50: transfer+bridge peers done, 11/11 PASS; vmixer pm down
+- [Ecom subagent lanes](handoff-2026-10-08-1025-ecom-final-subagent-lanes.md) - Opus 5.5 12:55Z: DAG 21/21; S6 32/41, 9 FAIL unbuilt; FINAL-REPORT.md
+- [DSH bridge build](handoff-2026-10-08-0940-dsh-bridge-build.md) - Opus 5.5 [f24abd]: 11/11 PASS; ndi2 pm up post-reboot, vmixer down; exec fix user call
+- [Ecom subagent lanes](handoff-2026-10-08-1025-ecom-final-subagent-lanes.md) - Opus 5.5 12:55Z: DAG 21/21; S6 32/41, 9 FAIL unbuilt; FINAL-REPORT.md
+- [Ecom parallel DAG](handoff-2026-10-05-1740-ecom-final-parallel-dag.md) - Opus 5.5 10-08 07:55Z: 16/21; 2 lanes failed on seat quota, relaunch pending
+- [Lead hub standalone](handoff-2026-10-06-1630-lead-hub-standalone.md) - Opus 5.5 10-07 03:40: integration done 1a211b9+d02c4db local; :5180 verified
+- [LeadForge build](handoff-2026-10-06-0915-leadforge-build.md) - Opus 5.5 16:20: lead-app tab 5367bf8 on :5176/#leadforge; M2 needs keys
+- [Lead tool live data + jobs query](handoff-2026-10-06-0820-lead-tool-live-data-and-jobs-query.md) - Opus 5.5: PAUSED, superseded by LeadForge build (step 1 not started)
+- [pm + tools launch](handoff-2026-10-05-1750-pm-and-tools-launch.md) - Opus 5.5 18:12: ndi2 rule live; vmixer FCC 8082 still dropped, vmixer rule left
+- [pm + tools launch](handoff-2026-10-05-1750-pm-and-tools-launch.md) - Opus 5 17:50: both hosts up; 1 elevated firewall rule left, user call
+- [Ecom final seat+path bugs](handoff-2026-10-05-1310-ecom-final-seat-and-path-bugs.md) - Opus 5 16:35: 3 inspections delivered; chain relaunched
+- [Ecom final vmixer runs](handoff-2026-10-05-1215-ecom-final-vmixer-runs.md) - Opus 5.5 12:25: chain pid 26336 live (21 steps), waits on inspections; hard stop waived
+- [Ecom final DSH plan](handoff-2026-10-05-1100-ecom-final-dsh-plan.md) - Opus 5.5 11:20: saved runs + route-check.mjs + snapshot; presets need STEP 0; brain push
+- [AWS Bedrock seat auth](handoff-2026-10-05-0030-aws-bedrock-seat-auth.md) - Opus 5.5 00:30: key+login+credit OK; quotas 0, support case pending user submit
+- [Lead scraper public-opps integration](handoff-2026-10-05-0640-lead-scraper-public-opportunities.md) - Opus 5.5 08:55: all open items fixed; main 60e5607 queued, not pushed
+- [Solar SAM review merge](handoff-2026-10-04-2314-solar-sam-integration.md) - Opus 5.5 10-05: Q15-Q54 merged into decisions + pm; 2 user questions open
+- [Headless builds review](handoff-2026-10-02-1848-headless-builds-review.md) - Opus 5.5 18:48: lead scraper reviewed; all hosts down after reboot
+- [Ecomm canna+commerce builds](handoff-2026-10-02-0350-ecomm-canna-commerce-builds.md) - CLOSED 10-05: user OK on previews 5190-5192
+- [GitHub CI failures lseekv1](handoff-2026-10-01-1007-github-ci-failures.md) - Opus 5.5 10:07: c5f11ff11e fork guards; logs unread, no GitHub auth
+- [Remote standby on](handoff-2026-10-01-0514-remote-standby.md) - Opus 5.5 15:24: RUN-002 closed, fd7ae624da pushed; only vmixer 54a9807b8e open
+- [G2 leads/RFP listing mid-build](handoff-2026-09-30-2246-g2-leads-rfp-listing.md) - Sonnet 5 22:46: 97% quota, Toolbar/FilterPanel need styled-jsx rewrite
+- [Headless builds after reboot](handoff-2026-09-29-2315-headless-builds-after-reboot.md) - Opus 5.5 10:00: superseded by remote-standby note; dsh-run fix uncommitted
+- [Parallel backlog run](handoff-2026-09-29-1940-parallel-backlog-completion.md) - Opus 5.5 23:05: 003/004 running, 002 stopped until Codex 00:33
+- [DSH headless Auto Mode](handoff-2026-09-29-2133-dsh-auto-mode.md) - Opus 5.5 22:50: pushed 244110e30b; 137526dd8c local; sandbox EPERM = design limit
+- [DSH multi-pipeline Stage 1](handoff-2026-09-29-1625-dsh-multi-pipeline-stage1.md) - Opus 5.5 17:10: committed; 2 real parallel smoke runs in flight, check dsh-run list
+- [Headless gateless DSH runs](handoff-2026-09-29-1240-headless-dsh-gateless-runs.md) - Opus 5.5 20:40: queue STOPPED; WRITE-format bug, user chose lenient parser
+- [vmixer services + rerun relay](handoff-2026-09-29-0800-vmixer-services-and-rerun-relay.md) - Opus 5 08:00: DSH/FCC up, mode fix; rerunÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Lead Intelligence -> ndi2](handoff-2026-09-29-lead-intel-handoff-to-ndi2.md) - Opus 5: launched on vmixer, gate EXPIRED, 0ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Lead Intelligence run](handoff-2026-09-29-0630-lead-intelligence-run-prep.md) - Opus 5 07:30: preset+roster+relay all live, userÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Headless ecomm runs](handoff-2026-09-29-0525-headless-dsh-ecomm-runs.md) - Opus 5 00:40: run 1 delivered 7 files (1 seat);ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [SWARM_SELECT_BUILD shipped to gatekeeper](handoff-2026-09-29-0430-swarm-ship-vmixer.md) - Opus 5 04:30: 9be7bd6375 queued; vmixer waits toÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [9be7bd6375 on origin; rebase held](handoff-2026-09-29-0415-vmixer-harness-reconcile-ecomm.md) - Opus 5 04:41: ahead1/behind1; no runs yet; quotaÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Ecomm 6 independent design runs](handoff-2026-09-28-1632-ecomm-swarm-only-and-select-build.md) - Opus 5 18:15: 9 presets live both hosts, brainÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [SWARM_SELECT_BUILD built; agy seats dead](handoff-2026-09-28-2020-swarm-select-build.md) - Opus 5 21:05: green, uncommitted, blocks 6 ecommÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [pm UI run at gate; SWARM_SELECT_BUILD specced](handoff-2026-09-28-1745-capacity-pm-ecomm.md) - Opus 5 19:25: gate bb5acff6 awaits user; newÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Settling test passed](handoff-2026-09-28-1637-image-kind-and-seats.md) - Opus 5 17:10: run alive 429s, 10/11 seatsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [PM inventory + OpenClaw L2](handoff-2026-09-28-0919-pm-inventory-and-openclaw-l2.md) - Opus 5 10:05: L2 queued, DSH live on 9b4db91659;ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [PM completion: all open work in pm](handoff-2026-09-28-0417-pm-completion-operational.md) - Opus 5 06:25: prepare-not-dispatch, 19/19; noÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Handoff 2026-09-28 03:40: swarm any-kind + READ roots](handoff-2026-09-28-0340-swarm-any-kind-and-read-roots.md) - Opus 5.5: 99df2c5899 queued, 797/797, no push
+- [RC + vmixer DSH fix](handoff-2026-09-27-2039-rc-vmixer-fix-dsh.md) - Opus 5 03:32: sidecars merged, queue = 1 staleÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Restart 4 vMixer tasks](handoff-2026-09-28-0315-restart-four-vmixer-tasks.md) - Opus 5.5 03:15: ecomm roster-blocked, OpenClaw L2ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Ecomm item 5 run](handoff-2026-09-27-2045-ecomm-item5-run.md) - Opus 5 21:00: users run mid-flight; seat 401ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [AWS seat build](handoff-2026-09-27-1440-aws-seat-build-ndi2.md) - Opus 5.5 10:40 leg 13: router+docs+SDK deps done, uncommitted; sdk.ts left
+- [vMixer OpenRouter seat 401](handoff-2026-09-27-1857-vmixer-openrouter-seat-401.md) - Opus 5 20:25: hunk intact uncommitted; last stepÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Ecomm DSH run readiness](handoff-2026-09-27-0105-ecomm-dsh-run-vmixer.md) - Opus 5.5 19:05: build path FIXED+proven; seatÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [OpenClaw ChatGPT route](handoff-2026-09-27-0310-openclaw-chatgpt-relay.md) - Opus 5.5 18:40: L1 queued 5fc8371944; L2ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [AWS seat + quota manager](handoff-2026-09-27-1418-aws-seat-quota-manager.md) - Opus 5: AWS CLI+Kiro 2.24.1 in, Kiro RUNS onÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [RC + vmixer DSH/Antigravity](handoff-2026-09-27-0257-rc-vmixer-dsh-antigravity.md) - Opus 5 04:05: fam1 dropped, 4 commits queuedÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Quota handoff as manual Routine](handoff-2026-09-27-0227-quota-handoff-manual-routine.md) - Opus 5 2x6: re-verified, nothing built; next mapÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Archive all Claude Code sessions](handoff-2026-09-27-0216-archive-all-sessions.md) - Opus 5 vmixlaptop2x6: 16/17 archived;ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [RC standby + fleet-sync check](handoff-2026-09-26-2250-rc-standby-fleet-sync-check.md)
+- [DSH runs management](handoff-2026-09-26-1645-dsh-runs-management.md)
+- [DSH session titles + archive](handoff-2026-09-26-1645-dsh-session-titles-archive.md)
+- [Automatic Quota Handoff](handoff-2026-09-26-1213-automatic-quota-handoff.md)
+- [lower startup + handoff tokens](handoff-2026-09-26-0022-lower-startup-and-handoff-tokens.md)
+- [resume last agents + Remote Control](handoff-2026-09-25-0650-resume-last-agents-rc.md)
+- [Handoff 2026-09-22/25: automate handoff rule](handoff-2026-09-22-auto-handoff-window-question.md)
+- [canna/commerce transfer](handoff-2026-09-25-0355-canna-commerce-swarm-build-prep.md)
+- [DSH PWA install button](handoff-2026-09-25-0207-dsh-pwa-install-button.md)
+- [GitHub workflow run failed - gates fixed, re-verÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦](handoff-2026-09-25-0200-github-workflow-run-failed.md)
+- [DSH local LLM context overflow](handoff-2026-09-24-0020-dsh-local-llm-context-overflow.md)
+- [vmixer2o2 OpenRouter relay-base](handoff-2026-09-24-0015-vmixer2o2-openrouter-relaybase.md)
+- [FCC system-wide fix](handoff-2026-09-23-2200-fcc-systemwide-fix.md)
+- [vmixer2o2 seat fix commit + DSH sync](handoff-2026-09-23-1230-vmixer2o2-seat-fix-commit-sync.md)
+- [DSH brand asset export](handoff-2026-09-23-0435-dsh-brand-asset-export.md)
+- [DSH fix plan - user-chosen solutions](handoff-2026-09-23-0200-dsh-fix-plan-decisions.md)
+- [DSH coordination record - ONE owner, all sessions](handoff-2026-09-22-2130-dsh-swarm-readiness-gate-commerce.md)
+- [DSH build sync + agy pool/OpenRouter](handoff-2026-09-22-1738-dsh-build-sync-agy-pool-openrouter.md)
+- [DSH install sync check](handoff-2026-09-23-0021-dsh-install-sync-check.md)
+- [local-llm routing targets - Ãƒâ€šÃ‚Â AUTOSTART ROOT CAUÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦](handoff-2026-09-18-0121-local-llm-routing-targets.md)
+- [moe-cache task 2 verify](handoff-2026-09-22-1900-moe-cache-task2-verify.md)
+- [local LLM optimization status question - Ãƒâ€šÃ‚Â CLOSED](handoff-2026-09-22-1430-local-llm-status-question.md)
+- [parallel-build benchmark via DSH council+swarm](handoff-2026-09-22-parallel-build-benchmark.md)
+- [members-only marketplace platform](handoff-2026-09-22-0412-members-only-marketplace-platform.md)
+- [DSH swarm/power-estimate question](handoff-2026-09-22-dsh-swarm-power-estimate-question.md)
+- [DSH build+secrets sync to vmixer - Ãƒâ€šÃ‚Â CLOSED](handoff-2026-09-21-1814-dsh-vmixer-build-secrets-sync.md)
+- [CheaperInference key entry](handoff-2026-09-21-1715-cheaperinference-key-entry.md)
+- [gatekeeper parser fix CLOSED](handoff-2026-09-21-2300-vmixer-gatekeeper-entry-fix.md)
+- [check outstanding work](handoff-2026-09-21-1900-check-outstanding-work-quota-stop.md)
+- [DSH incomplete runs audit](handoff-2026-09-21-0218-dsh-run-failures-audit.md)
+- [vmixer2o2 fleet check-in](handoff-2026-09-21-1640-vmixer2o2-fleet-checkin.md)
+- [DSH down on vMixer](handoff-2026-09-18-2112-dsh-down-vmixer.md)
+- [archive all runs](handoff-2026-09-21-archive-all-runs.md)
+- [CheaperInference swarm fix](handoff-2026-09-20-2205-cheaperinference-swarm-fix.md)
+- [DSH permissions, UI, CheaperInference](handoff-2026-09-20-1538-agent-permissions-dsh-ui-cheaperinference.md)
+- [agent write permissions + DSH UI controls](handoff-2026-09-20-0523-agent-permissions-dsh-ui.md)
+- [DSH council-to-swarm and gatekeeper](handoff-2026-09-20-0456-dsh-council-swarm-gatekeeper.md)
+- [cheapinference.com web-search QUOTA STOP](handoff-2026-09-19-1224-search-cwd-cheapinference-quota-stop.md)
+- [DSH council not going to swarm QUOTA STOP](handoff-2026-09-19-1133-dsh-council-to-swarm-quota-stop.md)
+- [fix Free Claude Code](handoff-2026-09-18-2357-fix-free-claude-code-quota-stop.md)
+- [search-cwd web-search QUOTA STOP](handoff-2026-09-18-2127-search-cwd-quota-stop.md)
+- [long-term sync plan](handoff-2026-09-21-0530-long-term-sync-plan.md)
+- [DSH quota work account](handoff-2026-09-21-0640-dsh-quota-work-account.md)
+- [usage panel render QUOTA STOP](handoff-2026-09-21-0530-usage-panel-render-quota-stop.md)
+- [check brain, resume agents task](handoff-2026-09-21-0522-check-brain-resume-agents.md)
+- [second Claude seat setup](handoff-2026-09-21-0244-second-claude-seat-setup.md)
+- [second Claude Code account plan](handoff-2026-09-21-0300-second-claude-account-plan.md)
+- [app parity ndi2 vs vMixer](handoff-2026-09-18-1039-app-parity-ndi2-vmixer.md)
+- [DSH local-writer route](handoff-2026-09-18-0900-dsh-local-writer-route.md)
+- [DSH out of sync + vMixer secrets](handoff-2026-09-18-0731-dsh-vmixer-sync-secrets.md)
+- [DSH OpenRouter key](handoff-2026-09-18-dsh-openrouter-fix.md)
+- [OpenClaw prompt optimizer](handoff-2026-09-18-0130-openclaw-prompt-optimizer.md)
+- [llama benchmarks](handoff-2026-09-18-0110-llama-benchmarks.md)
+- [llama.cpp moe-cache setup](handoff-llama-cpp-moe-cache-setup.md)
+- [llama-DSH wiring](handoff-2026-09-17-2110-llama-dsh-wiring.md)
+- [DSH OpenRouter key](handoff-2026-09-18-0133-dsh-openrouter-key.md)
+- [vMixer llama DSH seat](handoff-2026-09-17-2132-vmixer-llama-dsh-seat.md)
+- [token benchmark + shared-brain reconciliation](handoff-2026-09-17-0315-token-benchmark-and-reconciliation.md)
+- [all 3-run code live, pm refresh, DSH fixes, sync](handoff-2026-09-17-0216-dsh-all-live-pm-sync.md)
+- [council fixes P2 onward](handoff-2026-09-17-0155-council-fixes-p2.md)
+- [DSH fixes push + pm](handoff-2026-09-16-2155-dsh-fixes-and-pm.md)
+- [Antigravity quota seats down](handoff-antigravity-quota-seats-down.md)
+- [pm build](handoff-pm-build.md)
+- [multi-machine sync](handoff-multi-machine-sync.md)
+- [marketing screenshots](handoff-2026-09-16-marketing-screenshots.md)
+- [three broken DSH runs completed](handoff-dsh-three-run-completion.md)
+- [sharedclone mirror](handoff-sharedclone-mirror.md)
+- [gatekeeper push 2026-09-15](handoff-gatekeeper-push-2026-09-15.md)
+- [ChatGPT brain access](handoff-chatgpt-brain-access.md)
+- [DSH saved runs + gatekeeper queue](handoff-distributed-dsh-runs.md)
+- [vMixer clone-repair lookup](handoff-vmixer-clone-repair-lookup.md)
+- [VMIXER2O2 system repair](handoff-vmixer-system-repair.md)
+- [Antigravity add seats](handoff-antigravity-add-seats.md)
+- [DSH port 3080 launch](handoff-dsh-port-3080-launch.md)
+- [search-cwd web query](handoff-search-cwd-web-query.md)
+- [DSH pipeline approval control](handoff-dsh-pipeline-approval.md)
+- [Antigravity language-server search](handoff-antigravity-language-server-search.md)
+- [DSH model choice](handoff-dsh-model-choice.md)
+- [DSH run continuation](handoff-dsh-run-continuation.md)
+- [DSH on two machines](handoff-dsh-two-machines.md)
+- [Shared memory protocol](shared-memory-protocol.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â one store above all projects, shared withÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Shared agent log](shared-agent-log.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â append-only timeline of what each agentÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH brain wiring](handoff_dsh_brain_wiring.md)
+- [usage-panel scheduled run](handoff-usage-panel-scheduled-run.md)
+## Standing policy
+- [Classifier block = one line](feedback_classifier_block_one_line.md) - auto-mode block: one line, ask to switch mode, then wait
+- [DSH seat policy](feedback_dsh_seat_policy.md) - paid = deepseek+codex(+claude), free seats do grunt work
+- [Last active agents come from the handoffs](feedback_last_active_agents_from_handoffs.md) - rank handoff-*.md by Updated/mtime across allÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [ChatGPT shared-brain permission](chatgpt-shared-brain-permission.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â standing user authorization forÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Fix, don't explain](fix-dont-explain.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â apply fixes silently; no rationale unlessÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [No live git pushes](no-live-git-pushes.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â hold all pushes until right before theÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Nothing without permission](nothing-without-permission.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â agents must ask before acting or spending;ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Agents self-identify by model](agents-self-identify-by-model.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â every DSH agent names its model, never aÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Caveman mode default](feedback_caveman_mode.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â user wants caveman style active everyÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [No analogies](feedback_no_analogies.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â explain with mechanism and file names,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Say "Claude Code", not "me"](feedback_name_claude_code.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â caveman style must not collapse the agentÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [No unsolicited legal advice](feedback_no_unsolicited_legal_advice.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â never bolt legal or compliance commentaryÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Test before instructing the user](feedback_test_before_instructing_user.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â no instruction to the user until every stepÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Never tell the user to run it](feedback_never_tell_user_to_run_it.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â if the user typed a task the agent does it;ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Weekly 98% stop](feedback_weekly_98_stop.md) - Ãƒâ€šÃ‚Â at 98% weekly quota stop all agents, handoffÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Long-session and quota handoff](quota-handoff-protocol.md) - checkpoint at 100k/4h/95%, finish at 150k/8h/99%;ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [One click, never a checklist](feedback_one_click_bundling.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â bundle every scriptable user-side step intoÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [ndi2 is the code master; vMixer is its clone](feedback_ndi2_is_code_master.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â one agent mind across machines; vMixerÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Efficiency rules](rules/efficiency.md) - Ãƒâ€šÃ‚Â approved token-efficiency rules 1-110,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Selectable choices](feedback_selectable_choices.md) - offer picks/orderings as selectable options,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Step by step = one step, one question, then wait](feedback_step_by_step_one_at_a_time.md) - Ãƒâ€šÃ‚Â one step or one question per message, then waitÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+## Git
+- [sharedclone mirror](sharedclone-mirror.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â non-authoritative ChatGPT-readable copy ofÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Push requests](push-requests.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â the queue agents file committed work into;ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Git push method](git-push-method.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â how a push actually gets out: PowerShellÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Git gatekeeper agent](git-gatekeeper-agent.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â one agent owns every push; all other agentsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Git push cue](git-push-cue.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â "ok lets push the updates" = scan everyÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Git push method](reference_git_push_method.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â Bash push is blocked by the classifier; useÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+## DSH, council, harness
+- [DSH saved runs](dsh-runs.md) - one line per council, pipeline or swarm run savedÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH remembered facts](dsh-memory.md) - what DSH agents remembered, from every machine,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH council plugin](dsh-council-plugin.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â the five-seat council, its two-factorÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Free Claude Code setup](free-claude-code-setup.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â the local proxy, wired into DSH two ways,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH swarm](dsh-swarm-disabled.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â why it was off, and the 2026-09-03 localÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH harness gotchas](dsh-harness-gotchas.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â build and plugin traps in the fork.
+- [DeepSeek Harness fork](deepseek-harness-fork.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â two repos: private working fork, andÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [dshklv1 public repo](dshklv1-public-repo.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â it now ships the proxy, the launcher and aÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH pipeline chain](dsh-pipeline-chain.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â council - Ãƒâ€šÃ‚Â¾-swarm - Ãƒâ€šÃ‚Â¾-council as
+- [DSH swarm profiles](dsh-swarm-profiles.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â economy vs fastest: paid plans and reviews,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH profile plugin install](project_dsh_profile_plugin_install.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â bundle patch is not enough; the profileÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH target architecture](dsh-target-architecture.md) - Ãƒâ€šÃ‚Â Brain / PM / Context Compiler / DSH / agentsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH runtime routing](dsh-runtime-routing.md) - Ãƒâ€šÃ‚Â canonical resolver order, cost classes,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH user profiles](dsh-user-profiles.md) - Ãƒâ€šÃ‚Â entitlement chain, admin/manager/worker/clientÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH platform completion bar](dsh-platform-completion.md) - Ãƒâ€šÃ‚Â seven behaviors that must be demonstratedÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DSH team platform plan](project_dsh_team_platform.md) - Ãƒâ€šÃ‚Â 2026-09-11 multi-user hosting plan, P0-P6,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Antigravity (agy) headless seat](project_antigravity_agy_seat.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â no agy binary; attach to the IDE languageÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+## Projects
+- [Agent project manager](project_agent_project_manager.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â standalone shared work tracker for humansÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Clone migration to vMixer](project_clone_migration_vmixer.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â ndi2 cloned to VMIXER2O2; one-clickÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Green energy platform (SunShare)](project_green_energy_platform.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â standalone solar-funding app, its deployÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [DreamHost deploy constraints](project_dreamhost_deploy_constraints.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â no standalone mode, MySQL not Postgres, PHPÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Shared workdir collisions](feedback_shared_workdir_collisions.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â with a peer agent in the same directory,ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Antigravity quota tool](project_antigravity_quota_tool.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â loopback quota call; since 2026-09-11 readsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Antigravity seat pool](project_antigravity_seat_pool.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â many Google accounts on one machine:ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [LeadForge prospector](project_leadforge.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â 500-business Metro Manila pilot inÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [LeadForge API findings](reference_leadforge_api_findings.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â Google's credit is gone, Grab has noÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+## Environment and cost
+- [Claude Code status line](claude-code-statusline.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â real quota without the usage menu, and theÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Budget parameters](user-budget-parameters.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â $60/mo target and the measuredÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [Machine registry](machines.md) - Ãƒâ€šÃ‚Â per-host role, hardware and local LLMÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+- [pnpm / corepack EPERM](pnpm-corepack-eperm.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â corepack enable fails here; use global pnpmÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+## History exports (read-only evidence)
+- [History exports index](history/README.md) - Ãƒâ€šÃ‚Â - Ãƒâ€šÃ‚Â per machine under `history/<host>/`:ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+
+- [G6 run-monitor + desktop-agent](handoff-2026-09-30-0000-g6-run-monitor-desktop-agent.md) - Sonnet 5 00:00: run-monitor done+tested; desktop-agent lib/store/app written, html/css/server/tests left
+
+- [Solar SAM Lead Intelligence integration plan](solar-sam-lead-intelligence-integration-plan.md) â€” development-only extension plan; prior-answer text inaccessible, exact preservation unverified.
+- [Solar SAM integration decisions](solar-sam-integration-decisions.md) â€” Opus 5.5: Q1-Q54 locked; pm WP0-WP7 bodies updated, WP0 next
+- [Resume machine handoffs](handoff-2026-10-05-1222-resume-machine-handoffs.md) - Opus 5 12:35: quota 100%; brain clean/level, vmixer unreachable, sidecar is a subset

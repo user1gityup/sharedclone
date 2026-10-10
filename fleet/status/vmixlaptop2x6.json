@@ -1,0 +1,76 @@
+{
+  "host": "vmixlaptop2x6",
+  "brainKey": "present",
+  "dshCredentials": "synced",
+  "secrets": {
+    "fcc-.env": "same",
+    "billboard-platform-.env": "same",
+    "billboard-platform-.env.local": "same",
+    "billboard-platform-streaming-server-.env": "same",
+    "green-energy-platform-.env.local": "same",
+    "pm-remote-env": "same"
+  },
+  "repos": {
+    "deepseek-harness": {
+      "state": "current",
+      "branch": "feat/heterogeneous-teammates",
+      "head": "fd7ae624da",
+      "behind": 0,
+      "ahead": 0
+    },
+    "dsh-council-plugins": {
+      "state": "current",
+      "branch": "main",
+      "head": "4d5267383e",
+      "behind": 0,
+      "ahead": 0
+    },
+    "green-energy-platform": {
+      "state": "current",
+      "branch": "main",
+      "head": "d9b55334af",
+      "behind": 0,
+      "ahead": 0
+    },
+    "billboard-platform": {
+      "state": "other-branch",
+      "branch": "main",
+      "head": "3a61f5e73f",
+      "behind": null,
+      "ahead": null
+    },
+    "free-claude-code": {
+      "state": "offline",
+      "branch": "main",
+      "head": "8ac3c6cd71",
+      "behind": null,
+      "ahead": null
+    }
+  },
+  "reposCheckedAt": "2026-10-10T17:15:13.149Z",
+  "dsh": {
+    "status": "current",
+    "head": "fd7ae624daa1d2a4e0a38d4c11d85dda977b4644"
+  },
+  "apps": {
+    "role": "master",
+    "versions": {
+      "claudeCode": "2.1.263",
+      "codex": "0.153.4",
+      "antigravity": "2.15.0"
+    },
+    "claudeDigest": "4579177b371b58e3",
+    "codexDigest": "1c68be1ca13a4f5b",
+    "items": null,
+    "at": "2026-10-10T16:59:12.497Z"
+  },
+  "tools": {
+    "node": "v24.19.0",
+    "git": true,
+    "pnpm": true,
+    "teamviewer": true,
+    "codexLogin": true,
+    "claudeLogin": true
+  },
+  "seen": "2026-10-10T17:31:33.981Z"
+}

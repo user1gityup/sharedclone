@@ -1,0 +1,25 @@
+# Notes are text with LF endings on every machine, so a file saved with CRLF
+# on one machine does not show as rewritten on the other.
+*.md text eol=lf
+
+# Tooling: pinned too, so a clone on one machine checks out byte-identical
+# files to another and `install` does not see a difference that is only line
+# endings. Batch files keep CRLF, which cmd.exe needs.
+*.mjs  text eol=lf
+*.json text eol=lf
+*.ps1  text eol=crlf
+*.cmd  text eol=crlf
+
+# Files several agents append to. The union driver keeps both machines' lines
+# instead of stopping on a conflict; brain-sync then reconciles the push queue
+# so a request one machine closed is not reopened by the other.
+MEMORY.md            merge=union
+shared-agent-log.md  merge=union
+push-requests.md     merge=union
+dsh-runs.md          merge=union
+dsh-memory.md        merge=union
+
+# DSH saved runs, one file per run, and the sealed DSH credentials. Plain text so
+# a conflict can be carried as a sidecar; brain-sync resolves both itself.
+dsh-presets/**/*.yaml  text eol=lf
+dsh-credentials.enc    text eol=lf

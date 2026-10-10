@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum OrderState {
+  DRAFT
+  AWAITING_PAYMENT
+  PAYMENT_PROCESSING
+  PAID
+  PARTIALLY_FULFILLED
+  FULFILLED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentRail {
+  STRIPE
+  STRIPE_CONNECT
+  SOLANA_DEVNET
+  MANUAL_CRYPTO
+}
+
+enum PaymentRequestStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  EXPIRED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ShipmentStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  RETURNED
+}
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_CONFIRMED_BY_VENDOR
+  ORDER_SHIPPED
+  PAYMENT_CONFIRMED
+  VENDOR_APPLICATION_APPROVED
+  VENDOR_APPLICATION_REJECTED
+  NEW_VENDOR_APPLICATION
+  ACCOUNT_LOW_BALANCE
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  role         UserRole   @default(CUSTOMER)
+  status       UserStatus @default(ACTIVE)
+  // users-service opaque id (sub claim from JWT), NOT an autoincrement
+  usersId      String     @unique
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  vendor           Vendor?
+  cart             Cart?
+  orders           Order[]
+  notifications    Notification[]
+  notificationRules NotificationRule[]
+  pushSubscriptions PushSubscription[]
+  paymentRequests  PaymentRequest[]
+  payouts          Payout[]
+  reviews          Review[]
+}
+
+model Vendor {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
+  businessName    String
+  description     String?
+  status          UserStatus @default(PENDING)
+  stripeAccountId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  products  Product[]
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  vendorId      String
+  vendor        Vendor   @relation(fields: [vendorId], references: [id])
+  name          String
+  description   String?
+  basePrice     Int      // minor units
+  currency      String   @default("usd")
+  category      String?
+  imageUrl      String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  variants    Variant[]
+  cartLines   CartLine[]
+  orderLines  OrderLine[]
+  reviews     Review[]
+}
+
+model Variant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  name      String  // e.g. "Size L", "Color Red"
+  sku       String  @unique
+  price     Int?    // minor units; overrides basePrice if set
+  stock     Int     @default(0)
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventoryItems InventoryItem[]
+  orderLines     OrderLine[]
+}
+
+model InventoryItem {
+  id           String   @id @default(cuid())
+  variantId    String
+  variant      Variant  @relation(fields: [variantId], references: [id])
+  location     String?
+  quantity     Int      @default(0)
+  reservedQty  Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines CartLine[]
+}
+
+model CartLine {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  variantId String?
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  state         OrderState @default(DRAFT)
+  totalMinor    Int        @default(0) // minor units
+  currency      String     @default("usd")
+  shippingAddress String?
+  notes         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  lines           OrderLine[]
+  paymentRequests PaymentRequest[]
+  shipments       Shipment[]
+}
+
+model OrderLine {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    Variant? @relation(fields: [variantId], references: [id])
+  priceMinor Int     // minor units at time of order
+  quantity   Int
+  vendorId   String  // denormalized for easy vendor filtering
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model PaymentRequest {
+  id            String               @id @default(cuid())
+  orderId       String
+  order         Order                @relation(fields: [orderId], references: [id])
+  userId        String
+  user          User                 @relation(fields: [userId], references: [id])
+  rail          PaymentRail
+  method        String               // "card" | "sol" | "usdc_sol" | "eth" | "btc"
+  amountMinor   Int                  // minor units
+  nonce         String               @unique
+  status        PaymentRequestStatus @default(PENDING)
+  confirmedAt   DateTime?
+  expiresAt     DateTime
+  stripePaymentIntentId String?
+  solanaReference        String?
+  solanaSignature        String?
+  manualAddress          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Payout {
+  id            String       @id @default(cuid())
+  vendorId      String
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  amountMinor   Int          // minor units
+  rail          PaymentRail
+  status        PayoutStatus @default(PENDING)
+  stripeTransferId String?
+  solanaSignature   String?
+  note          String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Shipment {
+  id            String         @id @default(cuid())
+  orderId       String
+  order         Order          @relation(fields: [orderId], references: [id])
+  vendorId      String
+  trackingNumber String?
+  carrier       String?
+  status        ShipmentStatus @default(PENDING)
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+}
+
+model NotificationRule {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  eventKey      String
+  emailEnabled  Boolean  @default(false)
+  pushEnabled   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, eventKey])
+}
+
+model PushSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  endpoint    String
+  p256dh      String
+  auth        String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, endpoint])
+}
+
+model IntegrationSetting {
+  key         String   @id
+  value       String   // AES-256-GCM encrypted
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+}
+
+model HouseRevenue {
+  id            String   @id @default(cuid())
+  source        String   // e.g. "ORDER_SALE"
+  grossAmountMinor Int   // minor units
+  amountMinor   Int      // minor units — what the house keeps
+  splitBasisPoints Int?  // basis points (0-10000) applied
+  vendorId      String?
+  note          String?
+  createdAt     DateTime @default(now())
+}

@@ -1,0 +1,15 @@
+    apps/debug-plan:
+      name: App review - debug and dev plan
+      query: >-
+        Read the file
+        ~\Documents\claudecode\APP-REVIEW-COUNCIL-PROMPT.md in full,
+        and follow it exactly as your instructions for this run. It is the
+        complete prompt and it is authoritative: it carries the scope (both
+        billboard-platform and green-energy-platform, working trees including
+        uncommitted work), the measured shared-code divergence, the paired-fix
+        rule that decides the shape of every item, and what each of the three
+        stages must produce. Do not summarise it and do not substitute a plan of
+        your own. Nothing is committed or pushed by any seat. Each agent names
+        its own model in anything the user reads. Stop at each stage's approval
+        gate as the file instructs.
+      autoAdvance: false

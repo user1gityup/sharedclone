@@ -1,0 +1,17 @@
+    ecomm/final-i3-ecom:
+      name: Ecom final I-3 - existing Ecom inspection (read-only)
+      stages: swarm
+      autoAdvance: true
+      mode: economy
+      query: |-
+        ECOM FINAL BUILD - PHASE 1 INSPECTION (READ-ONLY). Saved by Claude Opus 5.5 on 2026-10-05 for the user to run on vmixer2o2.
+        Plan: ~/Documents/claudecode/dsh-runs/ecom-final/DSH-NEXT-STEPS.md. Spec: ~/Downloads/ecom_final_build_prompt_updated.md (if absent on this machine, use the plan file).
+        SEATS (user pick): harness main agent = free-claude. Council, swarm and review seats = openai, claude, claude-work only. Set the DSH roster to exactly these before starting.
+        STEP 0 (before anything else): run node ~/.claude/shared-brain/ecom-final/route-check.mjs. If it exits 2, stop, write nothing, and report its NO-GO lines verbatim. If it exits 0, use the seat routing picks it prints for this unit.
+        RULES: read-only inspection. Write exactly one file, named below, and nothing else. Never edit billboard-platform, green-energy-platform, users, commerce, canna or any preview tree. No git commit, no push, no settings writes, no secret-shaped text. If a path named below does not exist on this machine, list it under MISSING in the output file and continue with what exists; do not invent content.
+        OUTPUT FILE goes in ~/Documents/claudecode/dsh-runs/ecom-final/docs/ (create the folder).
+
+        OUTPUT: inspection-ecom.md
+        User decisions: keep 3 repos (users = identity, commerce = marketplace, canna = regulated path); preview code will later be copied to build/ecom-final branches.
+        Inspect repos ~/Documents/claudecode/{users,commerce,canna} (BUILD-BRIEF.md, README.md) and preview trees ~/Documents/claudecode/dsh-runs/build-ecomm-{users,commerce,canna}-preview (prisma/schema.prisma, src/, tests, package.json, DSH-AUTO-REPORT.md, USERS-CONTRACT.md) plus ~/Documents/claudecode/dsh-runs/build-ecomm-users/CONTRACT.md. The preview trees live on ndi2; if missing here, read the copy at ~/.claude/shared-brain/ecom-final/snapshot/{users,commerce,canna} instead (preview trees minus node_modules, .next, logs, .env) and say in the output which source was used; report MISSING only if both are absent.
+        For each tree: models/enums, API routes, pages, which features are real end to end vs stub/TODO/fake data, test commands and last results, which Billboard modules were ported. Then a gap list against spec sections 6-18 and 21: separate wholesale catalog, MOQ, case packs, quantity breaks; five tiers + admin benefits + platform overrides; Retail+Vendor on one account + separate Admin; vendor application + approval; wholesale approval; distributed inventory (owner, location, reservations); master/child orders + split fulfillment; payments/refunds/splits; accounting; age-restricted and cannabis gates; seeded test users.

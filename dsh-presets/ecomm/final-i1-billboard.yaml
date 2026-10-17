@@ -1,0 +1,16 @@
+    ecomm/final-i1-billboard:
+      name: Ecom final I-1 - Billboard inspection (read-only)
+      stages: swarm
+      autoAdvance: true
+      mode: economy
+      query: |-
+        ECOM FINAL BUILD - PHASE 1 INSPECTION (READ-ONLY). Saved by Claude Opus 5.5 on 2026-10-05 for the user to run on vmixer2o2.
+        Plan: ~/Documents/claudecode/dsh-runs/ecom-final/DSH-NEXT-STEPS.md. Spec: ~/Downloads/ecom_final_build_prompt_updated.md (if absent on this machine, use the plan file).
+        SEATS (user pick): harness main agent = free-claude. Council, swarm and review seats = openai, claude, claude-work only. Set the DSH roster to exactly these before starting.
+        STEP 0 (before anything else): run node ~/.claude/shared-brain/ecom-final/route-check.mjs. If it exits 2, stop, write nothing, and report its NO-GO lines verbatim. If it exits 0, use the seat routing picks it prints for this unit.
+        RULES: read-only inspection. Write exactly one file, named below, and nothing else. Never edit billboard-platform, green-energy-platform, users, commerce, canna or any preview tree. No git commit, no push, no settings writes, no secret-shaped text. If a path named below does not exist on this machine, list it under MISSING in the output file and continue with what exists; do not invent content.
+        OUTPUT FILE goes in ~/Documents/claudecode/dsh-runs/ecom-final/docs/ (create the folder).
+
+        OUTPUT: inspection-billboard.md
+        Inspect ~/Documents/claudecode/billboard-platform. Cover, with exact file paths and line refs: lib/auth.js, session.js, totp.js (pending-2FA cookie), googleAuth.js, metaAuth.js, passwordReset.js, settings.js + IntegrationSetting (AES-256-GCM vault), stripe.js, stripeConnect.js, paymentConfirm.js (confirmPaymentRequest), payments.js, payouts API, houseRevenue.js, treasury.js, Transaction model, notifications/, nav/ + roleAccess.js, uploads.js, rateLimit.js, devOnly.js, TeamMembership/ManagedAccount (org model), seed/test users in scripts/ or prisma/. Read CONTINUE.md, WORKFLOW.md, PRISMA-CHANGES.md and git log for original prompts and fix history. For each: what it does, constraints, whether it suits Ecom (users identity / commerce marketplace / canna regulated) and what must change.
+        Before and after: record git rev-parse HEAD and git status --short of billboard-platform in the output; any difference = run failed.

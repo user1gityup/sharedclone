@@ -1,0 +1,8 @@
+    dsh/agent-permissions:
+      name: Agent permissions — council decision, no swarm
+      stages: council
+      autoAdvance: false
+      query: |-
+        Read ~\Documents\Codex\2026-09-13\can-2\outputs\dsh-granular-agent-permissions-council-prompt.md in full and treat it as the authoritative specification for this run.
+
+        This is a council-only decision run: research, proposals, review, and one vote. No swarm stage, no files written, no settings changed, no commits, no pushes. If anything must be built locally, the final answer returns the complete code, the fastest collision-free swarm path, and a ready-to-save swarm run (stages swarm,review, mode fastest) exactly as the specification describes; that run is saved with save_pipeline_preset only after the user approves the verdict, and it starts nothing until pressed. Stop at the approval gate. Every seat names its own model in anything the user reads.

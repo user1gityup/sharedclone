@@ -1,0 +1,219 @@
+    pm/ui-samples:
+      name: PM UI samples - 3 distinct directions (design only)
+      stages: council,swarm
+      autoAdvance: false
+      query: >
+        # PM UI SAMPLE RUN — three visually distinct samples, design only
+
+
+        DESIGN ONLY. Do NOT implement, modify or refactor the production Project
+        Manager.
+
+        Do NOT touch ~/.claude/shared-brain/pm/*.mjs, pm.db, or any pm module.
+        No commits, no
+
+        pushes, no settings writes. The deliverable is sample HTML pages and
+        nothing else.
+
+
+        ## What Project Manager is
+
+        A standalone work tracker shared by a human and by agents across two
+        machines. It holds
+
+        projects, tasks and runs in one SQLite store, and it is the resume
+        authority: an agent
+
+        reads it to find out what it was doing. Live at 127.0.0.1:4480. It
+        currently holds
+
+        11 projects and 129 tasks, 128 of them open. Two hosts: ndi2 (alias
+        vmixlaptop2x6) and
+
+        vmixer2o2. Work is executed by DSH council/swarm runs, by Claude Code
+        sessions, and by
+
+        Codex, each on a named provider and model.
+
+
+        ## Deliverable
+
+        THREE standalone samples, A, B and C below, each ONE self-contained
+        .html file:
+
+        - Everything inline. No build step, no bundler, no npm, no external
+        network at runtime:
+          no CDN script, no remote font, no remote image. Inline SVG only for any icon or chart.
+        - Light AND dark both first-class, with a manual switch in the page that
+        actually works.
+          Define colors as CSS custom properties on :root and redefine them for dark.
+        - Must render correctly at phone width (360px) with no horizontal page
+        scroll, and at
+          desktop width. Mobile is near-full-functionality, not a cut-down view.
+        - Populated with realistic PM data, not lorem ipsum: real-looking
+        project and task names
+          for this kind of work (DSH council fixes, harness builds, quota handoffs, brain sync,
+          ecomm service builds), real machine names ndi2 and vmixer2o2, real provider/model
+          identities (Claude Opus 5, Claude Sonnet 5, DeepSeek-V3, Gemini, GPT, Kimi).
+        - Static mockups are fine; interactive touches are welcome where they
+        cost nothing
+          (theme switch, expand-in-place a row, open the command palette, switch a view).
+        A FOURTH sample D is optional, and only worth making if it genuinely
+        combines the
+
+        strongest ideas of A, B and C and looks clearly different from all
+        three.
+
+
+        ## Approved design decisions — every sample must honour all of these
+
+        1.  HOME: hybrid. Prominent current-work area at the top, projects and
+        tasks below.
+            The current-work area is a "Continue Where You Left Off" launcher.
+        2.  DENSITY: adaptive. Compact by default, with a dense mode as a toggle
+        or saved view.
+
+        3.  NAVIGATION: adaptive. Sidebar on desktop, condensed drawer on small
+        screens,
+            command palette available everywhere.
+        4.  PROJECTS: hybrid. Compact rows by default, expandable detail,
+        optional card view.
+
+        5.  TASKS: hybrid. Compact rows by default, expandable rich detail,
+        optional board view.
+
+        6.  RESUME: a Recent Work launcher focused on the latest work, with
+        prominent
+            Resume / Open / Launch actions, built to minimise session-recovery effort.
+        7.  DETAIL: hybrid. Expand in place for quick detail, full detail view
+        for complex ones.
+
+        8.  MACHINES: show the machine assignment directly, plus basic health —
+        Online, Busy,
+            Offline.
+        9.  AGENTS: show the agent AND its provider/model. Do not hide execution
+        identity.
+
+        10. QUOTA/COST: hybrid. Compact percentages in normal views; expanded
+        resource detail
+            with bars or gauges and budget/cost figures.
+        11. STATUS: coloured chips WITH icons, never colour alone. The
+        vocabulary is exactly:
+            READY, RUNNING, PAUSED, WAITING, BLOCKED, FAILED, VERIFY, COMPLETE, ARCHIVED.
+        12. ATTENTION: a compact top alert strip for immediate awareness, plus a
+        dedicated
+            Attention panel for full detail.
+        13. ROUTINES: a dedicated Routines area plus contextual shortcuts beside
+        the relevant
+            task or run. Examples: quota handoff, checkpoint/archive, recovery, sync.
+        14. CREATING WORK: a fast, familiar "+ New" button, with guided fields
+        appearing when
+            more structure is needed. It can create a Project, a Task or a Run.
+        15. SEARCH: hybrid. Ordinary global search plus a command palette for
+        fast actions.
+
+        16. VISUAL STYLE: clean enterprise dashboard. Professional, restrained,
+        clear hierarchy.
+            NOT console-like, NOT gamer-style, NOT neon-on-black.
+        17. NOTION-INSPIRED CAPABILITIES, all of them: flexible views,
+        table/board/grouped
+            views, structured properties, expandable records, saved views, filters, sorting,
+            grouping. Do NOT clone Notion's visual design.
+        18. MOBILE: near full desktop-equivalent function, including routing,
+        machines,
+            advanced views and configuration where practical.
+        19. ROLES: one shared core, with navigation, actions and detail adapting
+        by role, plus
+            a "View As" for authorised admins and managers. Roles: Admin, Manager, Worker, Client.
+        20. CONFIRMATIONS: configurable. Routine actions (Resume, Open) stay
+        fast; high-impact
+            ones (reroute, stop, archive, delete) confirm. Admins configure the policy.
+        21. THEME: full light and dark, both first-class, manual switch.
+
+        22. DASHBOARD COMPOSITION: hybrid. Cards for high-priority information —
+        Continue,
+            Attention, Machines/system health, Quota/resource summary. Flatter rows and tables
+            for projects, tasks, runs and larger operational data.
+
+        ## Home page hierarchy to follow
+
+        1. Header: search, command palette, + New, theme switch, role / View As
+        where authorised.
+
+        2. Attention strip: count and severity summary, linking to the Attention
+        panel.
+
+        3. Continue Where You Left Off: recent/current work, Resume/Open/Launch,
+        machine +
+           health, agent + provider/model, current status.
+        4. Resource and system summary cards: machines, quota, budget/cost,
+        critical state.
+
+        5. Projects: compact expandable rows, optional card view, filters and
+        saved views.
+
+        6. Tasks and runs: compact rows, expand in place, full detail view,
+        optional board and
+           grouped views.
+        7. Routines: dedicated section plus contextual shortcuts.
+
+
+        ## The three samples
+
+        SAMPLE A — Operational Dashboard. A clean enterprise operations
+        dashboard emphasising
+
+        current work, machines, quota, status and actions.
+
+        SAMPLE B — Project Management, Notion-influenced. A clean enterprise
+        project-management
+
+        layout emphasising flexible views, structured properties, filters,
+        grouping and
+
+        expandable records.
+
+        SAMPLE C — Compact DSH Command Center. A higher-density operational
+        layout emphasising
+
+        speed, resume and launch, machines, agents and current run state, still
+        in the approved
+
+        enterprise visual language.
+
+        They must be visually DISTINCT from one another — different layout
+        structure, different
+
+        type scale, different use of colour and space — while all obeying the 22
+        decisions.
+
+
+        ## How to work
+
+        - Every seat names its own exact model in its reply.
+
+        - Council stage: agree the shared design language first — the colour
+        tokens for light
+          and dark, the type scale, the spacing scale, the status chip design covering all nine
+          states, and how each of A, B and C will differ. Then split the samples into units so
+          two seats never write the same file.
+        - Swarm stage: each unit produces ONE complete .html file as its answer,
+        in full, ready
+          to open in a browser. No placeholders, no "rest omitted", no TODO.
+        - Judge a sample on whether it honours all 22 decisions, whether it
+        reads as a
+          professional enterprise tool, and whether it is genuinely different from its siblings.
+
+        ## Out of scope
+
+        No production PM code. No changes to pm.db, pm/*.mjs, settings.yaml or
+        the harness.
+
+        No legal, compliance or licensing commentary. No cost estimates for the
+        user's budget
+
+        unless asked. Stop at the review gate rather than proceeding to
+        implementation: the
+
+        user reviews the samples and picks or combines a direction before
+        anything is built.

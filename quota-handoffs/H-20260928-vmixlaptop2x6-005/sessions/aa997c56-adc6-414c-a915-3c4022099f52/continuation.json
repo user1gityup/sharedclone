@@ -1,0 +1,49 @@
+{
+  "handoff_id": "H-20260928-vmixlaptop2x6-005",
+  "source_user": "ndi2",
+  "source_machine": "vmixlaptop2x6",
+  "source_session_id": "aa997c56-adc6-414c-a915-3c4022099f52",
+  "provider": "claude-code",
+  "model": "claude-opus-5",
+  "project": "claudecode",
+  "repository": null,
+  "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+  "branch": null,
+  "git_head": null,
+  "uncommitted_changes": [],
+  "task_objective": "Read ~/.claude/shared-brain/resume-vmixlaptop2x6.md and the note it names. Verify its claims against live filesystem, git and processes before editing, claim ownership in the note, then do its Next line. Read shared-agent-log.md only through tail or grep.",
+  "latest_request": "Try again",
+  "current_status": "Claude Opus 5, ndi2 (vmixlaptop2x6), Remote Control ON.\nNote: `C:\\Users\\ndi2\\.claude\\shared-brain\\handoff-2026-09-27-2039-rc-vmixer-fix-dsh.md` — claimed, refreshed.\n**Verified live, leg 2 held:** harness HEAD `478ebb005f`, origin `4f28bd4e47` (3 behind), same 8 colliding files dirty, index.ts hunk still a proven no-op (diff vs origin empty), DSH 3080 / FCC 8082 / relay 8080 all answering.\n**Two leg-2 claims were wrong, both fixed:**\n1. Sidecars were *not* stale. Each held content in no other copy. The seat-401 one carried `[e18bb3]`'s 21:05 confirmation — the exact answer its note still recorded as \"pending\". Merged all three, `.sync-conflicts` now empty, originals moved to `.backups/sync-conflicts-merged-2026-09-28/`.\n2. Push queue has **one** open entry, not two. The second was the template inside the Format code block; `0a5600abf2` has read `skipped` since 2026-09-11.\n**Changed since leg 2:** untracked set grew 3 → 6 (`quota-aws/`, two new specs) — AWS sessions advanced, still uncommitted, so the pull stays unsafe.\nNothing edited in the repo, nothing committed, pushed or cleaned. Prior session `local_7b3dec34` gone from ListAgents — no channel to it.\n**Three items, all yours:** ...[355 more chars in archive]",
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "Verify the last status against the repository, then continue the objective.",
+  "important_decisions": [
+    "See handoff note shared-brain/handoff-2026-09-27-2039-rc-vmixer-fix-dsh.md",
+    "See handoff note shared-brain/handoff-2026-09-27-1440-aws-seat-build-ndi2.md",
+    "See handoff note shared-brain/handoff-2026-09-27-1440-aws-seat-build-ndi2.from-remote.md",
+    "See handoff note shared-brain/handoff-2026-09-27-0105-ecomm-dsh-run-vmixer.md",
+    "See handoff note shared-brain/handoff-2026-09-27-1857-vmixer-openrouter-seat-401.md",
+    "See handoff note shared-brain/handoff-2026-09-27-2045-ecomm-item5-run.md",
+    "See handoff note shared-brain/handoff-2026-09-27-0105-ecomm-dsh-run-vmixer.from-remote.md",
+    "See handoff note shared-brain/handoff-2026-09-27-1857-vmixer-openrouter-seat-401.from-remote.md",
+    "See handoff note shared-brain/handoff-2026-09-28-0315-restart-four-vmixer-tasks.md"
+  ],
+  "relevant_files": [],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [
+    "Exit code 1\n--AWS local has vmixer2o2 state?--\n1\n152:Do not trust vmixer2o2's 25db02347f; ndi2's 478ebb005f is the code master.\n--ECOMM local has these?--\nSTEP A NOW DONE: 0\nclone-result-VMIXER2O2: 0\n039842b0: 0\n48dd3e: 0\necomm-dsh-readines ...[88 more chars in archive]"
+  ],
+  "last_meaningful_session_state": "2026-09-28T10:31:04.212Z",
+  "transcript_records": 256,
+  "settings": {
+    "title": "Continue RC + vmixer DSH fix",
+    "model": "claude-opus-5",
+    "effort": "xhigh",
+    "permission_mode": "auto",
+    "desktop_session_id": null,
+    "desktop_account": null
+  },
+  "created_at": "2026-09-28T10:41:25.462Z",
+  "archive": "quota-handoffs/H-20260928-vmixlaptop2x6-005/archive/aa997c56-adc6-414c-a915-3c4022099f52.jsonl.gz"
+}

@@ -1,0 +1,53 @@
+{
+  "handoff_id": "H-20260927-vmixlaptop2x6-001",
+  "source_user": "ndi2",
+  "source_machine": "vmixlaptop2x6",
+  "source_session_id": "363ae667-aa19-46d1-bd32-c4922b51386a",
+  "provider": "claude-code",
+  "model": "claude-opus-5-5",
+  "project": "claudecode",
+  "repository": null,
+  "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+  "branch": null,
+  "git_head": null,
+  "uncommitted_changes": [],
+  "task_objective": "i want to  create the run for the ecomm work that will run via dsh on vmixer machine turn on remote coordinate with remote agent working on ecomm dsh and lets double check that the run will work via dsh hav no issues building and if it does then send the shared run to dsh on vmixer and alert me when to run it i want it to produce all the assets locally there vmimxer as planned via dsh",
+  "latest_request": "gave the go",
+  "current_status": "Claude Opus 5.5: the one-click repo clone script passed every test here (fresh run, re-run, damaged-bundle refusal). Now waiting for the brain to sync it to vmixer2o2.",
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "Verify the last status against the repository, then continue the objective.",
+  "important_decisions": [
+    "See handoff note shared-brain/handoff-2026-09-25-0355-canna-commerce-swarm-build-prep.md",
+    "See handoff note shared-brain/handoff-2026-09-26-2250-rc-standby-fleet-sync-check.md",
+    "See handoff note shared-brain/handoff-2026-09-27-0105-ecomm-dsh-run-vmixer.md"
+  ],
+  "relevant_files": [
+    "C:\\Users\\ndi2\\.claude\\projects\\C--Users-ndi2-Documents-claudecode\\363ae667-aa19-46d1-bd32-c4922b51386a\\tool-results\\hook-038e5561-3e4d-4012-b3f6-5f88f76bea23-2-additionalContext.txt",
+    "C:\\Users\\ndi2\\.claude\\shared-brain\\handoff-2026-09-25-0355-canna-commerce-swarm-build-prep.md",
+    "C:\\Users\\ndi2\\Documents\\claudecode\\users\\BUILD-BRIEF.md",
+    "C:\\Users\\ndi2\\Documents\\claudecode\\commerce\\BUILD-BRIEF.md",
+    "C:\\Users\\ndi2\\Documents\\claudecode\\canna\\BUILD-BRIEF.md",
+    "C:\\Users\\ndi2\\.claude\\shared-brain\\handoff-2026-09-27-0105-ecomm-dsh-run-vmixer.md",
+    "C:\\Users\\ndi2\\.claude\\shared-brain\\transfer\\2026-09-26-ndi2-to-vmixer2o2\\clone-repos.ps1",
+    "C:\\Users\\ndi2\\.claude\\shared-brain\\transfer\\2026-09-26-ndi2-to-vmixer2o2\\CLONE-REPOS-ON-VMIXER.cmd",
+    "C:\\Users\\ndi2\\AppData\\Local\\Temp\\claude\\C--Users-ndi2-Documents-claudecode\\363ae667-aa19-46d1-bd32-c4922b51386a\\tasks\\bw7x4u133.output"
+  ],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [
+    "Exit code 1\nOK   users     cloned  039842b040  origin 0/0\nFAIL canna     bundle canna.bundle is damaged (sha256 <redacted>, expected <redacted>)\nOK   commerce  cloned  34701f74cd  origin 0/0\nFAILED - see C:\\Users\\ndi2\\AppData\\Local\\Temp\\cla ...[244 more chars in archive]"
+  ],
+  "last_meaningful_session_state": "2026-09-27T08:23:23.937Z",
+  "transcript_records": 403,
+  "settings": {
+    "title": "Ecomm run setup on vmixer via dsh",
+    "model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "permission_mode": "auto",
+    "desktop_session_id": "local_30bea663-67a4-43ba-a37a-d52d3ff90587",
+    "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+  },
+  "created_at": "2026-09-27T08:23:23.968Z",
+  "archive": "quota-handoffs/H-20260927-vmixlaptop2x6-001/archive/363ae667-aa19-46d1-bd32-c4922b51386a.jsonl.gz"
+}

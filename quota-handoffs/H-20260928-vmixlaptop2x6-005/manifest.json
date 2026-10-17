@@ -1,0 +1,220 @@
+{
+  "handoff_id": "H-20260928-vmixlaptop2x6-005",
+  "kind": "quota",
+  "simulated": false,
+  "state": "RESTORING",
+  "reason": "Session usage 98%",
+  "trigger": {
+    "window": "session",
+    "percent": 98,
+    "resetAt": "2026-09-28T15:09:00.000Z",
+    "windows": [
+      {
+        "window": "session",
+        "percent": 98
+      }
+    ],
+    "reason": "Session usage 98%",
+    "key": "claude:.claude:8aa17a70@vmixlaptop2x6|REAL"
+  },
+  "quota": {
+    "provider": "claude",
+    "account": "claude:.claude:8aa17a70@vmixlaptop2x6",
+    "state": "OK",
+    "session_used_percent": 98,
+    "weekly_used_percent": 50,
+    "session_reset_at": "2026-09-28T15:09:00.000Z",
+    "weekly_reset_at": "2026-10-04T17:59:00.000Z",
+    "session_reset_label": "Sep 28, 8:09am",
+    "weekly_reset_label": "Oct 4, 10:59am",
+    "measurement_source": "statusline-cache (/api/oauth/usage or /usage)",
+    "measurement_confidence": "high",
+    "timestamp": "2026-09-28T10:41:15.684Z",
+    "simulated": false
+  },
+  "source_user": "ndi2",
+  "source_machine": "vmixlaptop2x6",
+  "source_account": "claude:.claude:8aa17a70@vmixlaptop2x6",
+  "source_account_uuid": "8aa17a70-3c66-4e64-a3a1-d867c7e49608",
+  "created_at": "2026-09-28T10:41:25.462Z",
+  "sessions": [
+    {
+      "source_session_id": "01b97017-fa1d-421e-900c-b044559f2b38",
+      "model": "claude-opus-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Project manager completion dashboard",
+        "model": "claude-opus-5",
+        "effort": "medium",
+        "permission_mode": "auto",
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/01b97017-fa1d-421e-900c-b044559f2b38/continuation.md",
+      "archive": "archive/01b97017-fa1d-421e-900c-b044559f2b38.jsonl.gz"
+    },
+    {
+      "source_session_id": "42db1ab5-e4b7-46a6-9af7-3cf5a56f731a",
+      "model": "<synthetic>",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Close vMixer seat-401 thread and fix stale notes",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_a78a6eb2-2d85-4ff6-8aa9-10ce2b42a0b2",
+        "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+      },
+      "package": "sessions/42db1ab5-e4b7-46a6-9af7-3cf5a56f731a/continuation.md",
+      "archive": "archive/42db1ab5-e4b7-46a6-9af7-3cf5a56f731a.jsonl.gz"
+    },
+    {
+      "source_session_id": "803a3d87-f42c-4a68-9db3-f8d19ea1d733",
+      "model": "claude-opus-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue AWS seat build",
+        "model": "claude-opus-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/803a3d87-f42c-4a68-9db3-f8d19ea1d733/continuation.md",
+      "archive": "archive/803a3d87-f42c-4a68-9db3-f8d19ea1d733.jsonl.gz"
+    },
+    {
+      "source_session_id": "8b82335a-1c12-4fe8-b102-088852bef159",
+      "model": "<synthetic>",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Resume AWS seat build: multi-account quota-aws",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_3c2b7cf5-ac5a-4bcb-afa5-5f9e335e2df9",
+        "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+      },
+      "package": "sessions/8b82335a-1c12-4fe8-b102-088852bef159/continuation.md",
+      "archive": "archive/8b82335a-1c12-4fe8-b102-088852bef159.jsonl.gz"
+    },
+    {
+      "source_session_id": "a6b7b9c6-e46e-44ed-9b58-a9494e59011e",
+      "model": "claude-opus-5-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Recent sessions relaunch list",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_4f616369-e465-48d0-96e8-ba98ff72cbda",
+        "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+      },
+      "package": "sessions/a6b7b9c6-e46e-44ed-9b58-a9494e59011e/continuation.md",
+      "archive": "archive/a6b7b9c6-e46e-44ed-9b58-a9494e59011e.jsonl.gz"
+    },
+    {
+      "source_session_id": "aa997c56-adc6-414c-a915-3c4022099f52",
+      "model": "claude-opus-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue RC + vmixer DSH fix",
+        "model": "claude-opus-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/aa997c56-adc6-414c-a915-3c4022099f52/continuation.md",
+      "archive": "archive/aa997c56-adc6-414c-a915-3c4022099f52.jsonl.gz"
+    },
+    {
+      "source_session_id": "e552dae2-5e52-4cf9-b4e8-48a482ef19bd",
+      "model": "claude-opus-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue RC vMixer DSH work",
+        "model": "claude-opus-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/e552dae2-5e52-4cf9-b4e8-48a482ef19bd/continuation.md",
+      "archive": "archive/e552dae2-5e52-4cf9-b4e8-48a482ef19bd.jsonl.gz"
+    },
+    {
+      "source_session_id": "e96e315a-6cc7-4e72-8dab-a4bfd39a5ec1",
+      "model": "claude-opus-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue AWS seat build",
+        "model": "claude-opus-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/e96e315a-6cc7-4e72-8dab-a4bfd39a5ec1/continuation.md",
+      "archive": "archive/e96e315a-6cc7-4e72-8dab-a4bfd39a5ec1.jsonl.gz"
+    },
+    {
+      "source_session_id": "fc024de9-a34c-4e72-ab50-c8de4902ac1d",
+      "model": "claude-opus-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue AWS seat multi-account build",
+        "model": "claude-opus-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/fc024de9-a34c-4e72-ab50-c8de4902ac1d/continuation.md",
+      "archive": "archive/fc024de9-a34c-4e72-ab50-c8de4902ac1d.jsonl.gz"
+    }
+  ],
+  "history": [
+    {
+      "from": "NORMAL",
+      "to": "PREPARING",
+      "at": "2026-09-28T10:41:25.462Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6"
+    },
+    {
+      "from": "PREPARING",
+      "to": "SNAPSHOTTING",
+      "at": "2026-09-28T10:41:25.462Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6",
+      "detail": "9 active session(s)"
+    },
+    {
+      "from": "SNAPSHOTTING",
+      "to": "READY",
+      "at": "2026-09-28T10:41:25.462Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6"
+    },
+    {
+      "from": "READY",
+      "to": "CLAIMED",
+      "at": "2026-09-29T15:46:20.702Z",
+      "by": "ndi2@vmixlaptop2x6"
+    },
+    {
+      "from": "CLAIMED",
+      "to": "RESTORING",
+      "at": "2026-09-29T15:46:20.702Z",
+      "by": "ndi2@vmixlaptop2x6"
+    }
+  ],
+  "session_count": 9
+}

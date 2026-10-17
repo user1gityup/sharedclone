@@ -1,0 +1,87 @@
+{
+  "handoff_id": "H-20260926-vmixlaptop2x6-001",
+  "kind": "quota",
+  "simulated": false,
+  "state": "ACTIVE",
+  "reason": "Live account-switch trial (user-requested), vmixlaptop2x6",
+  "trigger": null,
+  "quota": {
+    "provider": "claude",
+    "account": "claude:.claude:8aa17a70@vmixlaptop2x6",
+    "state": "OK",
+    "session_used_percent": 19,
+    "weekly_used_percent": 53,
+    "session_reset_at": "2026-09-26T23:39:00.000Z",
+    "weekly_reset_at": "2026-09-27T17:59:00.000Z",
+    "session_reset_label": "Sep 26, 4:39pm",
+    "weekly_reset_label": "Sep 27, 10:59am",
+    "measurement_source": "statusline-cache (/api/oauth/usage or /usage)",
+    "measurement_confidence": "high",
+    "timestamp": "2026-09-26T22:38:50.789Z",
+    "simulated": false
+  },
+  "source_user": "ndi2",
+  "source_machine": "vmixlaptop2x6",
+  "source_account": "claude:.claude:8aa17a70@vmixlaptop2x6",
+  "source_account_uuid": "8aa17a70-3c66-4e64-a3a1-d867c7e49608",
+  "created_at": "2026-09-26T22:40:12.048Z",
+  "sessions": [
+    {
+      "source_session_id": "ac49e8ee-da4c-4ba8-a020-9870e6a9581e",
+      "model": "claude-opus-5-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+      "settings": {
+        "title": "Continue quota handoff v2 receiver",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_3a7fcd9f-e696-41dc-ae9d-fa28ae16f6a7",
+        "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+      },
+      "package": "sessions/ac49e8ee-da4c-4ba8-a020-9870e6a9581e/continuation.md",
+      "archive": "archive/ac49e8ee-da4c-4ba8-a020-9870e6a9581e.jsonl.gz"
+    }
+  ],
+  "history": [
+    {
+      "from": "NORMAL",
+      "to": "PREPARING",
+      "at": "2026-09-26T22:40:12.048Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6"
+    },
+    {
+      "from": "PREPARING",
+      "to": "SNAPSHOTTING",
+      "at": "2026-09-26T22:40:12.048Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6",
+      "detail": "1 active session(s)"
+    },
+    {
+      "from": "SNAPSHOTTING",
+      "to": "READY",
+      "at": "2026-09-26T22:40:12.048Z",
+      "by": "claude:.claude:8aa17a70@vmixlaptop2x6"
+    },
+    {
+      "from": "READY",
+      "to": "CLAIMED",
+      "at": "2026-09-27T09:52:07.365Z",
+      "by": "vMixer@vmixer2o2"
+    },
+    {
+      "from": "CLAIMED",
+      "to": "RESTORING",
+      "at": "2026-09-27T09:52:07.365Z",
+      "by": "vMixer@vmixer2o2"
+    },
+    {
+      "from": "RESTORING",
+      "to": "ACTIVE",
+      "at": "2026-09-27T10:33:53.364Z",
+      "by": "vMixer@vmixer2o2",
+      "detail": "1 session(s) confirmed running"
+    }
+  ],
+  "session_count": 1
+}

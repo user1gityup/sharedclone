@@ -1,0 +1,126 @@
+<!-- Copied 2026-09-15T10:15:42.527Z from ~/Documents/Codex/2026-09-12/i-x20/outputs/dsh-run-recovery-codex-prompt.md on vmixlaptop2x6 (redacted). -->
+# Codex implementation prompt: make DSH council runs complete reliably
+
+Fix DSH council runs so large prompts, cancellations, slow seats, and partial results cannot silently produce an incomplete “successful” run.
+
+## DSH council → swarm → council execution contract
+
+This is a gated three-stage DSH pipeline:
+
+1. **Council:** every enabled, reachable council seat reviews the evidence and current implementation, agrees the root causes, and produces one exact implementation plan and swarm DAG. This stage is planning only: no repository writes, commands, builds, commits, or worker launches. Stop at the approval gate.
+2. **Swarm:** after the existing two-factor approval, implement the approved plan in parallel waves. Tasks in one wave must have disjoint write sets. Each hosted worker's output must have one named local owner responsible for applying and testing it. Persist successful units so a stopped swarm resumes without repeating completed work. Stop on a failed wave instead of advancing. No real metered model/API probes are allowed for verification.
+3. **Final council:** review the actual diff, tests, built libraries, fixture reproduction, partial-run UI, journal/resume behavior, and acceptance criteria. Create bounded corrective swarm units for defects, then re-review. Completion requires council quorum and evidence against the built artifacts.
+
+Every stage must identify participating models, unavailable seats, elapsed time, failures, and resumptions. Existing approval gates remain single-use and cannot be weakened or bypassed.
+
+## Repository
+
+`~\Documents\claudecode\deepseek-harness`
+
+## Read first
+
+- `packages/council/tool-council/src/seats.ts`
+- `packages/council/tool-council/src/council.ts`
+- `packages/council/tool-council/src/journal.ts`
+- `packages/council/tool-council/src/runs.ts`
+- `packages/council/tool-council/src/index.ts`
+- `~\.dsh\bin\agy-headless.mjs`
+- Existing tool-council tests
+
+Failure record:
+
+`~\.dsh\council-runs\61e19077-230b-4d00-b265-3c85f072d0d6.json`
+
+## Confirmed evidence
+
+The draft prompt was 89,830 characters. Results:
+
+- `free-claude`: success in 70,216 ms
+- `openai`: timed out after 180,000 ms
+- `kimi`: `{"kind":"user"}` in 136 ms
+- `deepseek`: `{"kind":"user"}` in 131 ms
+- `openrouter-free`: `{"kind":"user"}` in 129 ms
+- All three Antigravity seats rejected the prompt because `agentapi` passes it through one Windows argv entry and the current driver caps it at 30,000 characters.
+- Only one draft was usable, so reviews were skipped. DSH saved the run even though no council decision existed.
+- An earlier project-manager run was paced by a seat consuming the 420-second cap across rounds and was lost when DSH restarted.
+
+## Required implementation
+
+### 1. Large-prompt transport
+
+Make Antigravity handle prompts larger than the Windows command-line limit. Inspect the installed `language_server.exe agentapi` interface before choosing the transport.
+
+Prefer file, stdin, RPC, or native conversation context if supported. If `agentapi` fundamentally requires the final prompt in argv, add a seat-specific prompt-budget system that creates a self-contained prompt below the measured safe limit.
+
+Never silently truncate. Preserve the objective, hard constraints, required output, agreed plan, essential evidence, and citation identifiers. Record omitted material and the reason. Do not split one logical request into independent calls unless tested continuation preserves context.
+
+### 2. Cancellation correctness
+
+Before spawning a CLI child or starting an HTTP request, check `signal.aborted`. If cancelled, start nothing and return a normalized, readable reason such as `cancelled by user`, `run stopped`, `host shutdown`, or `deadline exceeded`.
+
+After spawn, cancellation must terminate the full descendant process tree on Windows. Fix error normalization so objects such as `{"kind":"user"}` never become user-facing messages.
+
+### 3. Timeout design
+
+Separate startup, stream-idle, seat-overall, council-round, and full-run deadlines. A slow seat must not hold every round indefinitely. Do not merely raise all timeouts.
+
+Persist the exact timeout source, for example:
+
+- `seat overall deadline exceeded after 180000ms`
+- `stream idle for 60000ms`
+- `council round deadline reached`
+- `run cancelled by user`
+
+Honor seat-specific timeouts consistently across CLI and OpenRouter transports.
+
+### 4. Partial-result policy
+
+Add explicit terminal states: `completed`, `partial`, `cancelled`, `failed`, and `awaiting_resume`.
+
+A multi-seat council below its configured draft or review quorum must not be reported as a completed council decision. Preserve successful answers and all failures, skip meaningless review, expose a resumable state, and never call one draft a council verdict. Add configurable quorum settings with safe defaults.
+
+### 5. Durable resume
+
+Extend the journal to persist run ID, phase, exact prompt identity, model/transport identity, successful replies, terminal failures, retryable failures, cancellation/timeout reasons, and quorum state.
+
+On resume:
+
+- recall valid successful replies;
+- call only unfinished or retryable seats;
+- do not retry unchanged configuration errors;
+- invalidate answers when the effective prompt, model, transport, or relevant context changes;
+- retain the journal until true completion or explicit Start over;
+- Stop must not discard useful completed replies.
+
+### 6. Observability
+
+Before each seat call, persist total prompt characters and UTF-8 bytes, sizes of query/plan/evidence/memory, selected transport, seat limit, and whether compaction occurred. Expose these in the run record and report. Never log credentials.
+
+### 7. UI
+
+The Council Budget/pipeline UI must distinguish running, waiting on slow seats, quorum unavailable, partial/resumable, cancelled, failed, and completed. Show each seat as succeeded, failed, timed out, cancelled, or never started. Continue must retry only unfinished/retryable work.
+
+## Regression tests
+
+Prove all of the following:
+
+- An 89,830-character input causes neither `ENAMETOOLONG` nor the current Antigravity 30,000-character rejection.
+- Compaction stays below the seat limit and retains marked mandatory sections.
+- A pre-aborted signal causes no child spawn and no HTTP request.
+- Mid-flight cancellation kills the Windows process tree.
+- Cancellation errors are readable and never `{"kind":"user"}`.
+- One success out of eight is never `completed`.
+- Resume recalls the successful seat and calls only unfinished/retryable seats.
+- Prompt or model changes invalidate affected journal entries.
+- Slow-seat interruption cannot lose already completed answers.
+- Existing short-prompt council, pipeline, approval gate, Stop-run, model-picker, and journal behavior remains intact.
+
+## Verification
+
+Run the complete tool-council suite, host and client typechecks, relevant UI tests, and production library builds. Verify the built library, not only source.
+
+Reproduce the 89,830-character scenario locally with fixtures. Make no real metered model calls.
+
+Report confirmed root causes, files changed, exact test/build exit results, built-artifact verification, and anything still untested.
+
+Do not push. Preserve unrelated working-tree changes. Do not commit unless the user separately authorizes a commit.

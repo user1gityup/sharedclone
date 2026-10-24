@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "repos": [
+    {
+      "name": "deepseek-harness",
+      "path": "~/Documents/claudecode/deepseek-harness",
+      "remote": "https://github.com/user1gityup/deepseek-harness.git",
+      "branch": "feat/heterogeneous-teammates",
+      "mode": "follow",
+      "build": "dsh"
+    },
+    {
+      "name": "dsh-council-plugins",
+      "path": "~/Documents/claudecode/dsh-council-plugins",
+      "remote": "https://github.com/user1gityup/dshklv1.git",
+      "branch": "main",
+      "mode": "follow"
+    },
+    {
+      "name": "green-energy-platform",
+      "path": "~/Documents/claudecode/green-energy-platform",
+      "remote": "https://github.com/user1gityup/nrg.git",
+      "branch": "main",
+      "mode": "follow"
+    },
+    {
+      "name": "billboard-platform",
+      "path": "~/Documents/claudecode/billboard-platform",
+      "remote": "https://github.com/user1gityup/digitalbillboard.git",
+      "branch": "docs/leadforge-council-prompt",
+      "mode": "follow"
+    },
+    {
+      "name": "free-claude-code",
+      "path": "~/Documents/claudecode/free-claude-code",
+      "remote": "https://github.com/Alishahryar1/free-claude-code.git",
+      "branch": "main",
+      "mode": "watch"
+    }
+  ]
+}

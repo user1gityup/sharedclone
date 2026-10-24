@@ -1,0 +1,41 @@
+{
+  "handoff_id": "H-20260927-vmixer2o2-002",
+  "source_user": "vMixer",
+  "source_machine": "vmixer2o2",
+  "source_session_id": "24f20ed5-7890-4625-a080-ac9651d37637",
+  "provider": "claude-code",
+  "model": "claude-opus-5-5",
+  "project": "shared-brain",
+  "repository": "C:/Users/vMixer/.claude/shared-brain",
+  "working_directory": "C:\\Users\\vMixer\\.claude\\shared-brain",
+  "branch": "main",
+  "git_head": "f8d83d6a2c4354f7306057d814ab591a6024f2b2",
+  "uncommitted_changes": [
+    "?? quota-handoffs/H-20260927-vmixer2o2-002.partial/"
+  ],
+  "task_objective": "Resume quota handoff H-20260927-vmixlaptop2x6-001, source session f519fe4a-98bc-4a43-93a8-2b0e5d07d72b. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260927-vmixlaptop2x6-001--f519fe4a-98bc-4a43-93a8-2b0e5d07d72b.md and continue the work it describes.",
+  "latest_request": null,
+  "current_status": "The ecomm setup session on this machine (vmixer2o2) asked whether anything here was using DSH. It plans to edit `~/.dsh/settings.yaml`, rebuild and relaunch DSH, and add three ecomm presets. I told it this session holds nothing there, so it can go ahead.\nThat's accurate: this session only ran read-only git checks and wrote brain notes. It never touched DSH, `~/.dsh` or the harness code.\nNothing else has changed since my last update. Commit `92cdcade3b` still exists only on vmixlaptop2x6, so it can only be queued from a session there.",
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "Verify the last status against the repository, then continue the objective.",
+  "important_decisions": [
+    "See handoff note shared-brain/handoff-2026-09-26-1645-dsh-runs-management.md"
+  ],
+  "relevant_files": [],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [],
+  "last_meaningful_session_state": "2026-09-27T09:07:01.100Z",
+  "transcript_records": 122,
+  "settings": {
+    "title": "Continue DSH runs management",
+    "model": "claude-opus-5-5",
+    "effort": "medium",
+    "permission_mode": "auto",
+    "desktop_session_id": "local_af941928-2588-4751-a720-155e0d59691d",
+    "desktop_account": "a540ddf6-241c-4236-a29c-94d3b5d6b489"
+  },
+  "created_at": "2026-09-27T09:52:07.365Z",
+  "archive": "quota-handoffs/H-20260927-vmixer2o2-002/archive/24f20ed5-7890-4625-a080-ac9651d37637.jsonl.gz"
+}

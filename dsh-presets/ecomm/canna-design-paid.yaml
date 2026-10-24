@@ -1,0 +1,36 @@
+    ecomm/canna-design-paid:
+      name: Ecomm 2 of 3 design paid - canna
+      stages: swarm
+      autoAdvance: true
+      mode: fastest
+      query: |-
+        ECOMM DESIGN SAMPLE - canna (Phase 1, cannabis storefront, CA) - PAID / SUBSCRIPTION SWARM.
+
+        INDEPENDENT RUN. This is one of six design runs (paid and free for each of users, canna and commerce) that the user launches by hand at the same time on vmixer2o2. This run is NOT a sub-job of anything. Never wait for another run, another task, the paid or free counterpart, or any shared completion barrier. Produce your own output, save it, and complete - however early or late that is relative to the others.
+
+        PIPELINE ARGUMENTS, for the chat model driving this run: pass submit_to as `canna` on EVERY pipeline tool call in this run, including every Continue. It is not stored between calls, and a swarm stage that finishes without it leaves the files uncommitted in staging. Never pass restart.
+
+        NO FURTHER QUESTIONS. Once the user has launched this run, do not ask which agents to use, which swarm configuration to use, whether to continue, or for intermediate design approval. The swarm is preselected by this preset's mode. HARNESS LIMITATION as of 2026-09-28: the swarm still stops ONCE at its own two-factor approval gate after planning, because a gateless run flag does not exist yet. That single stop is the only permitted interruption; after the user approves, run to completion with no further questions. Raise something only on an unrecoverable error.
+
+        SCOPE: DESIGN ONLY. Read ~\Documents\claudecode\canna\BUILD-BRIEF.md in full for what this service is and what it must eventually do, and design against it. Do NOT implement the product, do not install dependencies, do not write application source, do not port code. The production build is a separate paid-only run that happens after the user has picked winners.
+
+        STAGES (swarm only): THERE IS NO COUNCIL STAGE. Do not open, request or wait on a council. The swarm planner derives a collision-free unit DAG for the design deliverables below - one unit per file, each naming its acceptance check - and stops at the swarm approval gate. Then the approved units run as parallel as the DAG allows. Seats do not debate, vote on, merge or critique each other's design concepts; this run produces ONE coherent design, and the six runs together are what the user compares.
+
+        SEATS: mode `fastest`. The roster is filtered to non-free seats only (paid/subscription), so every proposer on this run is a metered seat. Optimize for quality, speed, strong visual design, strong UX and production-quality concepts. Do not ask which seats to use; the mode has already chosen them.
+
+        TARGET REPOSITORY: ~\Documents\claudecode\canna (writer key `canna`, branch main). Every file this run writes goes under design/paid/ and nowhere else.
+
+        DELIVERABLE, all under design/paid/:
+        - INDEX.md - task (canna), classification (paid), run id, and every seat that contributed with its model name.
+        - DESIGN.md - the design concept and its description in prose.
+        - MOCKUP.html - a single self-contained static mockup, inline CSS, no external assets, no script needed to read it, legible in light and dark. This is the design image the user looks at when picking winners.
+        - SPEC.md - design specifications: layout grid, type scale, color tokens, component inventory, states.
+        - UX.md - navigation, flows, and the UX/layout decisions with their reasons.
+        - FEATURES.md - the features this design commits to, mapped to the brief.
+        - IMPLEMENTATION-NOTES.md - what a production build would have to do to realize it, including anything the brief constrains.
+
+        HOST-COMMIT RULES. The DSH host refuses the WHOLE commit if any unit writes one of these, so no unit may: write package.json, pnpm-lock.yaml, pnpm-workspace.yaml, package-lock.json, .npmrc, any .env or .env.* file, anything under .github/workflows/, .husky/ or .githooks/, CLAUDE.md, AGENTS.md, settings.yaml, or any *.pem / *.key file; or put secret-shaped text in any file, even as an example. Exactly one unit owns each file. Every path is relative to the repository root. Never write into billboard-platform, green-energy-platform or deepseek-harness.
+
+        RESULT: the host commits the design files on a fresh branch dsh/<seat>/<runId> in the repository, worktree under ~\.dsh\worktrees\<repo>\<runId>. queue-build then reports queue-failed because the origin is a local bare repository, not GitHub. That is expected: the commit stays local on vmixer2o2 and nothing is pushed. The result stays readable while the other five runs are still going.
+
+        Every seat names its own model (Kimi K2, DeepSeek V4, Qwen3.6, ...) in anything the user reads. A seat label may accompany the model name, never replace it.

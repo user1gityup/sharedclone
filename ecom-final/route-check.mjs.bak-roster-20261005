@@ -1,0 +1,133 @@
+#!/usr/bin/env node
+// Pre-start capacity and weight-router check for the ecomm/final-i* saved runs.
+// Written by Claude Opus 5.5, 2026-10-05. Read-only: reads settings and quota
+// caches, writes nothing except the report it prints.
+//
+// Usage: node ~/.claude/shared-brain/ecom-final/route-check.mjs [--json]
+// Exit 0 = GO, 2 = NO-GO (reasons printed). Run on the machine that will run the presets.
+//
+// The user's seat pick (2026-10-05): harness main agent free-claude; council,
+// swarm and review seats openai, claude, claude-work. The check verifies each
+// is configured and has quota, then asks DSH's own weight router
+// (tool-council/src/router) which of them it would pick for each inspection unit.
+
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { freemem, homedir, hostname, totalmem } from 'node:os'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+
+const HOME = homedir()
+const C = join(HOME, 'Documents', 'claudecode')
+const HARNESS = join(C, 'deepseek-harness')
+const TC = join(HARNESS, 'packages', 'council', 'tool-council', 'src')
+const DSH_HOME = process.env.DSH_HOME ?? join(HOME, '.dsh')
+const DRIVER = 'free-claude'
+const SEATS = ['openai', 'claude', 'claude-work']
+const MIN_FREE_GB = 4
+const MIN_HEADROOM = 0.15
+
+const problems = []
+const notes = []
+const fail = (msg) => problems.push(msg)
+
+function loadYaml() {
+  const pnpm = join(HARNESS, 'node_modules', '.pnpm')
+  const dir = existsSync(pnpm) ? readdirSync(pnpm).filter(d => /^yaml@2\./.test(d)).sort().pop() : undefined
+  if (!dir) throw new Error(`yaml package not found under ${pnpm}`)
+  return createRequire(import.meta.url)(join(pnpm, dir, 'node_modules', 'yaml'))
+}
+
+// 1. Host capacity
+const freeGb = freemem() / 2 ** 30
+const totalGb = totalmem() / 2 ** 30
+if (freeGb < MIN_FREE_GB) fail(`only ${freeGb.toFixed(1)} GB RAM free of ${totalGb.toFixed(1)} GB (need ${MIN_FREE_GB})`)
+
+// 2. Inputs the runs read
+const inputs = {
+  'billboard-platform': join(C, 'billboard-platform'),
+  'green-energy-platform': join(C, 'green-energy-platform'),
+  users: join(C, 'users'), commerce: join(C, 'commerce'), canna: join(C, 'canna'),
+  'ecom snapshot (fallback for preview trees)': join(HOME, '.claude', 'shared-brain', 'ecom-final', 'snapshot'),
+}
+for (const [name, p] of Object.entries(inputs)) if (!existsSync(p)) fail(`missing input ${name}: ${p}`)
+const previews = ['users', 'commerce', 'canna'].map(n => join(C, 'dsh-runs', `build-ecomm-${n}-preview`))
+if (!previews.every(existsSync)) notes.push('preview trees absent here; I-3 uses the brain snapshot')
+
+// 3. DSH settings: driver, seats, swarm roster
+let settings
+try { settings = loadYaml().parse(readFileSync(join(DSH_HOME, 'settings.yaml'), 'utf8')) } catch (e) { fail(`cannot read ${DSH_HOME}/settings.yaml: ${e.message}`) }
+const council = settings?.council ?? {}
+const seatCfg = council.seats ?? {}
+const roster = council.swarmRoster ?? {}
+const driver = settings?.['agent-default-model']?.provider
+if (driver !== 'free-claude-code') fail(`harness main agent is ${driver ?? 'unset'}, user picked free-claude (agent-default-model.provider free-claude-code)`)
+for (const id of SEATS) {
+  if (!(id in seatCfg)) fail(`seat ${id} is not configured in DSH on this machine`)
+  else if (seatCfg[id]?.enabled !== true) fail(`seat ${id} is switched off in the council seats (user must switch it on)`)
+  if (roster[id]?.enabled !== true) fail(`seat ${id} is off in the swarm roster (user must switch it on)`)
+}
+const extra = Object.entries(roster).filter(([id, v]) => v?.enabled === true && !SEATS.includes(id)).map(([id]) => id)
+if (extra.length) fail(`swarm roster also has ${extra.join(', ')} on; user picked only ${SEATS.join(', ')}`)
+if (council.pipelineId) notes.push(`shared pipeline slot holds ${council.pipelineId}; use dsh-run (run-bound slots) or clear it first`)
+
+// 4. Quota headroom
+const cq = settings?.['claude-quota'] ?? {}
+const headroom = {}
+const pct = (v) => (typeof v === 'number' ? Math.max(0, 1 - v / 100) : undefined)
+headroom.claude = Math.min(pct(cq.sessionPercent) ?? 1, pct(cq.weekPercent) ?? 1)
+headroom['claude-work'] = Math.min(pct(cq.workSessionPercent) ?? 1, pct(cq.workWeekPercent) ?? 1)
+try {
+  const buckets = JSON.parse(settings?.['codex-quota']?.bucketsJson ?? '[]')
+  const left = buckets.map(b => (typeof b.remaining === 'number' ? b.remaining / 100 : typeof b.usedPercent === 'number' ? 1 - b.usedPercent / 100 : undefined)).filter(v => v !== undefined)
+  headroom.openai = left.length ? Math.min(...left) : undefined
+} catch { headroom.openai = undefined }
+const guard = join(HOME, '.claude', 'quota-guard', 'exhausted.json')
+const exhausted = existsSync(guard) ? 'quota guard holds the Claude subscription exhausted' : undefined
+for (const id of SEATS) {
+  if (headroom[id] === undefined) notes.push(`no quota reading for ${id}`)
+  else if (headroom[id] < MIN_HEADROOM) fail(`${id} quota headroom ${(headroom[id] * 100).toFixed(0)}% < ${MIN_HEADROOM * 100}%`)
+}
+if (exhausted) fail(exhausted)
+
+// 5. Weight router: which seat would DSH pick for each inspection unit
+let routing = []
+try {
+  const { resolveRoster } = await import(pathToFileURL(join(TC, 'router', 'index.ts')).href)
+  const { workerCandidate } = await import(pathToFileURL(join(TC, 'route-swarm.ts')).href)
+  const workers = SEATS.map(id => ({
+    provider: id, name: id, enabled: roster[id]?.enabled === true && seatCfg[id]?.enabled === true,
+    costClass: 'included', kinds: roster[id]?.kinds ?? ['research', 'docs', 'review', 'any'],
+  }))
+  const state = Object.fromEntries(SEATS.map(id => [id, {
+    ...(exhausted && id !== 'openai' ? { available: false, unavailableReason: exhausted } : {}),
+    ...(headroom[id] !== undefined ? { quotaHeadroom: headroom[id] } : {}),
+  }]))
+  const candidates = workers.map(w => workerCandidate(w, { id: w.provider, model: seatCfg[w.provider]?.model || undefined }, state[w.provider], new Map()))
+  const units = [
+    ['ecomm/final-i1-billboard', 'research', 60_000, 6_000],
+    ['ecomm/final-i2-solar', 'research', 40_000, 4_000],
+    ['ecomm/final-i3-ecom', 'research', 80_000, 8_000],
+  ]
+  for (const [id, kind, prompt, output] of units) {
+    const r = resolveRoster([{ id: 'inspector', capabilities: { [kind]: 'low' } }, { id: 'reviewer', capabilities: { review: 'low' }, independentFrom: ['inspector'] }], candidates,
+      { policy: 'TOKEN_EFFICIENT', estimatedPromptTokens: prompt, estimatedOutputTokens: output })
+    const picks = Object.fromEntries(r.assignments.map(a => [a.roleId, a.candidateId]))
+    if (!picks.inspector) fail(`${id}: router could not fill the inspector role (${r.rejections.map(x => `${x.candidateId}:${x.code}`).join(', ') || 'no candidates'})`)
+    routing.push({ preset: id, inspector: picks.inspector ?? null, reviewer: picks.reviewer ?? null, rejected: r.rejections.map(x => `${x.candidateId}:${x.code}`) })
+  }
+} catch (e) { fail(`weight router not loadable from ${TC}: ${e.message}`) }
+
+const report = {
+  host: hostname(), at: new Date().toISOString(), verdict: problems.length ? 'NO-GO' : 'GO',
+  ram: { freeGb: +freeGb.toFixed(1), totalGb: +totalGb.toFixed(1) },
+  driver, seats: SEATS, headroom, routing, problems, notes,
+}
+if (process.argv.includes('--json')) console.log(JSON.stringify(report, null, 2))
+else {
+  console.log(`${report.verdict} on ${report.host} - RAM ${report.ram.freeGb}/${report.ram.totalGb} GB free, driver ${driver}`)
+  for (const r of routing) console.log(`  ${r.preset}: inspector ${r.inspector} reviewer ${r.reviewer}${r.rejected.length ? ` (rejected ${r.rejected.join(', ')})` : ''}`)
+  for (const p of problems) console.log(`  NO-GO: ${p}`)
+  for (const n of notes) console.log(`  note: ${n}`)
+}
+process.exit(problems.length ? 2 : 0)

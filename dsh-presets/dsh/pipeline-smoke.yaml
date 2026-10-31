@@ -1,0 +1,6 @@
+    dsh/pipeline-smoke:
+      name: Pipeline smoke
+      query: 'Check the council -> swarm -> council chain end to end on a small,
+        harmless task: list the files under packages/council/tool-council/src
+        and say what each one is for.'
+      autoAdvance: false

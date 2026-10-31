@@ -1,0 +1,13 @@
+{
+  "keyHolder": "vmixlaptop2x6",
+  "mode": "lan",
+  "port": 8080,
+  "routes": {
+    "lan": "http://10.0.0.241:8080",
+    "tunnel": null,
+    "ssh": "http://127.0.0.1:18080"
+  },
+  "sshForward": "ssh -N -L 18080:127.0.0.1:8080 <user>@10.0.0.241",
+  "tokensSealedIn": "relay/tokens/<host>.enc",
+  "updated": "2026-09-18T16:16:14.421Z"
+}

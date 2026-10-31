@@ -1,0 +1,51 @@
+{
+  "exported": "2026-09-15T10:24:15.919Z",
+  "host": "vmixer2o2",
+  "node": "v24.19.0",
+  "redactions": 35,
+  "coverage": {
+    "claude": {
+      "sessions": 153,
+      "seats": 74,
+      "first": "2026-08-15T01:28:05.769Z",
+      "last": "2026-09-15T09:46:51.294Z",
+      "months": [
+        "2026-08",
+        "2026-09"
+      ]
+    },
+    "codex": {
+      "sessions": 12,
+      "execs": 55,
+      "first": "2026-09-06T03:25:57.788Z",
+      "last": "2026-09-13T21:19:28.210Z",
+      "workspaces": 9,
+      "copied": 4
+    },
+    "dsh": {
+      "runs": 5,
+      "first": "2026-09-07 11:08Z",
+      "last": "2026-09-07 23:55Z",
+      "journals": 1,
+      "jfirst": "2026-09-15 02:43Z",
+      "jlast": "2026-09-15 02:43Z"
+    },
+    "dshSessions": {
+      "files": 30,
+      "withAsks": 27,
+      "subagents": 2,
+      "first": "2026-08-25 08:40Z",
+      "last": "2026-09-15 02:44Z"
+    },
+    "gatekeeper": {
+      "receipts": 17,
+      "first": "2026-09-09T14:41:15.7132234Z",
+      "last": "2026-09-15T09:36:48.9058194Z"
+    },
+    "settings": {
+      "mode": "parsed",
+      "presets": 8,
+      "mtime": "2026-09-15T10:23:18.299Z"
+    }
+  }
+}

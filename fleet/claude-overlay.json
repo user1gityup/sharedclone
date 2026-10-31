@@ -1,0 +1,20 @@
+{
+  "_about": "Brain-owned additions to every machine's ~/.claude/settings.json and the files they run (fleet.mjs CLAUDE_OVERLAY). Edit the copies under fleet/apps-files/claude, not the local ones: followers are aligned to the brain copy every pass. Rule Enforcement P-e5d90d43 E1 policy guard, E6 Stop checks, E4 watchdog and E5 quota wrapper files. Claude Opus 5.5, 2026-10-26.",
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash|Write|Edit|MultiEdit", "hooks": [ { "type": "command", "command": "node \"{{HOME}}/.claude/hooks/pretooluse-policy-guard.mjs\" \"{{HOME}}/.claude/rules/policy.json\"", "timeout": 10 } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "node \"{{HOME}}/.claude/hooks/stop-output-checks.mjs\"", "timeout": 15 } ] }
+    ]
+  },
+  "files": [
+    "hooks/pretooluse-policy-guard.mjs",
+    "rules/policy.json",
+    "hooks/stop-output-checks.mjs",
+    "hooks/stop-output-checks.config.json",
+    "rules/watchdog/watchdog.mjs",
+    "rules/watchdog/collect-and-scan.mjs",
+    "rules/bin/cli-quota-wrapper.mjs"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "receiver": "vMixer@vmixer2o2",
+  "sessions": {
+    "0bdea577-dc3b-4172-945b-029f7c6bea65": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-28T02:57:08.094Z",
+      "chip": {
+        "title": "Resume AWS seat build leg 7",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-003, source session 0bdea577-dc3b-4172-945b-029f7c6bea65. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-003--0bdea577-dc3b-4172-945b-029f7c6bea65.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode absent here; launched in C:\\Users\\vMixer"
+    },
+    "0bef5502-8d04-4472-9bfd-5b2e7a74041b": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-28T02:57:08.094Z",
+      "chip": {
+        "title": "Remote standby for vmixer",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-003, source session 0bef5502-8d04-4472-9bfd-5b2e7a74041b. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-003--0bef5502-8d04-4472-9bfd-5b2e7a74041b.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode\\deepseek-harness\\packages\\council\\tool-council absent here; launched in C:\\Users\\vMixer"
+    },
+    "735ad08b-2439-4590-bcd9-f27ea32142d5": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-28T02:57:08.094Z",
+      "chip": {
+        "title": "Continue AWS seat build, leg 6",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-003, source session 735ad08b-2439-4590-bcd9-f27ea32142d5. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-003--735ad08b-2439-4590-bcd9-f27ea32142d5.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode absent here; launched in C:\\Users\\vMixer"
+    },
+    "c6a36fd1-ea22-496a-8890-b551aad37fe5": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-28T02:57:08.094Z",
+      "chip": {
+        "title": "Archive agents except continue AWS seat",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-003, source session c6a36fd1-ea22-496a-8890-b551aad37fe5. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-003--c6a36fd1-ea22-496a-8890-b551aad37fe5.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode absent here; launched in C:\\Users\\vMixer"
+    }
+  }
+}

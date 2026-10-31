@@ -1,0 +1,26 @@
+---
+name: handoff-2026-10-28-1710-tv-security-agent
+description: TV agent 10-28 - Tubi re-enabled (Free TV), Frigate TV 1.2 D-pad nav live both TVs; next doorbell motion/ring recording in Frigate
+metadata:
+  type: project
+---
+Id: handoff-2026-10-28-1710-tv-security-agent
+Updated: 2026-10-28 17:12Z (10:12 PT)
+Host: vmixer2o2
+Session: 67c346fd-da90-4613-b925-1ecd23dc44e9
+Model: Claude Opus 5.5 (claude-opus-5-5)
+Remote Control: off
+Owner: this session (user: "be my TV agent, finish outstanding Android TV security work")
+User queue (in order): 1 Free TV button app; 2 Frigate app remote-only (no mouse); 3 doorbell motion + ring recorded in Frigate ("seeing them on screen but not recorded").
+FAILED 1 (user verdict, counts against Claude Opus 5.5 validation): Free TV button app NOT found. onn remote key = KEYCODE_FEATURED_APP_1 -> FreeTvButtonHandler wants FAST deeplink livetvx://cltv.dev (Live TVx, user: not it) -> shows "Create a shortcut" picker. Tubi re-enabled on onn as a guess (not confirmed as the app; undo in changes.log). Search stopped by user.
+Done 2: com.vmx.frigatetv 1.2 code 3 installed both TVs. MainActivity: spatnav.js injected onPageFinished+doUpdateVisitedHistory; cursor OFF by default (Menu toggles); arrows->__ftv.move, OK->__ftv.ok() -> real touch (+IME if edit), Back -> Escape if layer open else goBack; onStop loads about:blank, onStart reloads. Backups *.bak-v1.1. Proof frigate-tv-src\proof\tk-v12-{2-right,4-down,5-back}.png (TandKcast, QR/login pages).
+Not verified: nav inside signed-in Frigate UI on TV - TandKcast session expired (24h), needs user phone re-pair (code on TV). onn was in use (YouTube) - not driven; 3 stray D-pad keys went to YouTube 17:08Z.
+Updated2: 2026-10-28 17:20Z - QUOTA FINISH (context 246k), stopped.
+Done 3 (partial): poller.mjs - every window (motion/ring/TV) gets fresh redial (resetStream), rings bypass motion backoff (bak poller.mjs.bak-20261028-rec). Root cause was 13/13 motion prewarms failing 10-28 -> Frigate never ON -> nothing recorded. Test window 17:11Z: live 8.9 s, Frigate recorded (proof tv-audit-2026-10-24ec-proof\doorbell-1711-frame.jpg + clip.mp4). NOT proven: a REAL Wyze motion/ring event recording via the redial. Watcher bg (scratchpad event-watch.sh, dies with session) - re-run: watch docker logs nvr-doorbell-poller for next 'event:' then 'live after'/'Frigate stays OFF', then check /api/doorbell/recordings.
+User ask 4 (Q&A answer: BOTH apps): doorbell holding picture = last motion screenshot + choose Go live from inside app.
+- Poller DONE+live: holding picture = Frigate last recorded doorbell frame -> state tv/hold.json, /status "hold":{ts,img}, refreshed 15 s after each live window and at start (bak poller.mjs.bak-20261028-hold). Verified: /doorbell/status.json hold 1793207524000.jpg, /doorbell/img/<f> 200 image/jpeg.
+- tvhome source EDITED, NOT BUILT: 1.5.6-vmx15 code 30 (bak MainActivity.java.bak-vmx14, AndroidManifest.xml.bak-vmx14): doorHold ImageView full tile behind strip, status 'Last seen <time> · OK for live'; OK on tile already = live. Next: powershell -NoProfile -File build-win.ps1 in tv-detox-src, install -r both TVs (onn has vmx13; check onn not in use), screencap tile.
+- Frigate app doorbell card NOT STARTED. Plan: manifest usesCleartextTraffic; Java JS bridge FTV.door() fetches http://10.0.0.244:1984/doorbell/status.json + hold img -> data URL; inject fixed [role=button] card on dashboard route (spatnav picks it up); OK -> Java GET /doorbell/live?id=frigatetv, ping every 25 s, load Frigate doorbell live view (find route: likely HOME + '#doorbell'); leave view -> /doorbell/stop. Build v1.3 code 4.
+Do not repeat: Wyze thumbnail URLs (prod-sight-safe-auth) 401 even with access_token header - dead end.
+Do not repeat (all): typing user password; driving onn while in use; Live TVx install.
+Claimed: 2026-10-28 17:20Z by Claude Opus 5.5 side session (from local_adde80c3). Verified live: tvhome TK vmx14/onn vmx13, frigatetv 1.2 both, poller restarted 17:16Z with hold 1793207524000.jpg, vmx15 source edited unbuilt. Real-event watcher running.

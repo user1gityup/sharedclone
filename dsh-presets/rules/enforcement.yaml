@@ -1,0 +1,40 @@
+    rules/enforcement:
+      name: Rule Enforcement System (pm P-e5d90d43)
+      query: |
+        # PM project P-e5d90d43 - Rule Enforcement System (DSH council run, user-driven)
+
+        RUN POLICY (user, 2026-10-25, prepared by Claude Opus 5.5 - NOT dispatched):
+        - The user drives this run directly in DSH and picks every council and swarm seat. No default roster. No Fable.
+        - Stages: council -> (user approves) swarm -> review. Hard target per stage: 10 minutes.
+        - Write ONLY inside this run's working directory: staged patches, RESULT.md, unified diffs against real repo paths, test output with real exit codes. No live config edits, no git commit/push, no settings.yaml change, no pm.db edit.
+        - No retries without a diagnosis. On any quota or usage-limit failure: stop and report; never retry at reset.
+        - Every agent names its model in everything it writes.
+
+        ## Goal
+        Make the master rules in ~/.claude/CLAUDE.md enforceable for every agent (Claude Code, Codex, DSH seats and swarm workers) by mechanism, not by instruction. Rules an agent can break by choice must instead fail closed or route to the user for approval.
+
+        ## Why (incident 2026-10-24)
+        10 parallel DSH runs burned both Claude accounts and the Codex limit with one real deliverable: an agent resumed failing runs repeatedly, scripted auto-resumes, stopped watching, and supervisors retried at each quota reset because a usage-limit error surfaced as "llm-claude-cli: success". Every rule broken there was text-only.
+
+        ## Work items (pm tasks)
+        - E1 T-2f3715ab: rules/policy.json single source (blocked commands, protected paths, banned seats, spend limits, required output markers), rendered by brain-sync; Claude Code PreToolUse hook enforces it on Bash/Write/Edit (block or ask); every decision logged in the brain.
+        - E2 T-20c47c40: DSH tool-layer guard (seat bans, write roots); auto supervisor stops on quota/usage limit and never retries at reset; default --max-attempts 1; resume --auto refuses an undiagnosed failed run.
+        - E3 T-d7fa76cd: packages/llm/llm-claude-cli/src/events.ts failure text = error ?? result text ?? subtype; classifyFailure then sees the limit -> RATE_LIMIT. Test.
+        - E4 T-907d086f: non-agent watchdog (scheduled task): 10-minute stuck rule over DSH runs/sessions/logs, stops retry loops and stale RUNNING records, reports to the hub.
+        - E5 T-d899f03a: Codex exec/approval policy + sandbox rendered from policy.json; git pre-push hook requiring the gatekeeper token in every repo; read-only ACLs on pm.db and settings backups; claude/codex CLI wrapper refusing new runs past the quota threshold.
+        - E6 T-804e8b21: Stop-hook output checks (model name, UTC+Pacific ETA on run launch, Q&A card format); failing message bounced back; optional cheap judge.
+
+        ## Known limit
+        Judgment rules (fix-don't-explain, no legal asides) can only be checked after the fact. Say which rules are enforced, which are checked, and which remain instruction-only.
+
+        ## Deliverables
+        RESULT.md (what was built, files, tests with real output, rule-by-rule coverage table, rollback) plus unified diffs. Label anything simulated as SIMULATED.
+
+        ## Context files
+        - ~/.claude/CLAUDE.md (master rules), ~/.claude/shared-brain/MEMORY.md, quota-handoff-protocol.md, pm-live.md
+        - ~/.claude/hooks/ (existing SessionStart/quota hooks), ~/.claude/settings.json
+        - deepseek-harness: packages/council/tool-council/bin/dsh-run.mjs, dsh-auto.mjs, packages/llm/llm-claude-cli/src/
+        - Gatekeeper: ~/Documents/Codex/2026-09-07/can-you-check-the-agent-history/outputs/gatekeeper/
+      stages: council,swarm,review
+      mode: fastest
+      autoAdvance: true

@@ -1,0 +1,352 @@
+# SANITIZED SNAPSHOT of ~/.dsh/settings.yaml on vmixer2o2 — not the live file, not loaded by DSH.
+# Exported 2026-09-15T10:24:15.919Z by .sync/export-history.mjs (parsed).
+# Removed: values under secret-named keys, credential-shaped strings, e-mail addresses, account names, home paths (~).
+# Kept: env-var NAMES (apiKeyEnv), providers, models, council seats, swarm roster, quota readings.
+# Truncated: long transient text at 1500 chars. pipelinePresets omitted (see dsh-presets/).
+ui-onboarding:
+  welcomeNoticeVersion: 2026-08-13.1
+llm-pi-ai:
+  providers:
+    openrouter:
+      apiKeyEnv: OPENROUTER_API_KEY
+    free-claude-code:
+      displayName: Free Claude Code
+      apiKeyEnv: FCC_DSH_API_KEY
+      api: openai-responses
+      baseURL: http://127.0.0.1:8082/v1
+      models:
+        - id: claude-sonnet-4-20250514
+          name: Free (routed by FCC)
+          contextWindow: 131072
+        - id: claude-opus-4-20250514
+          name: Free - large tier (routed by FCC)
+          contextWindow: 131072
+        - id: claude-haiku-4-20250514
+          name: Free - fast tier (routed by FCC)
+          contextWindow: 131072
+    openrouter-free:
+      displayName: OpenRouter Free
+      api: openai-completions
+      baseURL: http://127.0.0.1:8080/v1
+      models:
+        - id: proxy-auto
+          name: Free (auto-routed free models)
+          contextWindow: 65536
+        - id: thinkingmachines/inkling-small:free
+          name: "Thinking Machines: Inkling Small (free)"
+          contextWindow: 1048576
+        - id: thinkingmachines/inkling:free
+          name: "Thinking Machines: Inkling (free)"
+          contextWindow: 1048576
+        - id: nvidia/nemotron-3.5-lightning:free
+          name: "NVIDIA: Nemotron 3.5 Lightning (free)"
+          contextWindow: 1000000
+        - id: nvidia/nemotron-3-ultra-550b-a55b:free
+          name: "NVIDIA: Nemotron 3 Ultra (free)"
+          contextWindow: 1000000
+        - id: dots-studio/dots-3-note-preview:free
+          name: "Dots Studio: Dots3-Note Preview (free)"
+          contextWindow: 512000
+        - id: inclusionai/ling-3.0-flash-vl:free
+          name: "inclusionAI: Ling 3.0 Flash VL (free)"
+          contextWindow: 262144
+        - id: nex-agi/nex-n2.5-mini:free
+          name: "Nex AGI: Nex-N2.5-Mini (free)"
+          contextWindow: 262144
+        - id: nex-agi/nex-n2.5-pro:free
+          name: "Nex AGI: Nex-N2.5-Pro (free)"
+          contextWindow: 262144
+        - id: inclusionai/ling-3.0-flash-sante:free
+          name: "inclusionAI: Ling 3.0 Flash Sante (free)"
+          contextWindow: 262144
+        - id: inclusionai/ling-3.0-flash-fin:free
+          name: "inclusionAI: Ling 3.0 Flash Fin (free)"
+          contextWindow: 262144
+        - id: poolside/laguna-s-2.1:free
+          name: "Poolside: Laguna S 2.1 (free)"
+          contextWindow: 262144
+        - id: poolside/laguna-xs-2.1:free
+          name: "Poolside: Laguna XS 2.1 (free)"
+          contextWindow: 262144
+        - id: google/gemma-4-26b-a4b-it:free
+          name: "Google: Gemma 4 26B A4B (free)"
+          contextWindow: 262144
+        - id: google/gemma-4-31b-it:free
+          name: "Google: Gemma 4 31B (free)"
+          contextWindow: 262144
+        - id: nvidia/nemotron-3-super-120b-a12b:free
+          name: "NVIDIA: Nemotron 3 Super (free)"
+          contextWindow: 262144
+        - id: cohere/north-mini-code:free
+          name: "Cohere: North Mini Code (free)"
+          contextWindow: 256000
+        - id: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+          name: "NVIDIA: Nemotron 3 Nano Omni (free)"
+          contextWindow: 256000
+        - id: openrouter/free
+          name: Free Models Router
+          contextWindow: 200000
+        - id: nvidia/nemotron-3.5-content-safety:free
+          name: "NVIDIA: Nemotron 3.5 Content Safety (free)"
+          contextWindow: 128000
+        - id: liquid/lfm-2.5-2.6b:free
+          name: "LiquidAI: LFM2.5-2.6B (free)"
+          contextWindow: 65536
+      apiKeyEnv: OPENROUTER_API_KEY
+  agent-default-model:
+    provider: openrouter
+    model: deepseek/deepseek-v4-pro
+council:
+  observedCliTokensPerWeek: 1892086
+  seats:
+    openai:
+      enabled: false
+      args:
+        - exec
+        - --skip-git-repo-check
+        - "{prompt}"
+      model: ""
+    deepseek:
+      enabled: true
+      args: []
+    free-claude:
+      enabled: true
+      args: []
+    kimi:
+      enabled: true
+      args: []
+    claude:
+      enabled: true
+      args: []
+    agy-flash-lite:
+      enabled: false
+      args: []
+    agy-flash:
+      enabled: false
+      args: []
+    agy-pro:
+      enabled: false
+      args: []
+    openrouter-free:
+      enabled: true
+      args: []
+  councilMode: false
+  fileRoots: ~\Documents\claudecode\deepseek-harness
+  swarmMode: false
+  pipelinePresets: "<omitted: 8 saved runs, exported one file each under dsh-presets/>"
+  pendingPlanId: 5b69dee5-0df8-4541-acf0-449d281436d6
+  pendingPlanQuery: |-
+    RUN POLICY — USER REQUEST
+    Council planning: use exactly the seats selected in the Council Budget panel at the time this council stage runs. Identify each seat by model and report any seat that is unavailable; do not add, substitute or omit seats.
+    Build: the swarm stage will run in economy mode later. Free seats contest every unit, a winner is selected per unit, and paid seats do the reviews and the bounded fallback, exactly as economy mode defines it. The economy estimate must be shown at the swarm gate.
+    Make the product enjoyable and easy to use: clear visual hierarchy, responsive interactions, useful live progress, approachable empty states, and accessible controls.
+    Build repository path is still pending: obtain it before the swarm stage. Every stage stops at its own approval gate.
+
+    # Council + swarm build specification
+
+    Build a standalone project management application for a multi-human team coordinating CLI agents, councils, and swarms across projects, sessions, and machines. It must run independently of DSH; DSH is one execution connector. Deliver working software, verified end to end, in a separate repository.
+
+    ## Execution boundary
+    - This saved specification is not execution authorization. Target repository/swarm path, hosting, and execution authorization are pending.
+    - Before implementation, inspect applicable project instructions and current DSH integration code; shared notes are context, not proof of current behavior. Present the architecture, task graph, acceptance … [truncated 7262 chars]
+  pendingPlanText: |-
+    ## Council Planning Brief
+
+    **RESTATEMENT:** Build a standalone multi-human project management application that coordinates CLI agents, councils, and swarms across projects/sessions/machines, with DSH as one connector among many, delivered in verified phases with preserved approval gates.
+
+    **APPROACH:** Architecture-first: present stack decision (hosting, OS, budget), data model migrations, API contracts, and phase-1 task graph for human collaboration before any implementation. Each phase stops at approval with acceptance criteria, cost estimate, and evidence requirements.
+
+    **ASSUMPTIONS:**
+    - Target repository path and hosting decision pending (shared brain shows "Agent project manager" preset saved, not started, awaiting build path)
+    - DSH council/swarm connector must inspect current implementation; shared notes describe intent, not verified behavior
+    - "Economy mode" means free seats contest units, paid seats review/fallback—verify this matches current DSH swarm profiles
+
+    **RISKS:**
+    - Scope expansion into DSH orchestration duplication (explicitly forbidden)
+    - Gate bypass: platform approval substituting for DSH authorization (explicitly forbidden)
+    - Mock integration presented as real (forbidden—need actual DSH runs)
+    - Premature swarm path selection before repository/hosting resolved
+
+    ---
+
+    SCALE: huge
+    EST_OUTPUT_TOKENS: 18000
+  pendingPlanIssuedAt: 1789440255817
+  approvedPlanId: ""
+  approvedAt: 0
+  swarmRoster:
+    spawn:
+      enabled: false
+      kinds: []
+    codex:
+      enabled: false
+      kinds: []
+    free-claude:
+      enabled: true
+      kinds:
+        - code
+        - review
+        - research
+        - docs
+        - tests
+    claude:
+      kinds:
+        - tests
+        - research
+        - review
+        - docs
+        - code
+    kimi:
+      enabled: true
+      kinds:
+        - code
+        - tests
+        - docs
+        - research
+        - review
+    deepseek:
+      enabled: true
+      kinds:
+        - review
+        - research
+        - docs
+        - tests
+        - code
+    agy-pro:
+      enabled: false
+      kinds: []
+    agy-flash:
+      enabled: false
+      kinds: []
+    agy-flash-lite:
+      enabled: false
+      kinds: []
+    openrouter-free:
+      enabled: false
+      kinds: []
+    openai:
+      enabled: false
+      kinds:
+        - code
+        - tests
+        - docs
+        - research
+        - review
+  openai:
+    enabled: true
+    kinds:
+      - review
+  pipelineAuto: false
+  pipelineMinimize: chevron
+  pipelineCollapsed: false
+  pipelineId: c8198409-9b47-407f-862e-f34c14b0fce5
+  pipelineQuery: |-
+    RUN POLICY — USER REQUEST
+    Council planning: use exactly the seats selected in the Council Budget panel at the time this council stage runs. Identify each seat by model and report any seat that is unavailable; do not add, substitute or omit seats.
+    Build: the swarm stage will run in economy mode later. Free seats contest every unit, a winner is selected per unit, and paid seats do the reviews and the bounded fallback, exactly as economy mode defines it. The economy estimate must be shown at the swarm gate.
+    Make the product enjoyable and easy to use: clear visual hierarchy, responsive interactions, useful live progress, approachable empty states, and accessible controls.
+    Build repository path is still pending: obtain it before the swarm stage. Every stage stops at its own approval gate.
+
+    # Council + swarm build specification
+
+    Build a standalone project management application for a multi-human team coordinating CLI agents, councils, and swarms across projects, sessions, and machines. It must run independently of DSH; DSH is one execution connector. Deliver working software, verified end to end, in a separate repository.
+
+    ## Execution boundary
+    - This saved specification is not execution authorization. Target repository/swarm path, hosting, and execution authorization are pending.
+    - Before implementation, inspect applicable project instructions and current DSH integration code; shared notes are context, not proof of current behavior. Present the architecture, task graph, acceptance … [truncated 7262 chars]
+  pipelineStage: council
+  pipelinePlan: |-
+    ## Council Planning Brief
+
+    **RESTATEMENT:** Build a standalone multi-human project management application that coordinates CLI agents, councils, and swarms across projects/sessions/machines, with DSH as one connector among many, delivered in verified phases with preserved approval gates.
+
+    **APPROACH:** Architecture-first: present stack decision (hosting, OS, budget), data model migrations, API contracts, and phase-1 task graph for human collaboration before any implementation. Each phase stops at approval with acceptance criteria, cost estimate, and evidence requirements.
+
+    **ASSUMPTIONS:**
+    - Target repository path and hosting decision pending (shared brain shows "Agent project manager" preset saved, not started, awaiting build path)
+    - DSH council/swarm connector must inspect current implementation; shared notes describe intent, not verified behavior
+    - "Economy mode" means free seats contest units, paid seats review/fallback—verify this matches current DSH swarm profiles
+
+    **RISKS:**
+    - Scope expansion into DSH orchestration duplication (explicitly forbidden)
+    - Gate bypass: platform approval substituting for DSH authorization (explicitly forbidden)
+    - Mock integration presented as real (forbidden—need actual DSH runs)
+    - Premature swarm path selection before repository/hosting resolved
+
+    ---
+
+    SCALE: huge
+    EST_OUTPUT_TOKENS: 18000
+  pipelineTasks: ""
+  pipelineUnits: ""
+  pipelineCandidates: ""
+  pipelineHoldDetail: ""
+  pipelineHoldSeat: ""
+  pipelineHoldResumeAt: 0
+  pipelineHoldSource: ""
+  pendingSwarmId: ""
+  pendingSwarmQuery: |-
+    # Codex implementation prompt: make DSH council runs complete reliably
+
+    Fix DSH council runs so large prompts, cancellations, slow seats, and partial results cannot silently produce an incomplete “successful” run.
+
+    ## DSH council → swarm → council execution contract
+
+    This is a gated three-stage DSH pipeline:
+
+    1. **Council:** every enabled, reachable council seat reviews the evidence and current implementation, agrees the root causes, and produces one exact implementation plan and swarm DAG. This stage is planning only: no repository writes, commands, builds, commits, or worker launches. Stop at the approval gate.
+    2. **Swarm:** after the existing two-factor approval, implement the approved plan in parallel waves. Tasks in one wave must have disjoint write sets. Each hosted worker's output must have one named local owner responsible for applying and testing it. Persist successful units so a stopped swarm resumes without repeating completed work. Stop on a failed wave instead of advancing. No real metered model/API probes are allowed for verification.
+    3. **Final council:** review the actual diff, tests, built libraries, fixture reproduction, partial-run UI, journal/resume behavior, and acceptance criteria. Create bounded corrective swarm units for defects, then re-review. Completion requires council quorum and evidence against the built artifacts.
+
+    Every stage must identify participating models, unavailable seats, elapsed time, failures, and resumptions. Existing approval gates  … [truncated 7880 chars]
+  pendingSwarmTasks: '[{"id":"core-council-reliability","title":"Implement all council reliability core changes","detail":"Edit seats.ts, council.ts, journal.ts, runs.ts, index.ts to implement: 1) cancellation: pre-spawn abort check, normalized readable errors (no {\"kind\":\"user\"}), Windows process tree kill after spawn; 2) tiered timeouts (startup, stream-idle, seat-overall, council-round, run) with persisted source; 3) partial-result policy: terminal states (completed, partial, cancelled, failed, awaiting_resume), configurable quorum with safe defaults; 4) durable resume: extend journal schema for run phase, prompt hash, seat reply identity, result (success/failure terminal/retryable), and resume logic that reuses successful replies and only retries unfinished/retryable; 5) observability: persist prompt length/bytes, section sizes, transport, seat limit, compaction flag before each seat call. Integrate with existing CLI and OpenRouter transports. Update index.ts exports if new types are introduced. Preserve existing short-prompt flows and two-factor gate logic. Do not touch agy-headless.mjs or UI components.","dependsOn":[],"provider":"free-claude","tier":"general","acceptance":["TypeScript compilation passes (tsc -p packages/council/tool-council/tsconfig.json --noEmit)","Existing short-prompt council flow runs with mock fixture (no import errors, no early crash)","New types/functions are accessible from the root index.ts"],"files":["packages/council/tool-council/src/seats.ts","packages/counc … [truncated 2236 chars]'
+  pendingSwarmIssuedAt: 1789283001269
+  approvedSwarmId: ""
+  approvedSwarmAt: 1789283046370
+  pipelinePicked: ""
+  pipelineStages: council,swarm,review
+  pipelineWinner: ""
+  pipelineProfile: ""
+  pipelineStoppedId: f306442b-d806-403b-bca4-ec65bc35e7f5
+  pendingProposeId: ""
+  approvedProposeId: ""
+  swarmProfile: user
+  pendingSwarmProfile: economy
+  codexModels:
+    - gpt-6-astra
+    - gpt-5.6-sol
+    - gpt-5.6-terra
+    - gpt-5.6-luna
+    - gpt-5.5
+ui-theme:
+  preference: light
+claude-quota:
+  sessionPercent: 3
+  sessionResets: Sep 14, 12:50am
+  weekPercent: 99
+  weekResets: Sep 15, 1am
+  requests24h: 112
+  sessions24h: 12
+  requests7d: 3508
+  sessions7d: 126
+  bigContextPercent: 19
+  bigContextThresholdK: 150
+  longSessionPercent: 22
+  longSessionHours: 8
+  capturedAt: 1789359939597
+  refreshRequestedAt: 1789467081029
+  refreshState: failed
+codex-quota:
+  refreshState: ok
+  bucketsJson: '[{"id":"codex","label":"codex","primary":{"remaining":100,"minutes":300,"resetsAt":1789485797},"secondary":{"remaining":0,"minutes":10080,"resetsAt":1789811021}}]'
+  capturedAt: 1789467797277
+  refreshRequestedAt: 1789338012857
+antigravity-quota:
+  refreshState: ok
+  bucketsJson: '[{"id":"gemini-weekly","group":"Gemini Models","label":"Weekly Limit Remaining","remaining":0,"window":"weekly","resetsAt":1789514594,"note":"You have hit your weekly limit, it refreshes in 13 hours, 4 minutes. If on a supported paid plan, you can use AI credits in the interim or upgrade to a higher tier."},{"id":"3p-weekly","group":"Claude and GPT models","label":"Weekly Limit Remaining","remaining":0,"window":"weekly","resetsAt":1789523361,"note":"You have hit your weekly limit, it refreshes in 15 hours, 31 minutes. If on a supported paid plan, you can use AI credits in the interim or upgrade to a higher tier."}]'
+  capturedAt: 1789467798261
+  seatsJson: '[{"id":"seat1","label":"Shift A","source":"seat","tierId":"","tierName":"","weight":1,"buckets":[],"state":"down","counted":false,"inflight":0,"parkedUntil":null},{"id":"gone1","label":"Google One account","source":"seat","tierId":"","tierName":"","weight":1,"buckets":[],"state":"down","counted":false,"inflight":0,"parkedUntil":null},{"id":"fam1","label":"family seat 1","source":"seat","tierId":"","tierName":"","weight":1,"buckets":[],"state":"down","counted":false,"inflight":0,"parkedUntil":null},{"id":"seat4","label":"pool-seat4","source":"seat","tierId":"","tierName":"","weight":1,"buckets":[],"state":"down","counted":false,"inflight":0,"parkedUntil":null},{"id":"seat5","label":"pool-seat5","source":"seat","tierId":"","tierName":"","weight":1,"buckets":[],"state":"down","counted":false,"inflight":0,"parkedUntil":null},{"id":"seat6","label":"pool-seat6","source":"seat","tierId":"","tierName":"","weight":1,"buckets":[],"state":"down","counted":false,"inflight":0,"parkedUntil":null}]'
+  refreshRequestedAt: 1789434203760
+agent-default-model:
+  provider: codex-cli
+  model: gpt-5.6-sol

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "tool": "dsh-stuck-watchdog",
+  "generatedAt": "2026-10-31T14:33:03.005Z",
+  "staleThresholdMinutes": 10,
+  "runsFile": "C:\\Users\\vMixer\\.claude\\shared-brain\\enforcement\\watchdog-runs.json",
+  "totalRunsScanned": 0,
+  "staleCount": 0,
+  "findings": []
+}

@@ -1,0 +1,226 @@
+{
+  "version": "2026-10-26.1",
+  "generatedFrom": "~/.claude/CLAUDE.md@2026-10-25 (brain copy rules/CLAUDE.md)",
+  "blockedCommands": [
+    {
+      "id": "git-push-non-gatekeeper",
+      "description": "Only the git-gatekeeper subagent (or the user-operated PowerShell gatekeeper, or GPT-6 under the recorded quota exception) may push.",
+      "match": {
+        "tool": "Bash",
+        "sanitize": "shell-code",
+        "pattern": "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:\"(?:[^\"\\n]*[/\\\\])?git(?:\\.exe)?\"|'(?:[^'\\n]*[/\\\\])?git(?:\\.exe)?'|(?:(?:\\\\.|[^\\s;&|\"'])*[/\\\\])?git(?:\\.exe)?)(?:\\s+(?:-[Cc]\\s+(?:\"[^\"\\n]*\"|'[^'\\n]*'|\\S+)|--(?:git-dir|work-tree|namespace|exec-path|config-env)\\s+\\S+|--?[\\w-]+(?:=\\S+)?))*\\s+push(?![\\w-])"
+      },
+      "action": "block",
+      "allowIf": [
+        "agent==git-gatekeeper",
+        "agent==powershell-gatekeeper-queue"
+      ],
+      "rule": "Hold git pushes until I say the session is ending, and route every push through one agent ... Every other agent commits locally, appends a request to push-requests.md ... No agent pushes on its own.",
+      "narrowed": "Claude Opus 5.5 2026-10-26: only a git push in command position (line start or after ; && || | $( backtick), incl. git -C dir / git.exe / path / wrappers; not quoted text, heredoc bodies, comments or echo/printf text. sh -c / eval payloads are re-scanned."
+    },
+    {
+      "id": "git-force-push-main",
+      "description": "Force push to a protected branch, even by the gatekeeper, needs explicit per-instance approval.",
+      "match": {
+        "tool": "Bash",
+        "pattern": "\\bgit\\s+push\\b[^\\n]*(--force|--force-with-lease|-f\\b)[^\\n]*\\b(main|master)\\b"
+      },
+      "action": "block",
+      "allowIf": [],
+      "rule": "Never force push to main/master, warn the user if they request it."
+    },
+    {
+      "id": "git-skip-hooks-or-signing",
+      "description": "Skipping hooks or bypassing commit signing is allowed only when the user explicitly asked for it in this turn -- a condition this hook cannot verify from the command alone, so it routes to a human instead of silently allowing or silently blocking.",
+      "match": {
+        "tool": "Bash",
+        "pattern": "(--no-verify|--no-gpg-sign|commit\\.gpgsign=false)"
+      },
+      "action": "ask",
+      "allowIf": [],
+      "rule": "Never skip hooks (--no-verify) or bypass signing (--no-gpg-sign, -c commit.gpgsign=false) unless the user has explicitly asked for it."
+    },
+    {
+      "id": "pmdb-direct-edit-shell",
+      "description": "Write-like shell operations on pm.db only: sqlite3 with a write statement (or an unseen stdin script), cp onto it, mv/rm/tee/Set-Content on it, > or >> into it. Reads and mentions pass.",
+      "match": {
+        "tool": "Bash",
+        "sanitize": "shell-code",
+        "patterns": [
+          "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:(?:\\\\.|[^\\s;&|\"'])*[/\\\\])?sqlite3?(?:\\.exe)?\\b[^\\n;&|]*[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])[^\\n;&|]*(?:^|[\\s;\"'(_])(?:insert\\s+(?:or\\s+\\w+\\s+)?into|update\\s+[\\w.\"\\[\\]]+\\s+set|delete\\s+from|replace\\s+into|create\\s+(?:temp\\w*\\s+|unique\\s+)?(?:table|index|view|trigger)|drop\\s+(?:table|index|view|trigger)|alter\\s+table|vacuum\\b|reindex\\b|attach\\s|detach\\s|pragma\\s+[\\w.]+\\s*=|\\.import\\b|\\.restore\\b|\\.read\\b|\\.clone\\b|\\.recover\\b)",
+          "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:(?:\\\\.|[^\\s;&|\"'])*[/\\\\])?sqlite3?(?:\\.exe)?\\b[^\\n;&|]*(?:^|[\\s;\"'(_])(?:insert\\s+(?:or\\s+\\w+\\s+)?into|update\\s+[\\w.\"\\[\\]]+\\s+set|delete\\s+from|replace\\s+into|create\\s+(?:temp\\w*\\s+|unique\\s+)?(?:table|index|view|trigger)|drop\\s+(?:table|index|view|trigger)|alter\\s+table|vacuum\\b|reindex\\b|attach\\s|detach\\s|pragma\\s+[\\w.]+\\s*=|\\.import\\b|\\.restore\\b|\\.read\\b|\\.clone\\b|\\.recover\\b)[^\\n;&|]*[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])",
+          "(?:^|[\\s;\"'(_])(?:insert\\s+(?:or\\s+\\w+\\s+)?into|update\\s+[\\w.\"\\[\\]]+\\s+set|delete\\s+from|replace\\s+into|create\\s+(?:temp\\w*\\s+|unique\\s+)?(?:table|index|view|trigger)|drop\\s+(?:table|index|view|trigger)|alter\\s+table|vacuum\\b|reindex\\b|attach\\s|detach\\s|pragma\\s+[\\w.]+\\s*=|\\.import\\b|\\.restore\\b|\\.read\\b|\\.clone\\b|\\.recover\\b)[^\\n]*\\|\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:(?:\\\\.|[^\\s;&|\"'])*[/\\\\])?sqlite3?(?:\\.exe)?\\b[^\\n;&|]*[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])",
+          "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:(?:\\\\.|[^\\s;&|\"'])*[/\\\\])?sqlite3?(?:\\.exe)?\\b[^\\n;&|]*[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])[^\\n;&|]*<<-?\\s*[\"']?(\\w+)[\"']?[^\\n]*\\n(?:(?!\\1\\s*(?:\\n|$))[^\\n]*\\n)*?[^\\n]*(?:^|[\\s;\"'(_])(?:insert\\s+(?:or\\s+\\w+\\s+)?into|update\\s+[\\w.\"\\[\\]]+\\s+set|delete\\s+from|replace\\s+into|create\\s+(?:temp\\w*\\s+|unique\\s+)?(?:table|index|view|trigger)|drop\\s+(?:table|index|view|trigger)|alter\\s+table|vacuum\\b|reindex\\b|attach\\s|detach\\s|pragma\\s+[\\w.]+\\s*=|\\.import\\b|\\.restore\\b|\\.read\\b|\\.clone\\b|\\.recover\\b)",
+          "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:(?:\\\\.|[^\\s;&|\"'])*[/\\\\])?sqlite3?(?:\\.exe)?\\b[^\\n;&|]*[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])[^\\n;&|]*(?<!<)<(?![<(])",
+          "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:cp|copy|install|copy-item|cpi|xcopy|robocopy)(?:\\.exe)?\\s[^\\n;&|]*\\s[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])\\s*(?=$|[;&|\\n)])",
+          "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:cp|copy-item|cpi)\\s[^\\n;&|]*-destination\\s+[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])",
+          "(?:^|[;&|\\n`]|\\$\\()\\s*(?:(?:then|do|else|!|\\{|sudo|command|exec|nohup|env|time|xargs)\\s+|timeout\\s+\\S+\\s+|[A-Za-z_]\\w*=\\S*\\s+|-\\S+\\s+)*(?:mv|move|rm|del|erase|unlink|shred|truncate|remove-item|ri|move-item|mi|rename-item|ren|clear-content|clc|set-content|add-content|out-file|tee|sed\\s+-i\\S*|perl\\s+-\\S*i\\S*)(?:\\.exe)?\\s[^\\n;&|]*[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])",
+          ">{1,2}\\|?\\s*[\"']?[^\\s;&|\"'<>]*?\\bpm\\.db(?:-wal|-shm|-journal)?[\"']?(?=$|[\\s;&|)])"
+        ]
+      },
+      "action": "block",
+      "allowIf": [],
+      "rule": "Never hand-edit pm.db.",
+      "narrowed": "Claude Opus 5.5 2026-10-26: was \\bpm\\.db\\b anywhere in the command."
+    },
+    {
+      "id": "dsh-auto-resume-undiagnosed",
+      "description": "A resume of an auto/background run must carry a diagnosis flag; the 2026-10-24 incident was repeated undiagnosed auto-resume at each quota reset.",
+      "match": {
+        "tool": "Bash",
+        "pattern": "dsh-run\\s+resume\\b[^\\n]*--auto\\b(?!.*--diagnosis)"
+      },
+      "action": "ask",
+      "allowIf": [],
+      "rule": "On any quota or usage-limit failure: stop and report; never retry at reset. (RUN POLICY, P-e5d90d43) / resume --auto refuses an undiagnosed failed run (E2)."
+    }
+  ],
+  "protectedPaths": [
+    {
+      "id": "pmdb-file",
+      "pathPattern": "**/pm.db",
+      "tools": [
+        "Write",
+        "Edit"
+      ],
+      "action": "block",
+      "allowIf": [],
+      "rule": "Never hand-edit pm.db."
+    },
+    {
+      "id": "claude-settings-json",
+      "pathPattern": "**/.claude/settings.json",
+      "tools": [
+        "Write",
+        "Edit"
+      ],
+      "action": "ask",
+      "allowIf": [],
+      "rule": "Changes to the harness's own permission/hook wiring need a human look before they take effect."
+    },
+    {
+      "id": "claude-master-rules",
+      "pathPattern": "**/.claude/CLAUDE.md",
+      "tools": [
+        "Write",
+        "Edit"
+      ],
+      "action": "ask",
+      "allowIf": [],
+      "rule": "This file is the one master rule set for every agent on every machine -- an agent should not silently rewrite its own governing rules."
+    },
+    {
+      "id": "live-settings-yaml",
+      "pathPattern": "**/.dsh/settings.yaml",
+      "tools": [
+        "Write",
+        "Edit",
+        "Bash"
+      ],
+      "action": "block",
+      "allowIf": [],
+      "rule": "No live config edits ... no settings.yaml change. (RUN POLICY, P-e5d90d43)",
+      "narrowed": "Claude Opus 5.5 2026-10-28, on user instruction: protect only the live DSH config (~/.dsh/settings.yaml on every host). Separate run-lane files such as ~/.dsh-lanes/<name>/settings.yaml are allowed; they are how pm gives a dsh-run its free-only roster."
+    },
+    {
+      "id": "gatekeeper-state",
+      "pathPattern": "**/outputs/gatekeeper/state/**",
+      "tools": [
+        "Write",
+        "Edit"
+      ],
+      "action": "ask",
+      "allowIf": [],
+      "rule": "Read its JSON receipts ... before reporting success -- receipts are the gatekeeper's record, not something other agents overwrite."
+    }
+  ],
+  "bannedSeats": [
+    {
+      "id": "no-fable",
+      "matchPattern": "fable",
+      "action": "block",
+      "rule": "No Fable -- never use claude-fable seat/model in runs, picks or recommendations (2026-10-23)."
+    }
+  ],
+  "spendLimits": [
+    {
+      "id": "monthly-budget",
+      "metric": "monthly_usd",
+      "threshold": 60,
+      "action": "ask",
+      "rule": "~$60/month total."
+    },
+    {
+      "id": "quota-checkpoint",
+      "metric": "weekly_quota_pct",
+      "threshold": 95,
+      "action": "ask",
+      "rule": "Checkpoint at 100k/4h/95% of any quota."
+    },
+    {
+      "id": "quota-weekly-stop",
+      "metric": "weekly_quota_pct",
+      "threshold": 98,
+      "action": "handoff",
+      "rule": "At 98% of the weekly quota every agent stops: stop all running agents and background runs, write the handoff."
+    },
+    {
+      "id": "context-checkpoint",
+      "metric": "session_context_tokens",
+      "threshold": 100000,
+      "action": "ask",
+      "rule": "Checkpoint at 100k context."
+    },
+    {
+      "id": "context-stop",
+      "metric": "session_context_tokens",
+      "threshold": 150000,
+      "action": "handoff",
+      "rule": "At 150k context ... start no new scope."
+    },
+    {
+      "id": "session-hours-checkpoint",
+      "metric": "session_hours",
+      "threshold": 4,
+      "action": "ask",
+      "rule": "Checkpoint at four hours."
+    },
+    {
+      "id": "session-hours-stop",
+      "metric": "session_hours",
+      "threshold": 8,
+      "action": "handoff",
+      "rule": "At eight hours ... stabilize the work and finish the handoff."
+    },
+    {
+      "id": "never-retry-at-reset",
+      "metric": "retry_at_reset",
+      "threshold": true,
+      "action": "block",
+      "rule": "On any quota or usage-limit failure: stop and report; never retry at reset. (RUN POLICY, P-e5d90d43)"
+    }
+  ],
+  "requiredOutputMarkers": [
+    {
+      "id": "model-self-id",
+      "appliesTo": "every_message_in_shared_surface",
+      "markerPattern": "(Claude (Opus|Sonnet|Haiku) \\d|DeepSeek|Qwen|Kimi|GPT|Codex)",
+      "onMissing": "log_only",
+      "rule": "Name the model, never \"me\" -- every agent refers to itself by its model name in anything I read."
+    },
+    {
+      "id": "run-launch-eta",
+      "appliesTo": "run_launch_or_status_message",
+      "markerPattern": "ETA.*\\bUTC\\b.*\\bP[TS]T\\b|\\bUTC\\b.*\\bPacific\\b",
+      "onMissing": "ask",
+      "rule": "ETA on every job, unasked ... as clock time (UTC and Pacific) plus the duration."
+    },
+    {
+      "id": "qna-card-format",
+      "appliesTo": "ask_user_question_tool_call",
+      "markerPattern": "Question \\d+ of \\d+",
+      "onMissing": "log_only",
+      "rule": "Every question to me uses the Q&A card format ... headed \"Question X of Y - Z remaining\"."
+    }
+  ]
+}

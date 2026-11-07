@@ -1,0 +1,119 @@
+{
+  "receiver": "ndi2@vmixlaptop2x6",
+  "sessions": {
+    "01b97017-fa1d-421e-900c-b044559f2b38": {
+      "state": "RESTORED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Project manager completion dashboard",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session 01b97017-fa1d-421e-900c-b044559f2b38. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--01b97017-fa1d-421e-900c-b044559f2b38.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip",
+      "receiver_session_id": "94f39c91-8d85-4de8-abc9-cae07a0983cd",
+      "confirmed_at": "2026-09-29T15:53:38.093Z"
+    },
+    "42db1ab5-e4b7-46a6-9af7-3cf5a56f731a": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Close vMixer seat-401 thread and fix stale notes",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session 42db1ab5-e4b7-46a6-9af7-3cf5a56f731a. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--42db1ab5-e4b7-46a6-9af7-3cf5a56f731a.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    },
+    "803a3d87-f42c-4a68-9db3-f8d19ea1d733": {
+      "state": "RESTORED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Continue AWS seat build",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session 803a3d87-f42c-4a68-9db3-f8d19ea1d733. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--803a3d87-f42c-4a68-9db3-f8d19ea1d733.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip",
+      "receiver_session_id": "274eb4ee-ab81-4df4-8446-9fd1da2a81fd",
+      "confirmed_at": "2026-09-29T15:54:11.124Z"
+    },
+    "8b82335a-1c12-4fe8-b102-088852bef159": {
+      "state": "RESTORED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Resume AWS seat build: multi-account quota-aws",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session 8b82335a-1c12-4fe8-b102-088852bef159. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--8b82335a-1c12-4fe8-b102-088852bef159.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip",
+      "receiver_session_id": "449587b7-81d9-4b92-a2c8-10dcfa7d2681",
+      "confirmed_at": "2026-09-29T15:54:01.694Z"
+    },
+    "a6b7b9c6-e46e-44ed-9b58-a9494e59011e": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Recent sessions relaunch list",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session a6b7b9c6-e46e-44ed-9b58-a9494e59011e. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--a6b7b9c6-e46e-44ed-9b58-a9494e59011e.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    },
+    "aa997c56-adc6-414c-a915-3c4022099f52": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Continue RC + vmixer DSH fix",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session aa997c56-adc6-414c-a915-3c4022099f52. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--aa997c56-adc6-414c-a915-3c4022099f52.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    },
+    "e552dae2-5e52-4cf9-b4e8-48a482ef19bd": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Continue RC vMixer DSH work",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session e552dae2-5e52-4cf9-b4e8-48a482ef19bd. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--e552dae2-5e52-4cf9-b4e8-48a482ef19bd.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    },
+    "e96e315a-6cc7-4e72-8dab-a4bfd39a5ec1": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Continue AWS seat build",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session e96e315a-6cc7-4e72-8dab-a4bfd39a5ec1. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--e96e315a-6cc7-4e72-8dab-a4bfd39a5ec1.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    },
+    "fc024de9-a34c-4e72-ab50-c8de4902ac1d": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-29T15:46:20.702Z",
+      "chip": {
+        "title": "Continue AWS seat multi-account build",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-005, source session fc024de9-a34c-4e72-ab50-c8de4902ac1d. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-005--fc024de9-a34c-4e72-ab50-c8de4902ac1d.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    }
+  }
+}

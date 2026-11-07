@@ -1,0 +1,610 @@
+diff --git a/pm/bridge/auth.mjs b/pm/bridge/auth.mjs
+index b12d729d..14332b6e 100644
+--- a/pm/bridge/auth.mjs
++++ b/pm/bridge/auth.mjs
+@@ -5,14 +5,15 @@
+ //   { "tokens": [ { "name": "chatgpt", "sha256": "<hex>", "scopes": ["send","read"], "projects": ["*"] } ] }
+ // Create one with: node bridge/cli.mjs token-add <name> <scope,scope>
+ import { createHash, timingSafeEqual } from 'node:crypto'
+-import { existsSync, readFileSync } from 'node:fs'
++import { existsSync, readFileSync, statSync } from 'node:fs'
+ import { join } from 'node:path'
+ import { homedir } from 'node:os'
+ import { BridgeError } from './protocol.mjs'
+ 
+ // `auto`: may start Claude Code runs in permission mode auto (user approved for the
+ // chatgpt token 2026-10-08). Without it a run is limited to default/acceptEdits.
+-export const SCOPES = ['send', 'read', 'execute', 'file', 'admin', 'auto']
++// `replicate`: may pull this node's mailbox rows and token hashes (peer nodes only, replica.mjs).
++export const SCOPES = ['send', 'read', 'execute', 'file', 'admin', 'auto', 'replicate']
+ const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
+ 
+ export const sha256 = (s) => createHash('sha256').update(s).digest('hex')
+@@ -33,9 +34,25 @@ export function loadTokens(file = defaultTokenFile()) {
+  *  - peerToken: the pm PM_TOKEN shared between machines (scopes: peerScopes)
+  *  - trustLoopback: loopback callers without a token get every scope (the pm convention)
+  */
+-export function createAuth({ tokens = loadTokens(), peerToken = process.env.PM_TOKEN || '', peerScopes, trustLoopback = true } = {}) {
++/** Token list re-read whenever the file changes (replication adds peer tokens at runtime). */
++function liveTokens(file = defaultTokenFile()) {
++  let stamp = null
++  let cached = []
++  return () => {
++    let next = 'none'
++    try { const st = statSync(file); next = `${st.mtimeMs}:${st.size}` } catch {}
++    if (next !== stamp) {
++      try { cached = loadTokens(file) } catch { /* keep the last good list while a writer is mid-rename */ }
++      stamp = next
++    }
++    return cached
++  }
++}
++
++export function createAuth({ tokens, tokenFile = defaultTokenFile(), peerToken = process.env.PM_TOKEN || '', peerScopes, trustLoopback = true } = {}) {
+   const peer = peerToken ? sha256(peerToken) : null
+-  const pScopes = peerScopes ?? (process.env.BRIDGE_PEER_SCOPES || 'send,read,file,execute,auto').split(',').map((s) => s.trim())
++  const pScopes = peerScopes ?? (process.env.BRIDGE_PEER_SCOPES || 'send,read,file,execute,auto,replicate').split(',').map((s) => s.trim())
++  const current = tokens ? () => tokens : liveTokens(tokenFile)
+   return function authenticate(req) {
+     const header = req.headers.authorization || ''
+     const m = header.match(/^Bearer\s+(\S+)$/)
+@@ -52,7 +69,7 @@ export function createAuth({ tokens = loadTokens(), peerToken = process.env.PM_T
+     // agents: the mailboxes this caller may acknowledge for (a token speaks for its own name
+     // unless bridge-tokens.json lists "agents"); the machine-to-machine peer token speaks for all.
+     if (peer && eq(peer)) return { name: 'peer', scopes: pScopes, projects: ['*'], agents: ['*'] }
+-    const t = tokens.find((x) => typeof x.sha256 === 'string' && eq(x.sha256))
++    const t = current().find((x) => typeof x.sha256 === 'string' && eq(x.sha256))
+     if (!t) throw new BridgeError(401, 'invalid token')
+     return { name: t.name, scopes: t.scopes, projects: t.projects, agents: t.agents ?? [t.name] }
+   }
+diff --git a/pm/bridge/index.mjs b/pm/bridge/index.mjs
+index 1a3ca161..5302f2f4 100644
+--- a/pm/bridge/index.mjs
++++ b/pm/bridge/index.mjs
+@@ -12,6 +12,8 @@ import { createAuth, requireScope } from './auth.mjs'
+ import { createFiles } from './files.mjs'
+ import { createWorkers, httpForwarder, PERMISSION_MODES } from './workers.mjs'
+ import { canActFor, requireActFor, savePolicy, loadPolicy, policyFile } from './delivery.mjs'
++import { createReplicator, exportTokens } from './replica.mjs'
++import { defaultTokenFile } from './auth.mjs'
+ 
+ export const MCP_PROTOCOL = '2025-06-18'
+ 
+@@ -40,10 +42,12 @@ const parse = (buf) => {
+   try { return JSON.parse(buf.toString('utf8')) } catch { throw new BridgeError(400, 'body is not valid JSON') }
+ }
+ 
+-export function createBridge({ machine, aliases, dbPath, auth = createAuth(), peers = loadPeers(), workers: workerOpts = {}, roots, notify = null, policyPath = policyFile() } = {}) {
++export function createBridge({ machine, aliases, dbPath, auth = createAuth(), peers = loadPeers(), workers: workerOpts = {}, roots, notify = null, policyPath = policyFile(),
++  replica: replicaOpts = {}, tokenFile = defaultTokenFile() } = {}) {
+   const queue = openQueue(dbPath, { machine, aliases, policy: () => loadPolicy(policyPath) })
+   const files = createFiles(queue, roots ? { roots } : {})
+   const workers = createWorkers(queue, { forwardTo: Object.keys(peers).length ? httpForwarder(peers) : null, notify, ...workerOpts })
++  const replicator = createReplicator(queue, peers, { tokenFile, ...replicaOpts })
+ 
+   /** A token limited to some projects never sees messages from other projects. */
+   const visible = (p, rows) => (p.projects.includes('*') ? rows : rows.filter((r) => r.project && p.projects.includes(r.project)))
+@@ -97,7 +101,10 @@ export function createBridge({ machine, aliases, dbPath, auth = createAuth(), pe
+   }
+ 
+   const routes = [
+-    ['GET', /^\/api\/bridge\/health$/, 'read', () => ({ ok: true, protocol: PROTOCOL_VERSION, machine: queue.machine, queue: queue.stats(), running: [...api.workers.running.keys()], peers: Object.keys(peers), pending: queue.pending() })],
++    ['GET', /^\/api\/bridge\/health$/, 'read', () => ({ ok: true, protocol: PROTOCOL_VERSION, machine: queue.machine, queue: queue.stats(), running: [...api.workers.running.keys()], peers: Object.keys(peers), pending: queue.pending(), rev: queue.rev(), replica: queue.replicaStatus() })],
++    ['GET', /^\/api\/bridge\/replica$/, 'replicate', (m, b, p, q) => queue.changesSince(q.after, q.limit)],
++    ['GET', /^\/api\/bridge\/replica\/tokens$/, 'replicate', () => ({ tokens: exportTokens(tokenFile) })],
++    ['POST', /^\/api\/bridge\/replica\/sync$/, 'admin', () => replicator.syncAll()],
+     ['POST', /^\/api\/bridge\/messages$/, 'send', (m, b, p) => submit(p, b)],
+     ['GET', /^\/api\/bridge\/messages$/, 'read', (m, b, p, q) => visible(p, queue.list(q))],
+     ['GET', /^\/api\/bridge\/messages\/([\w.@:-]+)$/, 'read', (m, b, p) => visibleOne(p, queue.get(m[1]))],
+@@ -296,6 +303,7 @@ export function createBridge({ machine, aliases, dbPath, auth = createAuth(), pe
+     return true
+   }
+ 
+-  const api = { handle, queue, files, workers, start: () => api.workers.start(), stop: () => { api.workers.stop(); queue.close() } }
++  const api = { handle, queue, files, workers, replicator,
++    start: () => { api.workers.start(); replicator.start() }, stop: () => { replicator.stop(); api.workers.stop(); queue.close() } }
+   return api
+ }
+diff --git a/pm/bridge/queue.mjs b/pm/bridge/queue.mjs
+index a34c4bdb..6d802891 100644
+--- a/pm/bridge/queue.mjs
++++ b/pm/bridge/queue.mjs
+@@ -46,7 +46,24 @@ const DELIVERY_COLUMNS = {
+   delivered_at: 'TEXT', delivered_by: 'TEXT', acked_at: 'TEXT', acked_by: 'TEXT', responded_at: 'TEXT', response_id: 'TEXT',
+   ack_due_at: 'TEXT', response_due_at: 'TEXT', escalations: 'INTEGER NOT NULL DEFAULT 0', escalated_at: 'TEXT',
+   delivery_failed: 'INTEGER NOT NULL DEFAULT 0',
++  // Peer replication (replica.mjs): replica = 1 marks a copy of mail another node owns;
++  // rev = this node's change counter, bumped by triggers on every delivery-state change.
++  replica: 'INTEGER NOT NULL DEFAULT 0', rev: 'INTEGER NOT NULL DEFAULT 0',
+ }
++// Triggers keep rev current so a peer can pull every change after its cursor. They watch
++// only the delivery columns; the rev write itself is not watched, so they never recurse.
++const REV_BUMP = `UPDATE bridge_meta SET v = v + 1 WHERE k = 'rev';
++  UPDATE bridge_messages SET rev = (SELECT v FROM bridge_meta WHERE k = 'rev') WHERE seq = NEW.seq;`
++const REV_SCHEMA = `
++CREATE TABLE IF NOT EXISTS bridge_meta (k TEXT PRIMARY KEY, v INTEGER NOT NULL);
++CREATE TABLE IF NOT EXISTS bridge_replica (
++  peer TEXT PRIMARY KEY, url TEXT, after_rev INTEGER NOT NULL DEFAULT 0, last_ok_at TEXT, last_error TEXT, last_error_at TEXT, pulled INTEGER NOT NULL DEFAULT 0);
++CREATE TRIGGER IF NOT EXISTS bm_rev_ins AFTER INSERT ON bridge_messages BEGIN ${REV_BUMP} END;
++CREATE TRIGGER IF NOT EXISTS bm_rev_upd AFTER UPDATE OF state, track, replica, delivered_at, delivered_by, acked_at, acked_by,
++  responded_at, response_id ON bridge_messages BEGIN ${REV_BUMP} END;
++`
++/** Delivery columns copied between peers; each pair is set once and never cleared. */
++export const REPLICATED_PAIRS = [['delivered_at', 'delivered_by'], ['acked_at', 'acked_by'], ['responded_at', 'response_id']]
+ const LIVE = "state NOT IN ('dead', 'cancelled')"
+ 
+ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machine], clock = () => new Date(), policy = loadPolicy } = {}) {
+@@ -58,6 +75,18 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+   const have = new Set(db.prepare('PRAGMA table_info(bridge_messages)').all().map((c) => c.name))
+   for (const [col, type] of Object.entries(DELIVERY_COLUMNS)) if (!have.has(col)) db.exec(`ALTER TABLE bridge_messages ADD COLUMN ${col} ${type}`)
+   db.exec('CREATE INDEX IF NOT EXISTS bm_track ON bridge_messages(track, to_agent, acked_at, seq)')
++  if (!db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'bridge_meta'").get()) {
++    db.exec('BEGIN IMMEDIATE')
++    try {
++      db.exec(REV_SCHEMA)
++      // Rows stored before replication existed: rev = seq, counter starts above them.
++      db.exec('UPDATE bridge_messages SET rev = seq WHERE rev = 0')
++      db.exec("INSERT OR IGNORE INTO bridge_meta (k, v) SELECT 'rev', COALESCE(MAX(seq), 0) FROM bridge_messages")
++      db.exec('COMMIT')
++    } catch (err) { db.exec('ROLLBACK'); throw err }
++  }
++  db.exec(REV_SCHEMA)
++  db.exec('CREATE INDEX IF NOT EXISTS bm_rev ON bridge_messages(track, rev)')
+   const now = () => clock().toISOString()
+   const mine = new Set(aliases)
+   const bootId = randomUUID().slice(0, 8)
+@@ -177,7 +206,7 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+   function ack(id, by = 'unknown') {
+     return tx(() => {
+       const row = must(id)
+-      if (!['queued', 'done'].includes(row.state)) throw new BridgeError(409, `cannot ack ${id} in state ${row.state}`)
++      if (!['queued', 'done', 'replica', 'forwarded'].includes(row.state)) throw new BridgeError(409, `cannot ack ${id} in state ${row.state}`)
+       const t = now()
+       db.prepare(`UPDATE bridge_messages SET state = 'done', acked_at = COALESCE(acked_at, ?), acked_by = COALESCE(acked_by, ?),
+         delivered_at = COALESCE(delivered_at, ?), delivered_by = COALESCE(delivered_by, ?), updated_at = ? WHERE id = ?`).run(t, by, t, by, t, id)
+@@ -189,12 +218,15 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+   // ---- mailbox delivery ------------------------------------------------------
+   const here = [...mine]
+   const hereSql = here.map(() => '?').join(',')
++  // Mail this node serves: its own, plus replicas of mail a peer owns (so either node
++  // serves the full inbox while the other is off). Escalation stays with the owner.
++  const MBOX = `(to_machine IN (${hereSql}) OR replica = 1)`
+ 
+   /** Cursor = highest seq below which every tracked message for `agent` is acknowledged. Call inside tx. */
+   function advanceCursor(agent, by) {
+-    const low = db.prepare(`SELECT MIN(seq) AS s FROM bridge_messages WHERE track = 1 AND to_agent = ? AND to_machine IN (${hereSql})
++    const low = db.prepare(`SELECT MIN(seq) AS s FROM bridge_messages WHERE track = 1 AND to_agent = ? AND ${MBOX}
+       AND acked_at IS NULL AND ${LIVE}`).get(agent, ...here).s
+-    const high = db.prepare(`SELECT MAX(seq) AS s FROM bridge_messages WHERE track = 1 AND to_agent = ? AND to_machine IN (${hereSql})`).get(agent, ...here).s
++    const high = db.prepare(`SELECT MAX(seq) AS s FROM bridge_messages WHERE track = 1 AND to_agent = ? AND ${MBOX}`).get(agent, ...here).s
+     const cursor = low != null ? Number(low) - 1 : Number(high ?? 0)
+     db.prepare(`INSERT INTO bridge_cursors (agent, cursor, acked_by, updated_at) VALUES (?, ?, ?, ?)
+       ON CONFLICT(agent) DO UPDATE SET cursor = excluded.cursor, acked_by = excluded.acked_by, updated_at = excluded.updated_at`).run(agent, cursor, by, now())
+@@ -209,7 +241,7 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+   function inbox(agent, { after = 0, limit = 50, deliveredBy = null } = {}) {
+     const n = Math.min(Math.max(Number(limit) || 50, 1), 500)
+     return tx(() => {
+-      const rows = db.prepare(`SELECT * FROM bridge_messages WHERE track = 1 AND to_agent = ? AND to_machine IN (${hereSql})
++      const rows = db.prepare(`SELECT * FROM bridge_messages WHERE track = 1 AND to_agent = ? AND ${MBOX}
+         AND acked_at IS NULL AND ${LIVE} AND seq > ? ORDER BY seq LIMIT ?`).all(agent, ...here, Number(after) || 0, n)
+       if (deliveredBy && rows.length) {
+         const t = now()
+@@ -245,7 +277,7 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+         targets.set(id, row)
+       }
+       if (up_to !== undefined && up_to !== null) {
+-        for (const row of db.prepare(`SELECT * FROM bridge_messages WHERE track = 1 AND to_agent = ? AND to_machine IN (${hereSql})
++        for (const row of db.prepare(`SELECT * FROM bridge_messages WHERE track = 1 AND to_agent = ? AND ${MBOX}
+           AND seq <= ? AND acked_at IS NULL AND ${LIVE}`).all(agent, ...here, Number(up_to) || 0)) targets.set(row.id, row)
+       }
+       const set = db.prepare(`UPDATE bridge_messages SET acked_at = ?, acked_by = ?, delivered_at = COALESCE(delivered_at, ?),
+@@ -263,7 +295,7 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+   /** Pending summary for one agent, or every agent with tracked mail. */
+   function pending(agent = null) {
+     const t = now()
+-    const where = `track = 1 AND to_machine IN (${hereSql}) AND acked_at IS NULL AND ${LIVE}${agent ? ' AND to_agent = ?' : ''}`
++    const where = `track = 1 AND ${MBOX} AND acked_at IS NULL AND ${LIVE}${agent ? ' AND to_agent = ?' : ''}`
+     const args = agent ? [...here, agent] : here
+     const rows = db.prepare(`SELECT to_agent AS agent, COUNT(*) AS unacked,
+         SUM(CASE WHEN delivered_at IS NULL THEN 1 ELSE 0 END) AS undelivered,
+@@ -271,7 +303,7 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+         SUM(CASE WHEN priority = 'high' THEN 1 ELSE 0 END) AS high,
+         SUM(delivery_failed) AS failed, MIN(seq) AS oldest_seq, MIN(created_at) AS oldest_at, MAX(seq) AS last_seq
+       FROM bridge_messages WHERE ${where} GROUP BY to_agent ORDER BY to_agent`).all(t, ...args)
+-    const awaiting = db.prepare(`SELECT to_agent AS agent, COUNT(*) AS n FROM bridge_messages WHERE track = 1 AND to_machine IN (${hereSql})
++    const awaiting = db.prepare(`SELECT to_agent AS agent, COUNT(*) AS n FROM bridge_messages WHERE track = 1 AND ${MBOX}
+       AND expects_response = 1 AND responded_at IS NULL AND ${LIVE}${agent ? ' AND to_agent = ?' : ''} GROUP BY to_agent`).all(...args)
+     const cursors = Object.fromEntries(db.prepare('SELECT * FROM bridge_cursors').all().map((c) => [c.agent, Number(c.cursor)]))
+     const seen = Object.fromEntries(presence().map((p) => [p.agent, p]))
+@@ -327,6 +359,77 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+     })
+   }
+ 
++  // ---- peer replication -----------------------------------------------------
++  const revNow = () => Number(db.prepare("SELECT v FROM bridge_meta WHERE k = 'rev'").get()?.v ?? 0)
++
++  /** Mailbox rows (owned and replicas) changed after `after`, oldest change first. */
++  function changesSince(after = 0, limit = 200) {
++    const n = Math.min(Math.max(Number(limit) || 200, 1), 1000)
++    const rows = db.prepare(`SELECT * FROM bridge_messages WHERE track = 1 AND rev > ? ORDER BY rev LIMIT ?`).all(Number(after) || 0, n)
++    return { machine, rev: revNow(), rows: rows.map(({ seq, lease_owner, lease_until, fence, ...r }) => ({ ...r })) }
++  }
++
++  /**
++   * Merge rows pulled from a peer. Idempotent by id: an unknown row is stored as a
++   * replica (or as ours when it is addressed here); a known row takes each delivery
++   * pair (delivered/acked/responded) the first time it is set anywhere. A row is
++   * written only when something changes, so two nodes pulling each other converge.
++   */
++  function applyReplica(rows, peer = 'peer') {
++    return tx(() => {
++      const out = { inserted: 0, merged: 0, unchanged: 0, skipped: 0 }
++      const touched = new Set()
++      for (const r of rows) {
++        const local = get(r.id) ?? db.prepare('SELECT * FROM bridge_messages WHERE dedupe_key = ?').get(r.dedupe_key)
++        if (local && local.id !== r.id) { out.skipped++; continue }
++        if (!local) {
++          const ours = mine.has(r.to_machine)
++          const state = ['dead', 'cancelled'].includes(r.state) ? r.state : ours ? (r.acked_at ? 'done' : 'queued') : 'replica'
++          const t = now()
++          db.prepare(`INSERT INTO bridge_messages (id, dedupe_key, v, type, from_machine, from_agent, to_machine, to_agent,
++            correlation_id, reply_to, project, task, session, body, state, max_attempts, principal, created_at, updated_at, expires_at,
++            priority, expects_response, track, replica, delivered_at, delivered_by, acked_at, acked_by, responded_at, response_id, last_error)
++            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
++            r.id, r.dedupe_key, r.v, r.type, r.from_machine, r.from_agent, r.to_machine, r.to_agent,
++            r.correlation_id ?? null, r.reply_to ?? null, r.project ?? null, r.task ?? null, r.session ?? null, r.body, state,
++            r.max_attempts ?? 20, `replica@${peer}`, r.created_at, t, r.expires_at ?? null, r.priority ?? 'normal', r.expects_response ? 1 : 0,
++            ours ? 0 : 1, r.delivered_at ?? null, r.delivered_by ?? null, r.acked_at ?? null, r.acked_by ?? null,
++            r.responded_at ?? null, r.response_id ?? null, r.state === 'dead' ? r.last_error ?? null : null)
++          touched.add(r.to_agent)
++          out.inserted++
++          continue
++        }
++        const set = {}
++        for (const [at, by] of REPLICATED_PAIRS) if (!local[at] && r[at]) { set[at] = r[at]; set[by] = r[by] ?? null }
++        const ours = mine.has(local.to_machine)
++        // Our own forwarded copy of mail now owned (and tracked) by the peer becomes a replica.
++        if (!local.track && !ours) { set.track = 1; set.replica = 1 }
++        if (!ours && ['dead', 'cancelled'].includes(r.state) && local.state !== r.state) set.state = r.state
++        if (ours && set.acked_at && local.state === 'queued') set.state = 'done'
++        const cols = Object.keys(set)
++        if (!cols.length) { out.unchanged++; continue }
++        db.prepare(`UPDATE bridge_messages SET ${cols.map((c) => `${c} = ?`).join(', ')}, updated_at = ? WHERE id = ?`)
++          .run(...cols.map((c) => set[c]), now(), local.id)
++        touched.add(local.to_agent)
++        out.merged++
++      }
++      for (const agent of touched) advanceCursor(agent, `replica@${peer}`)
++      if (out.inserted || out.merged) audit(`replica@${peer}`, 'replica.apply', null, 'ok', out)
++      return out
++    })
++  }
++
++  const replicaCursor = (peer) => db.prepare('SELECT * FROM bridge_replica WHERE peer = ?').get(peer) ?? null
++  function setReplicaCursor(peer, { url, after_rev, ok, error, pulled = 0 }) {
++    const t = now()
++    db.prepare(`INSERT INTO bridge_replica (peer, url, after_rev, last_ok_at, last_error, last_error_at, pulled) VALUES (?, ?, ?, ?, ?, ?, ?)
++      ON CONFLICT(peer) DO UPDATE SET url = COALESCE(excluded.url, url), after_rev = COALESCE(?, after_rev),
++      last_ok_at = COALESCE(excluded.last_ok_at, last_ok_at), last_error = CASE WHEN ? THEN NULL ELSE excluded.last_error END,
++      last_error_at = COALESCE(excluded.last_error_at, last_error_at), pulled = pulled + excluded.pulled`)
++      .run(peer, url ?? null, after_rev ?? 0, ok ? t : null, error ?? null, error ? t : null, pulled, after_rev ?? null, ok ? 1 : 0)
++  }
++  const replicaStatus = () => db.prepare('SELECT * FROM bridge_replica ORDER BY peer').all().map((r) => ({ ...r }))
++
+   function setState(id, from, to, error = null) {
+     return tx(() => {
+       const row = must(id)
+@@ -412,6 +515,7 @@ export function openQueue(path = defaultBridgeDb(), { machine, aliases = [machin
+   return {
+     db, machine, owner, path, now, tx, audit, enqueue, lease, extend, settle, ack, setState, reconcile, due,
+     inbox, markDelivered, ackFor, pending, touch, presence, sweepOverdue, policy,
++    changesSince, applyReplica, replicaCursor, setReplicaCursor, replicaStatus, rev: revNow,
+     forwardResult, list, stats, requeueDead, get: (id) => toEnvelope(must(id)), isMine: (m) => mine.has(m),
+     close: () => db.close(),
+   }
+diff --git a/pm/bridge/replica.mjs b/pm/bridge/replica.mjs
+new file mode 100644
+index 00000000..c8a20fe8
+--- /dev/null
++++ b/pm/bridge/replica.mjs
+@@ -0,0 +1,134 @@
++// Peer mail replication: every node keeps a copy of the mailbox mail the others
++// own (messages, delivery, ack and response state), so either node serves the full
++// inbox for chatgpt, claude-code and the rest while the other is off.
++//
++// Pull-based. Each node asks each peer for mailbox rows changed after its stored
++// cursor (GET /api/bridge/replica?after=<rev>), merges them (queue.applyReplica,
++// idempotent by id) and advances the cursor. After an outage the next pull pages
++// through everything it missed. A peer whose counter went backwards (its database
++// was recreated) is read again from 0. Acks taken on a replica flow back the same
++// way, because the owner pulls the replica node too.
++//
++// Token hashes follow the same path (GET /api/bridge/replica/tokens) so a client
++// token issued on one node (the chatgpt connector's) is accepted on the other.
++// Imported entries carry from_peer and are dropped when the peer drops them;
++// local entries are never touched and imported ones are never re-exported.
++import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs'
++import { dirname } from 'node:path'
++import { defaultTokenFile } from './auth.mjs'
++
++/** One entry per distinct peer URL (bridge-peers.json may list aliases of one host). */
++export function uniquePeers(peers) {
++  const seen = new Map()
++  for (const [name, p] of Object.entries(peers ?? {})) {
++    if (!p?.url) continue
++    const url = p.url.replace(/\/$/, '')
++    if (!seen.has(url)) seen.set(url, { name, url, token: p.token })
++  }
++  return [...seen.values()]
++}
++
++/** Local token entries, safe to hand a peer: hashes only, never imported ones. */
++export function exportTokens(file = defaultTokenFile()) {
++  if (!existsSync(file)) return []
++  const data = JSON.parse(readFileSync(file, 'utf8'))
++  return (data.tokens ?? []).filter((t) => !t.from_peer && typeof t.sha256 === 'string')
++    .map(({ name, sha256, scopes, projects, agents }) => ({ name, sha256, scopes, projects, ...(agents ? { agents } : {}) }))
++}
++
++/** Mirror a peer's local tokens into ours. Returns { added, removed }. */
++export function mergeTokens(peer, remote, file = defaultTokenFile()) {
++  const data = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : { tokens: [] }
++  const tokens = data.tokens ?? []
++  const want = new Map(remote.filter((t) => t && typeof t.sha256 === 'string' && /^[0-9a-f]{64}$/.test(t.sha256) && t.name).map((t) => [t.sha256, t]))
++  const have = new Set(tokens.map((t) => t.sha256))
++  const kept = tokens.filter((t) => t.from_peer !== peer || want.has(t.sha256))
++  const removed = tokens.length - kept.length
++  let added = 0
++  for (const [h, t] of want) {
++    if (have.has(h)) continue
++    kept.push({ name: t.name, sha256: h, scopes: (t.scopes ?? []).filter((s) => s !== 'admin' && s !== 'replicate'),
++      projects: t.projects ?? ['*'], ...(t.agents ? { agents: t.agents } : {}), from_peer: peer })
++    added++
++  }
++  if (added || removed) {
++    mkdirSync(dirname(file), { recursive: true })
++    const tmp = `${file}.${process.pid}.tmp`
++    writeFileSync(tmp, JSON.stringify({ ...data, tokens: kept }, null, 2))
++    renameSync(tmp, file)
++  }
++  return { added, removed }
++}
++
++export function createReplicator(queue, peers, {
++  intervalMs = Number(process.env.BRIDGE_REPLICA_MS ?? 5000),
++  pageSize = 200,
++  tokenFile = defaultTokenFile(),
++  syncTokens = true,
++  fetchImpl = fetch,
++  timeoutMs = 10_000,
++} = {}) {
++  const list = uniquePeers(peers)
++  let timer = null
++  let busy = false
++
++  async function get(peer, path) {
++    const res = await fetchImpl(`${peer.url}${path}`, {
++      headers: peer.token ? { authorization: `Bearer ${peer.token}` } : {},
++      signal: AbortSignal.timeout(timeoutMs),
++    })
++    if (!res.ok) throw new Error(`peer ${peer.name} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`)
++    return res.json()
++  }
++
++  /** Pull everything a peer changed since our cursor. */
++  async function pull(peer) {
++    let after = Number(queue.replicaCursor(peer.name)?.after_rev ?? 0)
++    const total = { inserted: 0, merged: 0, unchanged: 0, skipped: 0, pages: 0 }
++    try {
++      for (;;) {
++        const page = await get(peer, `/api/bridge/replica?after=${after}&limit=${pageSize}`)
++        if (Number(page.rev) < after) { after = 0; continue } // peer counter reset: read it all again
++        const r = queue.applyReplica(page.rows ?? [], peer.name)
++        for (const k of ['inserted', 'merged', 'unchanged', 'skipped']) total[k] += r[k]
++        total.pages++
++        if (page.rows?.length) after = Number(page.rows[page.rows.length - 1].rev)
++        queue.setReplicaCursor(peer.name, { url: peer.url, after_rev: after, ok: true, pulled: page.rows?.length ?? 0 })
++        if (!page.rows || page.rows.length < pageSize) break
++      }
++      if (syncTokens) total.tokens = mergeTokens(peer.name, (await get(peer, '/api/bridge/replica/tokens')).tokens ?? [], tokenFile)
++      return { peer: peer.name, ok: true, after, ...total }
++    } catch (err) {
++      const error = String(err.message ?? err).slice(0, 300)
++      queue.setReplicaCursor(peer.name, { url: peer.url, ok: false, error })
++      return { peer: peer.name, ok: false, error, after, ...total }
++    }
++  }
++
++  async function syncAll() {
++    if (busy) return []
++    busy = true
++    try {
++      const out = []
++      for (const p of list) out.push(await pull(p))
++      return out
++    } finally {
++      busy = false
++    }
++  }
++
++  return {
++    peers: list,
++    pull,
++    syncAll,
++    start() {
++      if (list.length && intervalMs > 0) {
++        syncAll().catch(() => {})
++        timer = setInterval(() => syncAll().catch(() => {}), intervalMs)
++        timer.unref?.()
++      }
++      return this
++    },
++    stop() { clearInterval(timer) },
++  }
++}
+diff --git a/pm/bridge/test.mjs b/pm/bridge/test.mjs
+index dccb4440..ff05d5f8 100644
+--- a/pm/bridge/test.mjs
++++ b/pm/bridge/test.mjs
+@@ -15,6 +15,7 @@ import { createBridge } from './index.mjs'
+ import { createAuth, sha256 } from './auth.mjs'
+ import { safeRelative, pushFile, pullFile, fileSha256 } from './files.mjs'
+ import { chooseModel, loadRouter } from './weight.mjs'
++import { createReplicator, mergeTokens, exportTokens, uniquePeers } from './replica.mjs'
+ 
+ const HERE = dirname(fileURLToPath(import.meta.url))
+ const tmp = () => mkdtempSync(join(tmpdir(), 'bridge-test-'))
+@@ -112,12 +113,12 @@ test('weight router picks a model and rejects unknown pins', async () => {
+ })
+ 
+ // ---- HTTP-level tests against a real server on an ephemeral port -----------
+-async function node({ machine = 'a', tokens = [], trustLoopback = false, peers = {}, quota, dbPath = ':memory:', dir = tmp(), notify = null, policy = null, sweepMs } = {}) {
++async function node({ machine = 'a', tokens = [], tokenFile, trustLoopback = false, peers = {}, quota, dbPath = ':memory:', dir = tmp(), notify = null, policy = null, sweepMs } = {}) {
+   const policyPath = join(dir, 'bridge-policy.json')
+   if (policy) writeFileSync(policyPath, JSON.stringify(policy))
+   const bridge = createBridge({
+-    machine, dbPath, peers, notify, policyPath,
+-    auth: createAuth({ tokens, peerToken: 'peer-secret', trustLoopback }),
++    machine, dbPath, peers, notify, policyPath, tokenFile: tokenFile ?? join(dir, 'bridge-tokens.json'), replica: { intervalMs: 0 },
++    auth: createAuth({ ...(tokenFile ? { tokenFile } : { tokens }), peerToken: 'peer-secret', trustLoopback }),
+     roots: { inbox: join(dir, 'inbox') },
+     workers: { bin: process.execPath, binArgs: [join(HERE, 'fake-claude.mjs')], router: null, pollMs: 50, ...(sweepMs ? { sweepMs } : {}),
+       quota: quota ?? (() => ({ ok: true, headroom: 0.9 })), logDir: join(dir, 'logs') },
+@@ -464,3 +465,137 @@ test('delivery: handled agents (node, claude-code submit) and remote targets are
+   assert.equal(q.ack('r1', 'claude-code').delivery.state, 'acknowledged')
+   assert.equal(q.pending('claude-code').unacked, 0)
+ })
++
++// ---- peer mail replication (replica.mjs) -------------------------------------
++test('replica: copy is idempotent by id, acks flow back to the owner, nodes converge', () => {
++  const a = openQueue(':memory:', { machine: 'node-a' })
++  const b = openQueue(':memory:', { machine: 'node-b' })
++  const m1 = a.enqueue({ id: 'm1', type: 'message', to: { agent: 'chatgpt' }, body: { t: 1 }, expects_response: true })
++  a.enqueue({ id: 'm2', type: 'message', to: { agent: 'chatgpt' }, body: { t: 2 } })
++  a.enqueue({ id: 'n1', type: 'ping', to: { agent: 'node' } }) // not mailbox mail: never replicated
++  const feed = a.changesSince(0)
++  assert.deepEqual(feed.rows.map((r) => r.id), ['m1', 'm2'])
++  assert.deepEqual(b.applyReplica(feed.rows, 'node-a'), { inserted: 2, merged: 0, unchanged: 0, skipped: 0 })
++  assert.deepEqual(b.applyReplica(feed.rows, 'node-a'), { inserted: 0, merged: 0, unchanged: 2, skipped: 0 }, 'second copy changes nothing')
++  assert.deepEqual(b.inbox('chatgpt').map((m) => m.id), ['m1', 'm2'], 'replica node serves the inbox')
++  assert.equal(b.get('m1').state, 'replica')
++  assert.equal(b.pending('chatgpt').unacked, 2)
++  assert.equal(b.sweepOverdue({ ...b.policy(), ack_timeout_seconds: 0 }).length, 0, 'only the owner escalates')
++  // ChatGPT acks and answers on the replica node while the owner is off.
++  const revB = b.rev()
++  assert.deepEqual(b.ackFor('chatgpt', { ids: ['m1'] }, 'chatgpt').acked, ['m1'])
++  b.enqueue({ id: 'r1', type: 'message', from: { agent: 'chatgpt' }, to: { agent: 'claude-code' }, reply_to: 'm1', body: {} })
++  const back = b.changesSince(0).rows
++  assert.ok(back.find((r) => r.id === 'm1').acked_at)
++  const fromB = a.applyReplica(back, 'node-b')
++  assert.equal(fromB.merged, 1)
++  assert.equal(fromB.inserted, 1, 'the reply (owned by b) is copied to a')
++  const st = a.get('m1')
++  assert.equal(st.state, 'done')
++  assert.equal(st.delivery.acked_by, 'chatgpt')
++  assert.equal(st.delivery.response_id, 'r1')
++  assert.equal(st.delivery.state, 'responded')
++  assert.equal(a.pending('chatgpt').unacked, 1)
++  assert.ok(b.rev() > revB)
++  // Converged: pulling each other again writes nothing, so there is no ping-pong.
++  const ra = a.rev()
++  const rb = b.rev()
++  const again = b.applyReplica(a.changesSince(0).rows, 'node-a')
++  assert.equal(again.merged + again.inserted, 0)
++  assert.equal(a.applyReplica(b.changesSince(0).rows, 'node-b').merged, 0)
++  assert.equal(a.rev(), ra)
++  assert.equal(b.rev(), rb)
++  // Dedupe: a different id with a known dedupe_key is skipped; dead on the owner reaches the replica.
++  assert.equal(b.applyReplica([{ ...feed.rows[1], id: 'other' }], 'node-a').skipped, 1)
++  a.db.prepare("UPDATE bridge_messages SET state = 'dead', last_error = 'expired' WHERE id = 'm2'").run()
++  b.applyReplica(a.changesSince(0).rows, 'node-a')
++  assert.equal(b.get('m2').state, 'dead')
++  assert.equal(b.pending('chatgpt').unacked ?? 0, 0)
++  assert.equal(b.ack(m1.id, 'chatgpt').delivery.state, 'responded', 'legacy ack accepts a replica row')
++})
++
++test('replica: our forwarded copy becomes a replica of the peer-owned mail', () => {
++  const a = openQueue(':memory:', { machine: 'node-a' })
++  const b = openQueue(':memory:', { machine: 'node-b' })
++  const out = a.enqueue({ id: 'f1', type: 'message', to: { machine: 'node-b', agent: 'chatgpt' }, body: {} })
++  assert.equal(out.state, 'outbox')
++  a.forwardResult('f1', true)
++  b.enqueue({ id: out.id, type: out.type, from: out.from, to: out.to, body: out.body, created_at: out.created_at })
++  assert.equal(a.pending('chatgpt').unacked ?? 0, 0)
++  assert.equal(a.applyReplica(b.changesSince(0).rows, 'node-b').merged, 1)
++  assert.deepEqual(a.inbox('chatgpt').map((m) => m.id), ['f1'])
++  assert.equal(a.get('f1').state, 'forwarded')
++})
++
++test('replica tokens: hashes only, scopes capped, imports mirrored and never re-exported', () => {
++  const dir = tmp()
++  const fa = join(dir, 'a.json')
++  const fb = join(dir, 'b.json')
++  writeFileSync(fa, JSON.stringify({ tokens: [
++    { name: 'chatgpt', sha256: sha256('gpt-token'), scopes: ['send', 'read', 'execute', 'auto'], projects: ['*'] },
++    { name: 'ops', sha256: sha256('ops-token'), scopes: ['admin', 'replicate', 'read'], projects: ['*'] },
++  ] }))
++  writeFileSync(fb, JSON.stringify({ tokens: [{ name: 'local', sha256: sha256('local-token'), scopes: ['read'] }] }))
++  const exp = exportTokens(fa)
++  assert.equal(exp.length, 2)
++  assert.ok(exp.every((t) => !('token' in t) && /^[0-9a-f]{64}$/.test(t.sha256)))
++  assert.deepEqual(mergeTokens('node-a', exp, fb), { added: 2, removed: 0 })
++  assert.deepEqual(mergeTokens('node-a', exp, fb), { added: 0, removed: 0 })
++  const b = JSON.parse(readFileSync(fb, 'utf8')).tokens
++  assert.deepEqual(b.find((t) => t.name === 'ops').scopes, ['read'], 'admin and replicate never cross')
++  assert.deepEqual(exportTokens(fb).map((t) => t.name), ['local'], 'imports are not re-exported')
++  assert.deepEqual(mergeTokens('node-a', exp.filter((t) => t.name === 'chatgpt'), fb), { added: 0, removed: 1 }, 'revoked on the peer, dropped here')
++  assert.deepEqual(JSON.parse(readFileSync(fb, 'utf8')).tokens.map((t) => t.name).sort(), ['chatgpt', 'local'])
++  assert.deepEqual(uniquePeers({ ndi2: { url: 'http://h:1/' }, alias: { url: 'http://h:1' }, b: { url: 'http://g:1' } }).map((p) => p.name), ['ndi2', 'b'])
++})
++
++test('replica over HTTP: owner stopped, other node serves chatgpt inbox and ack; cursor catch-up; acks flow back', async () => {
++  const dir = tmp()
++  const dbA = join(dir, 'a.db')
++  const tokA = join(dir, 'a-tokens.json')
++  const tokB = join(dir, 'b-tokens.json')
++  writeFileSync(tokA, JSON.stringify({ tokens: [{ name: 'chatgpt', sha256: sha256('gpt-token'), scopes: ['send', 'read'], projects: ['*'] }] }))
++  let a = await node({ machine: 'node-a', dbPath: dbA, tokenFile: tokA, dir })
++  const b = await node({ machine: 'node-b', tokenFile: tokB })
++  try {
++    // replicate scope: the chatgpt token may not pull the feed; the peer token may.
++    assert.equal((await call(a.url, 'GET', '/api/bridge/replica?after=0', null, 'gpt-token')).status, 403)
++    assert.equal((await call(a.url, 'GET', '/api/bridge/replica/tokens')).status, 200)
++    for (let i = 1; i <= 3; i++) await call(a.url, 'POST', '/api/bridge/messages', { id: `g${i}`, type: 'message', to: { agent: 'chatgpt' }, from: { agent: 'claude' }, body: { i } })
++    const rb = createReplicator(b.bridge.queue, { 'node-a': { url: a.url, token: 'peer-secret' } }, { intervalMs: 0, pageSize: 2, tokenFile: tokB })
++    const first = await rb.pull(rb.peers[0])
++    assert.equal(first.ok, true, first.error)
++    assert.equal(first.inserted, 3)
++    assert.equal(first.pages, 2, 'paged by cursor')
++    assert.equal(first.tokens.added, 1, 'chatgpt token hash copied')
++
++    // Owner down.
++    a.close()
++    const down = await rb.pull(rb.peers[0])
++    assert.equal(down.ok, false)
++    assert.equal(b.bridge.queue.replicaStatus()[0].after_rev, first.after, 'cursor kept across the outage')
++    // ChatGPT reads and acks on b with its own token (b learned it by replication).
++    const inbox = (await mcpTool(b.url, 'bridge_inbox', { agent: 'chatgpt', unacked: true }, 'gpt-token')).structuredContent.result
++    assert.deepEqual(inbox.messages.map((m) => m.id), ['g1', 'g2', 'g3'])
++    const ack = (await mcpTool(b.url, 'bridge_send', { to_agent: 'bridge', type: 'ack', body: { ids: ['g1', 'g2'] } }, 'gpt-token')).structuredContent.result
++    assert.deepEqual(ack.acked, ['g1', 'g2'])
++    await mcpTool(b.url, 'bridge_send', { to_agent: 'claude-code', type: 'message', from_agent: 'chatgpt', body: { reply_to: 'g1', text: 'ok' } }, 'gpt-token')
++
++    // Owner back on the same database, with mail it took while b could not see it.
++    a = await node({ machine: 'node-a', dbPath: dbA, tokenFile: tokA, dir })
++    await call(a.url, 'POST', '/api/bridge/messages', { id: 'g4', type: 'message', to: { agent: 'chatgpt' }, from: { agent: 'claude' }, body: {} })
++    const rb2 = createReplicator(b.bridge.queue, { 'node-a': { url: a.url, token: 'peer-secret' } }, { intervalMs: 0, pageSize: 2, tokenFile: tokB })
++    const catchup = await rb2.pull(rb2.peers[0])
++    assert.equal(catchup.ok, true, catchup.error)
++    assert.equal(catchup.inserted, 1, 'only what was missed')
++    const ra = createReplicator(a.bridge.queue, { 'node-b': { url: b.url, token: 'peer-secret' } }, { intervalMs: 0, tokenFile: tokA })
++    const fromB = await ra.pull(ra.peers[0])
++    assert.equal(fromB.ok, true, fromB.error)
++    const st = (await call(a.url, 'GET', '/api/bridge/delivery/g1')).body
++    assert.equal(st.acked_by, 'chatgpt')
++    assert.equal(st.state, 'responded')
++    assert.equal((await call(a.url, 'GET', '/api/bridge/delivery?agent=chatgpt')).body.pending.unacked, 2, 'owner sees g3 and g4 still open')
++    assert.equal((await call(b.url, 'GET', '/api/bridge/delivery?agent=chatgpt')).body.pending.unacked, 2, 'both nodes agree')
++    assert.equal(fromB.tokens.added, 0, 'imported hashes are not sent back')
++  } finally { a.close(); b.close() }
++})

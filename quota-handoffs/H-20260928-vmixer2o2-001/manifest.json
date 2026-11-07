@@ -1,0 +1,118 @@
+{
+  "handoff_id": "H-20260928-vmixer2o2-001",
+  "kind": "preserve",
+  "simulated": false,
+  "state": "READY",
+  "reason": "Receiver vMixer@vmixer2o2 preserved its sessions before resuming H-20260928-vmixlaptop2x6-003",
+  "trigger": null,
+  "quota": null,
+  "source_user": "vMixer",
+  "source_machine": "vmixer2o2",
+  "source_account": "claude:.claude:a540ddf6@vmixer2o2",
+  "source_account_uuid": "a540ddf6-241c-4236-a29c-94d3b5d6b489",
+  "created_at": "2026-09-28T02:57:08.094Z",
+  "sessions": [
+    {
+      "source_session_id": "102e9142-2688-496a-b94c-9a9ad3564577",
+      "model": null,
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode",
+      "settings": {
+        "title": null,
+        "model": null,
+        "effort": null,
+        "permission_mode": null,
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/102e9142-2688-496a-b94c-9a9ad3564577/continuation.md",
+      "archive": "archive/102e9142-2688-496a-b94c-9a9ad3564577.jsonl.gz"
+    },
+    {
+      "source_session_id": "367e6c89-5409-4e1f-82a9-d33c7db0bd55",
+      "model": null,
+      "project": "deepseek-harness",
+      "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode\\deepseek-harness\\packages\\council\\tool-council",
+      "settings": {
+        "title": null,
+        "model": null,
+        "effort": null,
+        "permission_mode": null,
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/367e6c89-5409-4e1f-82a9-d33c7db0bd55/continuation.md",
+      "archive": "archive/367e6c89-5409-4e1f-82a9-d33c7db0bd55.jsonl.gz"
+    },
+    {
+      "source_session_id": "440fb775-d990-4e47-a7e9-73926f98696f",
+      "model": null,
+      "project": "deepseek-harness",
+      "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode\\deepseek-harness\\packages\\council\\tool-council",
+      "settings": {
+        "title": null,
+        "model": null,
+        "effort": null,
+        "permission_mode": null,
+        "desktop_session_id": null,
+        "desktop_account": null
+      },
+      "package": "sessions/440fb775-d990-4e47-a7e9-73926f98696f/continuation.md",
+      "archive": "archive/440fb775-d990-4e47-a7e9-73926f98696f.jsonl.gz"
+    },
+    {
+      "source_session_id": "48fc682c-7f8d-4594-84eb-a0be82aa1607",
+      "model": "<synthetic>",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode",
+      "settings": {
+        "title": "Run the ecomm build sequence (plan item 5)",
+        "model": "claude-opus-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_e87b5ae1-553b-487e-8293-ebfd0ea36ee5",
+        "desktop_account": "a540ddf6-241c-4236-a29c-94d3b5d6b489"
+      },
+      "package": "sessions/48fc682c-7f8d-4594-84eb-a0be82aa1607/continuation.md",
+      "archive": "archive/48fc682c-7f8d-4594-84eb-a0be82aa1607.jsonl.gz"
+    },
+    {
+      "source_session_id": "ac42a619-5f7e-4a41-be4b-034c988bb446",
+      "model": "claude-opus-5",
+      "project": "claudecode",
+      "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode",
+      "settings": {
+        "title": "Quota cutoff resume",
+        "model": "claude-opus-5",
+        "effort": "xhigh",
+        "permission_mode": "auto",
+        "desktop_session_id": "local_b3dd0951-8329-4d3f-8e08-a6b9d52a0570",
+        "desktop_account": "a540ddf6-241c-4236-a29c-94d3b5d6b489"
+      },
+      "package": "sessions/ac42a619-5f7e-4a41-be4b-034c988bb446/continuation.md",
+      "archive": "archive/ac42a619-5f7e-4a41-be4b-034c988bb446.jsonl.gz"
+    }
+  ],
+  "history": [
+    {
+      "from": "NORMAL",
+      "to": "PREPARING",
+      "at": "2026-09-28T02:57:08.094Z",
+      "by": "claude:.claude:a540ddf6@vmixer2o2"
+    },
+    {
+      "from": "PREPARING",
+      "to": "SNAPSHOTTING",
+      "at": "2026-09-28T02:57:08.094Z",
+      "by": "claude:.claude:a540ddf6@vmixer2o2",
+      "detail": "5 active session(s)"
+    },
+    {
+      "from": "SNAPSHOTTING",
+      "to": "READY",
+      "at": "2026-09-28T02:57:08.094Z",
+      "by": "claude:.claude:a540ddf6@vmixer2o2"
+    }
+  ],
+  "session_count": 5
+}

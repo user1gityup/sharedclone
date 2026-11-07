@@ -1,0 +1,43 @@
+{
+  "handoff_id": "H-20260928-vmixlaptop2x6-001",
+  "source_user": "ndi2",
+  "source_machine": "vmixlaptop2x6",
+  "source_session_id": "3c7e83fe-5f33-4edf-9893-1cb1377f9876",
+  "provider": "claude-code",
+  "model": "claude-opus-5",
+  "project": "claudecode",
+  "repository": null,
+  "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+  "branch": null,
+  "git_head": null,
+  "uncommitted_changes": [],
+  "task_objective": "Read ~/.claude/shared-brain/resume-vmixlaptop2x6.md and the note it names. Verify its claims against live filesystem, git and processes before editing, claim ownership in the note, then do its Next line. Read shared-agent-log.md only through tail or grep.",
+  "latest_request": "send to gatekeeper now",
+  "current_status": "Claude Opus 5 — that was the same receipt re-emitted; my watcher had no de-duplication, so it re-reported the push every cycle. Stopped it. Nothing changed: origin is still at `478ebb005f`, already verified.",
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "Verify the last status against the repository, then continue the objective.",
+  "important_decisions": [
+    "See handoff note shared-brain/handoff-2026-09-27-0257-rc-vmixer-dsh-antigravity.md",
+    "See handoff note shared-brain/handoff-2026-09-26-2250-rc-standby-fleet-sync-check.md",
+    "See handoff note shared-brain/handoff-2026-09-23-0021-dsh-install-sync-check.md"
+  ],
+  "relevant_files": [],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [
+    "Exit code 2\n{\n \"build\": \"tsx scripts/build.ts\",\n \"build:official\": \"tsx scripts/build.ts --profile official\",\n \"build:lib\": \"npm run build:lib:host && npm run build:lib:client\",\n \"build:lib:host\": \"tsc -b tsconfig.host.json && tsdown --env. ...[8604 more chars in archive]"
+  ],
+  "last_meaningful_session_state": "2026-09-27T11:05:22.875Z",
+  "transcript_records": 597,
+  "settings": {
+    "title": "Continue vmixer DSH check-in",
+    "model": "claude-opus-5",
+    "effort": "xhigh",
+    "permission_mode": "auto",
+    "desktop_session_id": "local_00afb24f-d1a2-42ba-971e-4f4dee5e8542",
+    "desktop_account": "a540ddf6-241c-4236-a29c-94d3b5d6b489"
+  },
+  "created_at": "2026-09-28T00:43:05.939Z",
+  "archive": "quota-handoffs/H-20260928-vmixlaptop2x6-001/archive/3c7e83fe-5f33-4edf-9893-1cb1377f9876.jsonl.gz"
+}

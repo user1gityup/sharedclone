@@ -1,0 +1,134 @@
+// users — production data model (BUILD-BRIEF.md §4).
+//
+// This is the PRODUCTION schema and migration target. The build-time/dev runtime
+// deliberately does not connect to a database: it uses an in-memory repository
+// (src/lib/db.ts) with the same shapes, so `next build` and the test suite run
+// with no database present. A production deployment generates a Prisma client
+// from this schema and swaps the in-memory repository for a Prisma-backed one
+// behind the same interface.
+//
+// No organization, role, permission, vendor, order, or product table belongs in
+// this repo. users answers "who is this person", never "what may they do".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String             @id
+  email           String             @unique
+  name            String?
+  picture         String?
+  passwordHash    String?            // scrypt hash (AES-256-GCM-encrypted in production)
+  emailVerified   Boolean            @default(false)
+  totpSecret      String?            // AES-256-GCM-encrypted at rest
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  credentials     Credential[]
+  verifications   EmailVerification[]
+  resets          PasswordReset[]
+  totp            TotpSecret?
+  backupCodes     BackupCode[]
+  oauthIdentities OAuthIdentity[]
+  sessions        Session[]
+  loginAttempts   LoginAttempt[]
+}
+
+model Credential {
+  id        String   @id
+  userId    String
+  type      String   // "password" | ...
+  value     String   // encrypted at rest
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+model EmailVerification {
+  id         String    @id
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordReset {
+  id         String    @id
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TotpSecret {
+  id        String   @id
+  userId    String   @unique
+  secret    String   // AES-256-GCM-encrypted at rest
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BackupCode {
+  id        String   @id
+  userId    String
+  hash      String
+  spentAt   DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hash])
+}
+
+model OAuthIdentity {
+  id         String   @id
+  userId     String
+  provider   String   // "google" | "meta"
+  subject    String   // provider-side account id
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, subject])
+}
+
+model Session {
+  id           String    @id
+  jti          String    @unique
+  sid          String    @unique
+  userId       String
+  device       String?
+  amr          String[]
+  refreshHash  String?   @unique
+  issuedAt     DateTime
+  expiresAt    DateTime
+  revokedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LoginAttempt {
+  id        String   @id
+  userId    String?
+  email     String
+  ip        String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

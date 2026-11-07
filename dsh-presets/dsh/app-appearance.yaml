@@ -1,0 +1,253 @@
+    dsh/app-appearance:
+      name: App appearance
+      stages: council,propose,swarm,review
+      query: |-
+        DSH PIPELINE RUN — "app" APPEARANCE (chromeless standalone window)
+
+        Four stages. One call advances one stage. Every stage stops at its own gate.
+        Nothing is written to disk, executed, or spent beyond configured seat research
+        until the user presses approve and then sends a message. No seat pushes to git:
+        commit locally and append to ~/.claude/shared-brain/push-requests.md.
+        Every seat names its own model (Claude Opus 5, GPT-6, Kimi K2, ...) in anything
+        the user reads. A seat or role label may accompany the model name, never replace
+        it.
+
+        There are two council votes in this run. Vote 1 (end of stage 1) picks the
+        SOLUTION. Vote 2 (end of stage 2) picks the CODE PLAN and is the final council
+        vote — no third council vote exists. After that the only decisions left are the
+        user's: which sample elements to keep (stage 3) and whether the swarm runs
+        (stage 4).
+
+        ================================================================
+        GOAL
+        ================================================================
+        Add a fourth appearance to DSH, called "app", alongside light / dark / system in
+        the Appearance row (packages/client/ui-theme/src/client/AppearanceRow.tsx,
+        THEME_PREFERENCES in packages/client/ui-theme/src/theme-settings.ts).
+
+        Selecting "app" launches DSH in its own window with NO address bar, NO browser
+        tab strip, NO bookmarks bar — a window that reads as a standalone desktop
+        application, not a web page. It must keep working against the existing local
+        host (default http://localhost:3080) and must not fork the UI: the same app
+        renders, in a different frame.
+
+        ================================================================
+        STAGE 1 — COUNCIL ROUND 1: choose the solution. PLANNING ONLY. VOTE 1.
+        ================================================================
+        EVERY enabled seat takes part in this planning round — claude, free-claude,
+        openai, kimi, deepseek. All five research, propose and vote.
+
+        No files written, no code executed, no worker spawned. If a seat proposes taking
+        an action, the vote rejects it.
+
+        Decide, with reasons and trade-offs, and produce ONE selected solution:
+
+        1. Window mechanism. Compare at least:
+           - PWA install (web manifest display: "standalone" or "window-controls-overlay",
+             launched via the browser's install/app mode)
+           - Chrome/Edge `--app=<url>` launched as a child process from the host
+           - Electron shell wrapping the existing web build
+           - Tauri / WebView2 wrapper
+           - window.open with popup features (state plainly whether modern browsers
+             still strip enough chrome to qualify — do not assume)
+           Name what each costs in new dependencies, build steps, Windows 11 behaviour,
+           and how it degrades when the mechanism is unavailable.
+
+        2. Where the switch lives. Is "app" a fourth value of ThemePreference, or a
+           separate setting with its own field, given that light/dark/system stay
+           orthogonal to it (an app window is still light or dark)? Say which, and what
+           the Appearance row shows once there are four cubes.
+
+        3. What happens on the click. Exact sequence from cube press to a chromeless
+           window on screen, including the case where the window is already open, and
+           how the user gets back to a normal browser tab.
+
+        4. Window behaviour: custom title bar and drag region, window controls,
+           remembered size and position, minimum size, multi-monitor, and the keyboard
+           shortcuts the browser would normally own.
+
+        5. Files touched and packages added, listed by path, in this repo layout
+           (packages/client/ui-theme, packages/bundle/base/cordis.patch.yml, and
+           whatever the mechanism needs). Note anything that has to change in the
+           compiled artifact, not just source.
+
+        6. Test plan: what proves it works, at unit level and in the running app.
+
+        APPEARANCE / DESIGN DIRECTION — the window frame and the "app" chrome take
+        inspiration from two references on godly.design:
+
+          athas.dev — soft photographic sky backdrop behind the surface; large, calm
+          headline typography with generous line height; a floating rounded window with
+          a thin translucent border and a wide, soft drop shadow so the app appears to
+          hover over its backdrop; a slim pill-shaped top nav; very few visible
+          affordances; light, airy, high space.
+
+          gumloop.com — near-white canvas with near-black text; a compact top bar with
+          small pill buttons; the product surface presented as a rounded card carrying
+          macOS-style traffic-light dots; a three-pane layout (left list rail, centre
+          content, right inspector) held together by soft neutral-gray panels and thin
+          hairline dividers; tight, confident spacing.
+
+        The synthesis to aim for: a rounded, shadowed, borderless window whose own title
+        strip carries traffic-light-style controls and the session title, drawn by DSH
+        itself — no OS chrome, no browser chrome — over a calm backdrop, with the
+        existing DSH panes sitting inside it as gumloop's three-pane card. Must work in
+        both light and dark, and must respect the system theme when preference is
+        "system".
+
+        VOTE 1. Every seat votes on the mechanism. No seat votes for its own proposal.
+
+        Stage 1 output: the selected solution, the losing options with one line each on
+        why they lost, the file list, and the test plan. Stop at the approval gate.
+
+        ================================================================
+        STAGE 2 — COUNCIL ROUND 2: code plans, then VOTE 2 (FINAL VOTE).
+        ================================================================
+        Same five seats — claude, free-claude, openai, kimi, deepseek. Still PLANNING
+        ONLY: no files written, no code executed, no worker spawned, and in this stage
+        no code bodies either. A plan, not an implementation.
+
+        The mechanism is settled by vote 1 and is not reopened. A seat that disagrees
+        with it says so in one line and plans it anyway.
+
+        Each seat independently writes ITS OWN CODE PLAN for that mechanism:
+
+          a. Repo-relative file list: every file added, changed, deleted. Mark which.
+          b. Per file, what goes in it — exported symbols, component names, function
+             signatures, props, types, config keys. Signatures and shapes are allowed;
+             function bodies are not.
+          c. State and data flow: where the "app" preference is stored, who reads it,
+             what crosses the host/client boundary, what happens on reload.
+          d. Build and artifact steps: what has to be rebuilt, in what order, and what
+             must be true of the compiled artifact — not just the source.
+          e. Test list: each test by name, what it asserts, which file it lives in, and
+             which of them are unit vs. running-app.
+          f. Failure and fallback behaviour when the mechanism is unavailable on the
+             host machine.
+          g. Risks in its own plan, and what it deliberately leaves out of scope.
+
+        Keep each plan under 400 lines. The round-2 review hands every seat all five
+        plans at once; over-long plans make that prompt unusable.
+
+        VOTE 2 — FINAL. Every seat reads all five code plans and votes for one. No seat
+        votes for its own plan. The plan with the most votes is THE CODE PLAN: it is
+        binding on stage 3 and stage 4, and no later stage re-architects it. Report the
+        tally, each seat's one-line reason, and the two runners-up with the one thing
+        each did better — the user may fold those specifics in later.
+
+        Stage 2 output: the five code plans, the vote-2 tally, and the winning code plan
+        restated in full as the single spec that stages 3 and 4 build against. Stop at
+        the approval gate.
+
+        ================================================================
+        STAGE 3 — SAMPLES: three engines write the code, their own style reading.
+        ================================================================
+        EXACTLY THREE seats draft in this stage, and no others:
+          - claude       (Claude CLI, subscription)
+          - kimi         (OpenRouter moonshotai/kimi-k2)
+          - openai       (codex CLI)
+
+        free-claude and deepseek take no part in stage 3. They planned and voted in
+        stages 1 and 2; three samples come back, not five.
+
+        All three implement THE CODE PLAN from vote 2 — same mechanism, same file list,
+        same signatures. They do not compete on architecture. They compete on the visual
+        and interaction reading of the design direction quoted in stage 1: the title
+        strip, the traffic lights, the backdrop, the shadow and radius, the three-pane
+        card, the typography, the spacing, the motion.
+
+        HARD RULE FOR THIS STAGE: samples only. Nothing is written to the working tree,
+        no build is run, no window is launched, no worker is spawned. The output is text
+        and one previewable file per seat that the user reads, looks at, and picks from.
+
+        Each seat returns, in this order:
+          1. Its model name.
+          2. A five-line summary of its style reading — what it chose to make distinct.
+          3. A LOOKABLE SAMPLE: one self-contained static HTML file — inline CSS, no
+             build step, no network fetch, no framework import — that renders its window
+             frame: backdrop, rounded shadowed window, title strip with traffic lights
+             and session title, and the three-pane card with placeholder content, shown
+             in both light and dark on the one page. The user opens this file in a
+             browser to judge it. Emit it in a fenced block headed by a proposed path
+             under the scratchpad directory, never the working tree.
+          4. Full code for every file it would add or change in the real repo, in fenced
+             blocks, each headed by the repo-relative path. Diffs for existing files,
+             whole files for new ones.
+          5. The exact commands it would run to build and verify.
+          6. Risks it knows about in its own version, and what it did not handle.
+
+        Number the visual elements in each sample using the SAME element ids across all
+        three seats — T1 title strip, T2 traffic lights, B1 backdrop, W1 window shape
+        (radius, border, shadow), C1 card, R1 rails and dividers, Y1 typography,
+        S1 spacing, M1 motion — so the user can say "T2 from Kimi, B1 from Claude"
+        without ambiguity.
+
+        Stage 3 ends by presenting the three samples side by side and STOPPING. Do not
+        advance. autoAdvance stays off for this run.
+
+        ================================================================
+        ELEMENT PICK — the user chooses, element by element.
+        ================================================================
+        The user reads the three samples, opens the three HTML previews, and names the
+        elements they want by element id and seat. This is not a single-winner vote: the
+        result is normally a mix across all three samples.
+
+        The seat whose code plan won vote 2 then writes a MERGE SPEC: every picked
+        element, which sample it came from, the exact code that implements it, and how
+        the picks combine without conflict — naming any pair that clashes and proposing
+        the resolution rather than silently choosing one. Nothing outside the picked
+        elements changes.
+
+        The merge spec is what stage 4 builds. No seat starts executing before the user
+        has finished picking and the execution approval gate has been pressed and
+        followed by a user message.
+
+        ================================================================
+        STAGE 4 — SWARM: three engines build the merge spec, as fast as it allows.
+        ================================================================
+        The three engines from stage 3 build it — claude, kimi, openai. The seats
+        themselves design the swarm: they present the task graph, the assignment and the
+        wave order, and they justify the assignment against how each engine actually
+        runs on this machine.
+
+        ENGINE FACTS THE PLAN MUST REASON WITH:
+          - claude  — local Claude CLI, one child process on this machine. Reads the
+                      repo, writes files, runs builds and tests.
+          - openai  — local codex CLI, also a local child process. Competes with claude
+                      for the same CPU, disk and working tree.
+          - kimi    — NOT LOCAL. Hosted through OpenRouter (moonshotai/kimi-k2). It runs
+                      as an API call, not a process on this machine. Consequences the
+                      plan must honour rather than restate:
+                        * it adds no local CPU, disk or working-tree contention, so it
+                          parallelises with the two local seats for free;
+                        * it is billed per token and pays network latency per call, so a
+                          few large tasks beat many small ones;
+                        * it CANNOT run a build, run a test, read the live repo, or touch
+                          the working tree. Everything it produces is text that a local
+                          seat has to apply and verify.
+          Therefore: give kimi self-contained authoring tasks — new files, isolated
+          components, CSS, fixtures — sized to whole files rather than surgical diffs,
+          and keep every apply, build, test and artifact check on claude or openai.
+          State explicitly which local seat owns applying and verifying each kimi task.
+
+        Rules for execution:
+          - The graph is presented before it runs: tasks, dependencies, which seat takes
+            which task, wave order, which local seat verifies each hosted task, and cost
+            estimate. It passes the swarm execution approval gate — button press plus a
+            later user message, single use, 15-minute TTL — and the approved graph runs
+            verbatim, never re-planned.
+          - Parallel waves only where files do not collide. Two workers never edit the
+            same file in the same wave.
+          - Every worker names its model in anything the user reads.
+          - Build and tests run at the end of each wave; a failing wave stops the run and
+            reports rather than continuing.
+          - Commits are local. No push. Append the request to
+            ~/.claude/shared-brain/push-requests.md and stop there.
+          - Verification is against the compiled artifact and the running app, not the
+            source. Capture real exit codes. State plainly anything left untested.
+
+        Stage 4 output: what landed, per file; the wave timeline with real elapsed times
+        per seat; test results with real numbers; and a screenshot or description of the
+        chromeless window actually running, checked against the merge spec element by
+        element.
+      autoAdvance: false

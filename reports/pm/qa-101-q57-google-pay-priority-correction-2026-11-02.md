@@ -1,0 +1,13 @@
+# PM 101 interview: Q57 Parking payment-priority correction (user explicit, 2026-11-02)
+**AUTHORITATIVE CORRECTION to earlier Q57 reconciliation**, original Parking PM task **T-be2407f6**. The user explicitly stated: **"I literally answered question today about Google pay being first."** Therefore record **GOOGLE PAY AS PRIORITY #1** in the Parking app payment-method ordering. This overrides any suggestion in the earlier Q57 Shared Brain delta that no first-priority method was specified. **Google Pay is not GrabPay**.
+
+## PM evidence and supersession
+- Original prior reconciler PM comment #1180 and Shared Brain `reports/pm/qa-101-decision-q57-reconciled-2026-11-02.md` (SHA `fe70b36fc638e6183faf7698d5e27a6494a0e7ba5385cfd277f0fda4fa68f160`) are kept as original audit history, but their assertions that no payment priority was established are SUPERSEDED.
+- Corrective PM comment **#1181** records the user-confirmed **Google Pay #1**.
+- Other previously established payment methods remain required under Metro Manila Parking Q5=D hybrid: GCash, Maya, cards, cash/QR, prepaid/pay-at-site, wallets/subscriptions; separate user goals to accept GrabPay and list parking sites on Grab Maps remain. These are distinct from Google's first priority.
+- The exact subsequent priority order was NOT independently recovered in this chat context. Do not invent or reorder items 2+; recover it from original decision records before committing it as an exact ranked sequence. Do not re-ask Google Pay #1.
+- Processor choice (PayMongo, direct GrabPay, other eligible providers) must serve verified payment options and is a separate architecture/provider-capability question, NOT a replacement for the selected customer-facing Google Pay-first ordering. Verify Google Pay support, merchant eligibility, Philippine regional support, PSP availability and sandbox testability rather than assuming.
+- No provider onboarding, secret retrieval, live charge, Google/Grab account changes, real merchant registration, external POI listing, code merge or deployment authorized from this correction.
+
+## Preserve unrelated decisions and files
+Original Parking PM project P-b150c82a and tasks T-e66fe030, T-bf279623 and T-be2407f6; all confirmed PM Q1–Q56 and Q57 historical requirement reconciliation, previous guarded delta decisions Q50–Q56, completed historical LinkedIn Q1–Q35 and Event Manager E1–E15/F1–F29, task IDs/histories and independent payment, credential, security, code review/merge, live execution and deployment gates. Do not overwrite concurrently modified canonical ledger `reports/pm/qa-101-progress-2026-11-01.md`; reconcile this corrective delta by PM task ID and timestamp when it can be read safely.

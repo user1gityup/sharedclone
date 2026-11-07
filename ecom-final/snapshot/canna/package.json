@@ -1,0 +1,35 @@
+{
+  "name": "canna",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Members-only California cannabis retail (B2C) and wholesale (B2B) marketplace. Verifies sessions issued by the users service; never mints tokens.",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0 -p 5192",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0 -p 5192",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-isolation=none test/*.test.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "db:seed": "node --env-file=.env --import tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "jose": "^5.9.6",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@prisma/client": "^6.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "typescript": "^5.7.3",
+    "prisma": "^6.2.1",
+    "tsx": "^4.19.2"
+  },
+  "imports": {
+    "@/*": "./src/*"
+  }
+}

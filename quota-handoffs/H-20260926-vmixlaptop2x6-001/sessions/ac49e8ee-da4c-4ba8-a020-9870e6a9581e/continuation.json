@@ -1,0 +1,49 @@
+{
+  "handoff_id": "H-20260926-vmixlaptop2x6-001",
+  "source_user": "ndi2",
+  "source_machine": "vmixlaptop2x6",
+  "source_session_id": "ac49e8ee-da4c-4ba8-a020-9870e6a9581e",
+  "provider": "claude-code",
+  "model": "claude-opus-5-5",
+  "project": "claudecode",
+  "repository": null,
+  "working_directory": "C:\\Users\\ndi2\\Documents\\claudecode",
+  "branch": null,
+  "git_head": null,
+  "uncommitted_changes": [],
+  "task_objective": "Read ~/.claude/shared-brain/resume-vmixlaptop2x6.md and the note it names. Verify its claims against live filesystem, git and processes before editing, claim ownership in the note, then do its Next line. Read shared-agent-log.md only through tail or grep.",
+  "latest_request": "make it real   i will log out of here log into a new machine and test it where will i find it?",
+  "current_status": "31/31. Creating the real handoff now.",
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "live trial of v2 on a real account switch; see note Next line",
+  "important_decisions": [
+    "See handoff note shared-brain/handoff-2026-09-26-1213-automatic-quota-handoff.md"
+  ],
+  "relevant_files": [
+    "C:\\Users\\ndi2\\.claude\\shared-brain\\.sync\\quota-guard.mjs",
+    "C:\\Users\\ndi2\\.claude\\shared-brain\\.sync\\claude-hook\\quota-handoff.mjs",
+    "C:\\Users\\ndi2\\AppData\\Local\\Temp\\claude\\C--Users-ndi2-Documents-claudecode\\ac49e8ee-da4c-4ba8-a020-9870e6a9581e\\scratchpad\\patch2.cjs",
+    "C:\\Users\\ndi2\\.claude\\shared-brain\\.sync\\resume-handoff.md",
+    "C:\\Users\\ndi2\\AppData\\Local\\Temp\\claude\\C--Users-ndi2-Documents-claudecode\\ac49e8ee-da4c-4ba8-a020-9870e6a9581e\\scratchpad\\v2tests.mjs",
+    "C:\\Users\\ndi2\\AppData\\Local\\Temp\\claude\\C--Users-ndi2-Documents-claudecode\\ac49e8ee-da4c-4ba8-a020-9870e6a9581e\\scratchpad\\e2e.sh"
+  ],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [
+    "Exit code 2\n/usr/bin/bash: -c: line 100: unexpected EOF while looking for matching `''",
+    "<tool_use_error>File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.</tool_use_error>"
+  ],
+  "last_meaningful_session_state": "2026-09-26T22:40:10.970Z",
+  "transcript_records": 377,
+  "settings": {
+    "title": "Continue quota handoff v2 receiver",
+    "model": "claude-opus-5-5",
+    "effort": "medium",
+    "permission_mode": "auto",
+    "desktop_session_id": "local_3a7fcd9f-e696-41dc-ae9d-fa28ae16f6a7",
+    "desktop_account": "8aa17a70-3c66-4e64-a3a1-d867c7e49608"
+  },
+  "created_at": "2026-09-26T22:40:12.048Z",
+  "archive": "quota-handoffs/H-20260926-vmixlaptop2x6-001/archive/ac49e8ee-da4c-4ba8-a020-9870e6a9581e.jsonl.gz"
+}

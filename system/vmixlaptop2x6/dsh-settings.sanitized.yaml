@@ -1,0 +1,302 @@
+# SANITIZED SNAPSHOT of ~/.dsh/settings.yaml on vmixlaptop2x6 — not the live file, not loaded by DSH.
+# Exported 2026-09-15T10:15:42.527Z by .sync/export-history.mjs (parsed).
+# Removed: values under secret-named keys, credential-shaped strings, e-mail addresses, account names, home paths (~).
+# Kept: env-var NAMES (apiKeyEnv), providers, models, council seats, swarm roster, quota readings.
+# Truncated: long transient text at 1500 chars. pipelinePresets omitted (see dsh-presets/).
+ui-onboarding:
+  welcomeNoticeVersion: 2026-08-13.1
+llm-pi-ai:
+  providers:
+    openrouter:
+      apiKeyEnv: OPENROUTER_API_KEY
+    free-claude-code:
+      displayName: Free Claude Code
+      apiKeyEnv: FCC_DSH_API_KEY
+      api: openai-responses
+      baseURL: http://127.0.0.1:8082/v1
+      models:
+        - id: claude-sonnet-4-20250514
+          name: Free (routed by FCC)
+          contextWindow: 131072
+        - id: claude-opus-4-20250514
+          name: Free - large tier (routed by FCC)
+          contextWindow: 131072
+        - id: claude-haiku-4-20250514
+          name: Free - fast tier (routed by FCC)
+          contextWindow: 131072
+    openrouter-free:
+      displayName: OpenRouter Free
+      api: openai-completions
+      baseURL: http://127.0.0.1:8080/v1
+      models:
+        - id: proxy-auto
+          name: Free (auto-routed free models)
+          contextWindow: 65536
+        - id: thinkingmachines/inkling-small:free
+          name: "Thinking Machines: Inkling Small (free)"
+          contextWindow: 1048576
+        - id: thinkingmachines/inkling:free
+          name: "Thinking Machines: Inkling (free)"
+          contextWindow: 1048576
+        - id: nvidia/nemotron-3.5-lightning:free
+          name: "NVIDIA: Nemotron 3.5 Lightning (free)"
+          contextWindow: 1000000
+        - id: nvidia/nemotron-3-ultra-550b-a55b:free
+          name: "NVIDIA: Nemotron 3 Ultra (free)"
+          contextWindow: 1000000
+        - id: dots-studio/dots-3-note-preview:free
+          name: "Dots Studio: Dots3-Note Preview (free)"
+          contextWindow: 512000
+        - id: inclusionai/ling-3.0-flash-vl:free
+          name: "inclusionAI: Ling 3.0 Flash VL (free)"
+          contextWindow: 262144
+        - id: nex-agi/nex-n2.5-mini:free
+          name: "Nex AGI: Nex-N2.5-Mini (free)"
+          contextWindow: 262144
+        - id: nex-agi/nex-n2.5-pro:free
+          name: "Nex AGI: Nex-N2.5-Pro (free)"
+          contextWindow: 262144
+        - id: inclusionai/ling-3.0-flash-sante:free
+          name: "inclusionAI: Ling 3.0 Flash Sante (free)"
+          contextWindow: 262144
+        - id: inclusionai/ling-3.0-flash-fin:free
+          name: "inclusionAI: Ling 3.0 Flash Fin (free)"
+          contextWindow: 262144
+        - id: poolside/laguna-s-2.1:free
+          name: "Poolside: Laguna S 2.1 (free)"
+          contextWindow: 262144
+        - id: poolside/laguna-xs-2.1:free
+          name: "Poolside: Laguna XS 2.1 (free)"
+          contextWindow: 262144
+        - id: google/gemma-4-26b-a4b-it:free
+          name: "Google: Gemma 4 26B A4B (free)"
+          contextWindow: 262144
+        - id: google/gemma-4-31b-it:free
+          name: "Google: Gemma 4 31B (free)"
+          contextWindow: 262144
+        - id: nvidia/nemotron-3-super-120b-a12b:free
+          name: "NVIDIA: Nemotron 3 Super (free)"
+          contextWindow: 262144
+        - id: cohere/north-mini-code:free
+          name: "Cohere: North Mini Code (free)"
+          contextWindow: 256000
+        - id: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+          name: "NVIDIA: Nemotron 3 Nano Omni (free)"
+          contextWindow: 256000
+        - id: openrouter/free
+          name: Free Models Router
+          contextWindow: 200000
+        - id: nvidia/nemotron-3.5-content-safety:free
+          name: "NVIDIA: Nemotron 3.5 Content Safety (free)"
+          contextWindow: 128000
+        - id: liquid/lfm-2.5-2.6b:free
+          name: "LiquidAI: LFM2.5-2.6B (free)"
+          contextWindow: 65536
+      apiKeyEnv: OPENROUTER_API_KEY
+  agent-default-model:
+    provider: openrouter
+    model: deepseek/deepseek-v4-pro
+council:
+  observedCliTokensPerWeek: 9792007
+  seats:
+    openai:
+      enabled: false
+      args:
+        - exec
+        - --skip-git-repo-check
+        - "{prompt}"
+      model: ""
+    deepseek:
+      enabled: true
+      args: []
+    free-claude:
+      enabled: true
+      args: []
+    kimi:
+      enabled: true
+      args: []
+    claude:
+      enabled: false
+      args: []
+    agy-flash-lite:
+      enabled: false
+      args: []
+    agy-flash:
+      enabled: false
+      args: []
+    agy-pro:
+      enabled: false
+      args: []
+    openrouter-free:
+      enabled: true
+      args: []
+  councilMode: true
+  fileRoots: ~\Documents\claudecode\deepseek-harness
+  swarmMode: false
+  pipelinePresets: "<omitted: 8 saved runs, exported one file each under dsh-presets/>"
+  pendingPlanId: ""
+  pendingPlanQuery: have free claude attempt to make the directories
+  pendingPlanText: |-
+    **Revised plan — free Claude creates the missing directories**
+
+    **1. Restatement**  
+    Have the local free Claude seat attempt to create the missing local Windows directories from the active handoffs, then verify and report exact paths and errors.
+
+    **2. Approach**  
+    - Locate the local Free Claude Code project/server and verify it is running or start it; use its CLI/API for the directory-creation command (borrowed from free-claude seat, supported by deepseek). If the server cannot start or authenticate, stop before directory creation and report that error.
+    - Treat free Claude as the local CLI proxy with shell access, not a remote model (borrowed from kimi seat, supported by free-claude). Select missing local Windows paths from the most recent open handoff(s) in scope: shared-brain/DSH-harness/staging, clone migration, and antigravity token directories. Remote/unmounted drives are out of scope.
+    - Build one PowerShell command, with cmd as fallback, that creates only missing directories using `New-Item -ItemType Directory -Force` or equivalent. No user-side checklist.
+    - Have free Claude run that command through its local proxy/CLI shell access and capture the full output.
+    - After the run, verify every requested path with `Test-Path`/`dir`; record exact paths, created vs. already-present status, and any permission/server/auth error.
+
+    **3. Acceptance conditions**  
+    - Free Claude actually attempted the directory creation; the plan did not stop at instructions.
+    - Every requested local  … [truncated 1154 chars]
+  pendingPlanIssuedAt: 1789449613175
+  approvedPlanId: ""
+  approvedAt: 0
+  swarmRoster:
+    spawn:
+      enabled: false
+      kinds: []
+    codex:
+      enabled: false
+      kinds: []
+    free-claude:
+      enabled: true
+      kinds:
+        - code
+        - review
+        - research
+        - docs
+        - tests
+    claude:
+      kinds:
+        - tests
+        - research
+        - review
+        - docs
+        - code
+      enabled: false
+    kimi:
+      enabled: true
+      kinds:
+        - code
+        - tests
+        - docs
+        - research
+        - review
+    deepseek:
+      enabled: true
+      kinds:
+        - review
+        - research
+        - docs
+        - tests
+        - code
+    agy-pro:
+      enabled: false
+      kinds: []
+    agy-flash:
+      enabled: false
+      kinds: []
+    agy-flash-lite:
+      enabled: false
+      kinds: []
+    openrouter-free:
+      enabled: true
+      kinds:
+        - research
+        - review
+    openai:
+      enabled: false
+      kinds:
+        - code
+        - tests
+        - docs
+        - research
+        - review
+  openai:
+    enabled: true
+    kinds:
+      - review
+  pipelineAuto: false
+  pipelineMinimize: chevron
+  pipelineCollapsed: false
+  pipelineId: ""
+  pipelineQuery: ""
+  pipelineStage: ""
+  pipelinePlan: ""
+  pipelineTasks: ""
+  pipelineUnits: ""
+  pipelineCandidates: ""
+  pipelineHoldDetail: ""
+  pipelineHoldSeat: ""
+  pipelineHoldResumeAt: 0
+  pipelineHoldSource: ""
+  pendingSwarmId: ""
+  pendingSwarmQuery: |-
+    RUN POLICY — USER REQUEST
+    Council planning and final council review: use exactly the seats selected in the Council Budget panel at the time each council stage runs. Identify each seat by model and report any seat that is unavailable; do not add, substitute or omit seats.
+    Build: run the swarm stage in economy mode. Free seats contest every unit, a winner is selected per unit, and paid seats do the reviews and the bounded fallback, exactly as economy mode defines it. Show the economy estimate at the swarm gate.
+    Make the product enjoyable and easy to use: clear visual hierarchy, responsive interactions, useful live progress, approachable empty states, and accessible controls.
+    Build repository path is still pending: obtain it before the swarm stage. Every stage stops at its own approval gate.
+
+    # Council + swarm build specification
+
+    Build a standalone project management application for a multi-human team coordinating CLI agents, councils, and swarms across projects, sessions, and machines. It must run independently of DSH; DSH is one execution connector. Deliver working software, verified end to end, in a separate repository.
+
+    ## Execution boundary
+    - This saved specification is not execution authorization. Target repository/swarm path, hosting, and execution authorization are pending.
+    - Before implementation, inspect applicable project instructions and current DSH integration code; shared notes are context, not proof of current behavior. Present the architecture, task graph, accep … [truncated 7267 chars]
+  pendingSwarmTasks: '[{"id":"architect-data-model","title":"Design core data model and schema","detail":"Design the relational database schema for: Workspace (team, membership, permissions), Project (objective, repositories, milestones), Task (requirements, acceptance criteria, priority, dependencies, owner, lifecycle), Plan revision (council proposal, decomposition, approval scope/status), Run (executor, model, agent instance, machine, state, timestamps, usage), Assignment (task-to-run relationship, renewable lease), Artifact (documents, patches, commits, evidence), and Decision/event history. Include tables for state machines, comments/instructions with delivery tracking, and versioned requirements. Output: SQL DDL with migrations, entity relationship diagram, and TypeScript interfaces. No implementation code yet.","dependsOn":[],"provider":"kimi"},{"id":"architect-api-contract","title":"Design API contract and state machine specifications","detail":"Design REST/JSON API endpoints for: project CRUD, task lifecycle (Draft→Ready→In Progress→In Review→Done, Blocked/Cancelled), run states (queued/running/quota-held/disconnected/failed/cancelled/completed), atomic claim/renew/release operations, artifact upload, instruction delivery with acknowledgment, and review submission/acceptance. Specify WebSocket or SSE for live progress. Design state transition validation rules, idempotency keys, and conflict detection. Output: OpenAPI 3.0 spec, state transition diagrams, and error code catalog. No implemen … [truncated 3926 chars]'
+  pendingSwarmIssuedAt: 1789448676348
+  approvedSwarmId: ""
+  approvedSwarmAt: 0
+  pipelinePicked: ""
+  pipelineStages: ""
+  pipelineWinner: ""
+  pipelineProfile: ""
+  pipelineStoppedId: 5d3fbb32-e32d-44f1-83ba-c762a22be8e1
+  pendingProposeId: ""
+  approvedProposeId: ""
+  swarmProfile: user
+  pendingSwarmProfile: ""
+  codexModels:
+    - gpt-5.6-sol
+    - gpt-6-astra
+    - gpt-5.6-terra
+    - gpt-5.6-luna
+    - gpt-5.5
+ui-theme:
+  preference: light
+claude-quota:
+  sessionPercent: 14
+  sessionResets: Sep 14, 12:50am
+  weekPercent: 100
+  weekResets: Sep 15, 1am
+  requests24h: 139
+  sessions24h: 9
+  requests7d: 3492
+  sessions7d: 116
+  bigContextPercent: 16
+  bigContextThresholdK: 150
+  longSessionPercent: 22
+  longSessionHours: 8
+  capturedAt: 1789370591108
+  refreshRequestedAt: 1789337742373
+  refreshState: ok
+codex-quota:
+  refreshState: ok
+  bucketsJson: '[{"id":"codex","label":"codex","primary":{"remaining":100,"minutes":300,"resetsAt":1789485250},"secondary":{"remaining":0,"minutes":10080,"resetsAt":1789811021}}]'
+  capturedAt: 1789467250482
+  refreshRequestedAt: 1789338012857
+antigravity-quota:
+  refreshState: ok
+  bucketsJson: '[{"id":"gemini-weekly","group":"Gemini Models","label":"Weekly Limit Remaining","window":"weekly","remaining":0,"resetsAt":1789514594,"note":null,"accounts":4},{"id":"3p-weekly","group":"Claude and GPT models","label":"Weekly Limit Remaining","window":"weekly","remaining":31.4,"resetsAt":1789523361,"note":null,"accounts":4}]'
+  capturedAt: 1789467252480
+  seatsJson: '[{"id":"seat1","label":"Shift A","source":"seat","tierId":"g1-plus-tier","tierName":"Google AI Plus","weight":1,"buckets":[{"id":"gemini-weekly","group":"Gemini Models","label":"Weekly Limit Remaining","remaining":0,"window":"weekly","resetsAt":1789734009,"note":"You have hit your weekly limit, it refreshes in 3 days, 2 hours. If on a supported paid plan, you can use AI credits in the interim or upgrade to a higher tier."},{"id":"3p-weekly","group":"Claude and GPT models","label":"Weekly Limit Remaining","remaining":6.8,"window":"weekly","resetsAt":1789891602,"note":"You have used some of your weekly limit, it will fully refresh in 4 days, 21 hours."}],"state":"ok","counted":true,"inflight":0,"parkedUntil":null},{"id":"gone1","label":"Google One account","source":"seat","tierId":"g1-plus-tier","tierName":"Google AI Plus","weight":1,"buckets":[{"id":"gemini-weekly","group":"Gemini Models","label":"Weekly Limit Remaining","remaining":0,"window":"weekly","resetsAt":1789514594,"note":"You have hit your weekly limit, it refreshes in 13 hours, 14 minutes. If on a supported paid plan, you can use AI credits in the interim or upgrade to a higher tier."},{"id":"3p-weekly","group":"Claude and GPT models","label":"Weekly Limit Remaining","remaining":0,"window":"weekly","resetsAt":1789523361,"note":"You have hit your weekly limit, it refreshes in 15 hours, 40 minutes. If on a supported paid plan, you can use AI credits in the interim or upgrade to a higher tier."}],"state":"ok","counted" … [truncated 1742 chars]'
+  refreshRequestedAt: 1789377208183
+agent-default-model:
+  provider: free-claude-code
+  model: claude-opus-4-20250514

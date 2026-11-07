@@ -1,0 +1,50 @@
+{
+  "handoff_id": "H-20260927-vmixer2o2-001",
+  "source_user": "vMixer",
+  "source_machine": "vmixer2o2",
+  "source_session_id": "c334f289-98e7-446d-b606-92821ceb50be",
+  "provider": "claude-code",
+  "model": "claude-opus-5-5",
+  "project": "claudecode",
+  "repository": null,
+  "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode",
+  "branch": null,
+  "git_head": null,
+  "uncommitted_changes": [],
+  "task_objective": "turn on remote control standby for assignment",
+  "latest_request": null,
+  "current_status": "Claude Opus 5.5: another vmixer2o2 session, \"Remote control for ecom dashboard\", now runs the canna/commerce DSH build. I've stepped back so we don't collide. The handoff note now says not to touch deepseek-harness, `~/.dsh/settings.yaml`, DSH on port 3080, or the `users`/`canna`/`commerce` folders. I closed my DSH browser tab. Remote Control is still on and I'm on standby for your next assignment.\nHandoff note: `C:\\Users\\vMixer\\.claude\\shared-brain\\handoff-2026-09-26-2250-rc-standby-fleet-sync-check.md`",
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "Verify the last status against the repository, then continue the objective.",
+  "important_decisions": [
+    "See handoff note shared-brain/handoff-2026-09-26-2250-rc-standby-fleet-sync-check.md"
+  ],
+  "relevant_files": [
+    "C:\\Users\\vMixer\\.claude\\shared-brain\\handoff-2026-09-26-2250-rc-standby-fleet-sync-check.md",
+    "C:\\Users\\vMixer\\.claude\\shared-brain\\resume-vmixer2o2.md",
+    "C:\\Users\\vMixer\\AppData\\Local\\Temp\\claude\\C--Users-vMixer-Documents-claudecode\\c334f289-98e7-446d-b606-92821ceb50be\\tasks\\bcc47dml9.output",
+    "C:\\Users\\vMixer\\AppData\\Local\\Temp\\claude\\C--Users-vMixer-Documents-claudecode\\c334f289-98e7-446d-b606-92821ceb50be\\tasks\\b1108xban.output",
+    "C:\\Users\\vMixer\\AppData\\Local\\Temp\\claude\\C--Users-vMixer-Documents-claudecode\\c334f289-98e7-446d-b606-92821ceb50be\\tasks\\b13n5sedf.output",
+    "C:\\Users\\vMixer\\AppData\\Local\\Temp\\claude\\C--Users-vMixer-Documents-claudecode\\c334f289-98e7-446d-b606-92821ceb50be\\tasks\\bqed2q1f9.output",
+    "C:\\Users\\vMixer\\AppData\\Local\\Temp\\claude\\C--Users-vMixer-Documents-claudecode\\c334f289-98e7-446d-b606-92821ceb50be\\tasks\\bii3j8sg9.output"
+  ],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [
+    "<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>",
+    "actions[0] (computer:left_click) failed: ref ref_77 is entirely outside the viewport (center (0, 0)) — likely hidden or off-canvas, so a click cannot reach it. Interact with what opens it first, or re-run read_page and pick a visible elemen ...[29 more chars in archive]"
+  ],
+  "last_meaningful_session_state": "2026-09-27T08:04:05.036Z",
+  "transcript_records": 468,
+  "settings": {
+    "title": "Remote control standby for assignment",
+    "model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "permission_mode": "auto",
+    "desktop_session_id": null,
+    "desktop_account": null
+  },
+  "created_at": "2026-09-27T08:52:10.174Z",
+  "archive": "quota-handoffs/H-20260927-vmixer2o2-001/archive/c334f289-98e7-446d-b606-92821ceb50be.jsonl.gz"
+}

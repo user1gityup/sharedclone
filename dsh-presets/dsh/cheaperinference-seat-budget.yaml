@@ -1,0 +1,16 @@
+    dsh/cheaperinference-seat-budget:
+      name: CheaperInference seat, models, and budget
+      stages: council,swarm,review
+      autoAdvance: false
+      query: |-
+        # CheaperInference DSH seat and budget
+
+        Run a gated council → swarm → review pipeline for the DeepSeek Harness repository. Every stage stops for its existing approval gate. The council produces a concrete plan and collision-free swarm graph before any implementation. The swarm executes only that approved graph. The final council reviews the actual diff, tests, compiled artifacts, and live DSH behavior. Every seat names its exact model. No agent pushes; completed commits go through submit_work or the shared queue helper for PowerShell gatekeeper review.
+
+        Goal: add CheaperInference as a selectable DSH provider and council seat using an API key, expose every currently available compatible text model in the DSH model selector, and provide a budget tool for CheaperInference prices, balance, usage, and spending limits. Integrate the new tool with existing DSH budget views where sensible, while preserving existing providers and model choices. Never store or print the API key in settings, logs, prompts, receipts, or tests; use the existing secret environment pattern.
+
+        Use the live official documentation at https://api.cheaperinference.com/docs and https://api.cheaperinference.com/api-reference as the specification. Verify endpoint schemas at council time. In particular, GET /v1/models includes capabilities and current pricing, and the API also documents GET /v1/usage/requests, GET /v1/usage/daily, GET /v1/account/balance, and GET /v1/account/usage. Do not use the older assumption that the model catalog lacks pricing or that usage must be local-only. Identify which endpoints require an API key or usage:read scope. Support pagination, cache validation, unavailable responses, price changes, and selected model IDs without a hard-coded truncated list. Preserve the user's existing provider and seat configuration.
+
+        Council deliverable: inspect the current provider, model picker, credentials, council seat, budget, and settings code; show file-level design, data flow, budget math and currency units, secret handling, migration behavior, tests, live verification, task dependencies, seat assignment, and an estimated execution cost. Include a fixture-only path when no API key is available. Stop for plan approval.
+
+        Swarm execution: implement the approved provider, dynamic model discovery and selection, seat, budget tool, settings wiring, and focused tests in isolated noncolliding tasks. Do not make paid generation calls during tests. Run typecheck, relevant tests, package builds, and a live DSH check that the model list and budget panel render. Verify the compiled artifacts and actual exit codes. Commit locally and queue through the gatekeeper; do not push. Stop for final council review and user acceptance.

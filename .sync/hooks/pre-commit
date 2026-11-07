@@ -1,0 +1,3 @@
+#!/bin/sh
+# Rewrite home paths to ~ in staged notes before they are committed.
+exec node "$(dirname "$0")/pre-commit.mjs"

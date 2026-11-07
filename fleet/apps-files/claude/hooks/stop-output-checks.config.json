@@ -1,0 +1,19 @@
+{
+  "minWorkReportChars": 300,
+  "rules": {
+    "model-self-id": true,
+    "eta-format": true,
+    "qa-card-format": true
+  },
+  "skipCwdPatterns": [
+    "/\\.dsh/(?:seat-cwd|search-cwd|runs-)",
+    "/blitz-runs/",
+    "/pm-data/bridge-work"
+  ],
+  "skipEntrypoints": [
+    "pm-bridge",
+    "sdk-cli",
+    "sdk-ts",
+    "sdk-py"
+  ]
+}

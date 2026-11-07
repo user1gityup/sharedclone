@@ -1,0 +1,81 @@
+{
+  "host": "vmixer2o2",
+  "upstream": "http://127.0.0.1:8090",
+  "maxLoaded": 1,
+  "relay": {
+    "port": 8091,
+    "tokenRef": "LLAMA_RELAY_TOKEN_VMIXER2O2",
+    "routes": {
+      "lan": "http://10.0.0.244:8091",
+      "tunnel": null
+    }
+  },
+  "models": [
+    {
+      "id": "DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M",
+      "tokensPerSecond": 15.8,
+      "loadSeconds": 12,
+      "contextTokens": 8192,
+      "capabilities": {
+        "coding": "low"
+      }
+    },
+    {
+      "id": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_K_M",
+      "tokensPerSecond": 16.8,
+      "loadSeconds": 31,
+      "contextTokens": 16384,
+      "capabilities": {
+        "coding": "low"
+      }
+    },
+    {
+      "id": "Ornith-1.5-35B-A3B-APEX-MTP-I-Compact",
+      "tokensPerSecond": 19.3,
+      "loadSeconds": 46,
+      "contextTokens": 16384,
+      "capabilities": {
+        "coding": "medium"
+      }
+    },
+    {
+      "id": "Qwen3.6-35B-A3B-UD-Q4_K_M",
+      "tokensPerSecond": 12.2,
+      "loadSeconds": 41,
+      "contextTokens": 65536,
+      "capabilities": {
+        "coding": "medium",
+        "tools": "medium",
+        "long-context": "medium"
+      }
+    },
+    {
+      "id": "gemma-4-26B-A4B-it-Q4_0",
+      "tokensPerSecond": 18.2,
+      "loadSeconds": 28,
+      "contextTokens": 32768,
+      "capabilities": {
+        "summarize": "medium"
+      }
+    },
+    {
+      "id": "gpt-oss-20b-MXFP4",
+      "tokensPerSecond": 25.3,
+      "loadSeconds": 23,
+      "contextTokens": 8192,
+      "capabilities": {
+        "coding": "low"
+      }
+    },
+    {
+      "id": "lfm25-8b-a1b-Q5_K_M",
+      "tokensPerSecond": 80.7,
+      "loadSeconds": 15.5,
+      "contextTokens": 16384,
+      "capabilities": {
+        "summarize": "low"
+      }
+    }
+  ],
+  "updated": "2026-09-28T23:40:45.436Z"
+}

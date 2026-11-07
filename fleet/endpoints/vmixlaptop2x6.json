@@ -1,0 +1,33 @@
+﻿{
+    "host":  "vmixlaptop2x6",
+    "at":  "2026-10-06T00:36:17.0593876Z",
+    "addresses":  [
+                      {
+                          "ip":  "172.29.144.1",
+                          "nic":  "vEthernet (WSL (Hyper-V firewall))"
+                      },
+                      {
+                          "ip":  "10.0.0.241",
+                          "nic":  "Wi-Fi"
+                      }
+                  ],
+    "ports":  {
+                  "llama":  8090,
+                  "fcc":  8082,
+                  "pm":  4480,
+                  "relay":  8091,
+                  "dsh":  3080
+              },
+    "listening":  {
+                      "llama":  false,
+                      "dsh":  true,
+                      "fcc":  true,
+                      "pm":  true,
+                      "relay":  false
+                  },
+    "startup":  {
+                    "fcc":  "already running",
+                    "pm":  "already running",
+                    "dsh":  "already running"
+                }
+}

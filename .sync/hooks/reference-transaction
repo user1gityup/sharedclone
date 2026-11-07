@@ -1,0 +1,11 @@
+#!/bin/sh
+# Refresh the non-authoritative ChatGPT mirror (github.com/user1gityup/sharedclone)
+# whenever the approved remote state moves: every push or fetch that updates
+# refs/remotes/origin/main. One way only: the mirror script reads the brain and
+# writes nothing but sharedclone. It runs detached so git never waits on it.
+# Log: .sync-state/mirror-sharedclone.log. Opt out with SHAREDCLONE_MIRROR_OFF=1.
+if [ "$1" != committed ]; then cat >/dev/null; exit 0; fi
+if grep ' refs/remotes/origin/main$' >/dev/null; then
+  [ -n "$SHAREDCLONE_MIRROR_OFF" ] || node "$(dirname "$0")/../mirror-sharedclone.mjs" --detach >/dev/null 2>&1 </dev/null
+fi
+exit 0

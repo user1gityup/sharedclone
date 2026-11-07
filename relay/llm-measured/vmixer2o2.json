@@ -1,0 +1,64 @@
+{
+  "source": "machines.md, vMixer GTX 1070 llama router 8090, measured 2026-09-17/18 by Claude Opus 5; Qwen3.6 re-measured 2026-09-28 by Claude Opus 5 at its live c=65536 preset (decode 12.2 tok/s at a short prompt; 7.1 tok/s at a 57.5k-token prompt). decode tok/s through the router, loadSeconds = cold load, contextTokens = largest context verified usable",
+  "maxLoaded": 1,
+  "models": {
+    "Qwen3.6-35B-A3B": {
+      "tokensPerSecond": 12.2,
+      "loadSeconds": 41,
+      "contextTokens": 65536,
+      "capabilities": {
+        "coding": "medium",
+        "tools": "medium",
+        "long-context": "medium"
+      }
+    },
+    "Ornith-1.5-35B-A3B": {
+      "tokensPerSecond": 19.3,
+      "loadSeconds": 46,
+      "contextTokens": 16384,
+      "capabilities": {
+        "coding": "medium"
+      }
+    },
+    "lfm25-8b-a1b": {
+      "tokensPerSecond": 80.7,
+      "loadSeconds": 15.5,
+      "contextTokens": 16384,
+      "capabilities": {
+        "summarize": "low"
+      }
+    },
+    "gpt-oss-20b": {
+      "tokensPerSecond": 25.3,
+      "loadSeconds": 23,
+      "contextTokens": 8192,
+      "capabilities": {
+        "coding": "low"
+      }
+    },
+    "gemma-4-26B-A4B": {
+      "tokensPerSecond": 18.2,
+      "loadSeconds": 28,
+      "contextTokens": 32768,
+      "capabilities": {
+        "summarize": "medium"
+      }
+    },
+    "NVIDIA-Nemotron-3.5-Lightning-30B-A3B": {
+      "tokensPerSecond": 16.8,
+      "loadSeconds": 31,
+      "contextTokens": 16384,
+      "capabilities": {
+        "coding": "low"
+      }
+    },
+    "DeepSeek-Coder-V2-Lite-Instruct": {
+      "tokensPerSecond": 15.8,
+      "loadSeconds": 12,
+      "contextTokens": 8192,
+      "capabilities": {
+        "coding": "low"
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+# Codex rule-drift snapshots: evidence for this machine's own sync, not notes.
+.rules-drift/
+
+# Sync bookkeeping: last result and the session lock.
+.sync-state/
+
+# Logs the one-click scripts write beside themselves.
+.sync/*-LOG.txt

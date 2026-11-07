@@ -1,0 +1,18 @@
+poll1 26 [] 0 non-applied
+poll2 (unchanged feed) 0
+rollup {"project_id":"P-244afbc3","total":22,"known":13,"unknown":9,"verified":13,"failed":0,"stale":0,"by_stage":{"verified_pass":13},"percent_of_all":59,"verified_pct":59}
+T-89e0f35d 00 — FREE/LOCAL model prefli done        verified_pass 100% anim=true
+T-f8213bde 01 — WS-2a verify grants, ap done        verified_pass 100% anim=true
+T-4a203644 02 — WS-2b verify lifecycle, done        verified_pass 100% anim=true
+T-bd19a400 03 — WS-2c verify Shared Bra in_progress verified_pass 100% anim=true
+T-c6a85f89 04 — WS-2d verify startup/Ga done        verified_pass 100% anim=true
+T-20fb4575 05 — Ecom I-1 Billboard read done        verified_pass 100% anim=true
+T-97fb88d2 06 — Ecom I-2 Solar read-onl done        verified_pass 100% anim=true
+T-1ea7e2be 07 — Ecom I-3 users/commerce done        verified_pass 100% anim=true
+T-ca38645f 08 — LinkedIn Q1–Q35 authent done        verified_pass 100% anim=true
+T-a0fd80a2 09 — LinkedIn canonical deci done        verified_pass 100% anim=true
+T-e53a7546 10 — LinkedIn access-mode de done        verified_pass 100% anim=true
+T-5cc7b29e 11 — LinkedIn workflow prere done        verified_pass 100% anim=true
+T-7a06614d 12 — LinkedIn review report  done        verified_pass 100% anim=true
+T-6636e019 13 — Final 12-task evidence  done        UNKNOWN
+UI (temp :4493, DOM check): view=progress lanes=22 verified-animations=13 gates=[Preflight gate, Tasks, Final report gate] meters=[13 of 22 | 59% | 13 known/9 unknown]; screenshot pane too small, DOM read used

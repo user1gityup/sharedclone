@@ -1,0 +1,505 @@
+#!/usr/bin/env node
+/**
+ * Llama relay: a machine with a GPU serves its local llama.cpp router to the
+ * other machines on the network, one token per client machine.
+ *
+ * The llama router (llama-control, 127.0.0.1:8090) stays on loopback. This
+ * relay listens on the LAN, checks a per-machine Bearer token against the
+ * SHA-256 kept in ~/.dsh/llama-relay/tokens.json, strips the caller's
+ * Authorization, and streams the request to the router. Only the model list
+ * and the three inference paths pass; the router's load/unload and admin
+ * paths do not.
+ *
+ * A serving host publishes one target record, relay/llm-targets/<host>.json,
+ * in the shape tool-council's `router/local-targets.ts` reads, so DSH on any
+ * machine can resolve a local seat to whichever host serves the model. A
+ * machine with no GPU publishes nothing.
+ *
+ * Tokens are per serving host and per client: relay/llama-tokens/<server>/
+ * <client>.enc, sealed with the brain key, opened by `connect` into DSH's
+ * .credentials.yaml under LLAMA_RELAY_TOKEN_<SERVER>. They never enter the
+ * shared credential blob (see LOCAL_ONLY_REF_PREFIXES in brain-sync.mjs).
+ *
+ * Serving host:
+ *   serve [--port 8091] [--upstream http://127.0.0.1:8090] [--host 0.0.0.0]
+ *   setup <client...>   store config, issue missing tokens, publish
+ *   issue <client> | revoke <client> | list | status | publish [--port 8091]
+ * Client machine:
+ *   connect      write a token ref for every published host that issued one
+ *   disconnect   remove those refs
+ *
+ * Token values never reach stdout. Output is JSON, except serve's request log.
+ */
+
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { createServer, request as httpRequest } from 'node:http'
+import { homedir, hostname, networkInterfaces } from 'node:os'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { findBrainKey, openCredentials, sealCredentials, writeCredentialRefs } from './brain-sync.mjs'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+export const DEFAULT_PORT = 8091
+export const DEFAULT_UPSTREAM = 'http://127.0.0.1:8090'
+export const TOKEN_REF_PREFIX = 'LLAMA_RELAY_TOKEN_'
+const MAX_BODY_BYTES = 32 * 1024 * 1024
+const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1', 'localhost'])
+const VIRTUAL_ADAPTER = /vEthernet|WSL|VirtualBox|VMware|Hyper-V|Loopback|Docker/i
+/** The only paths the relay forwards, by method. */
+export const ALLOWED = new Map([
+  ['GET /v1/models', true],
+  ['POST /v1/chat/completions', true],
+  ['POST /v1/completions', true],
+  ['POST /v1/embeddings', true],
+])
+const HOP_HEADERS = new Set(['host', 'authorization', 'connection', 'keep-alive', 'proxy-authorization', 'proxy-connection', 'te', 'trailer', 'upgrade', 'transfer-encoding'])
+
+const stamp = () => new Date().toISOString().replace(/[:.]/g, '-')
+
+export function tokenRefFor(server) {
+  return `${TOKEN_REF_PREFIX}${safeHost(server).replace(/[^a-z0-9]/g, '_').toUpperCase()}`
+}
+
+function paths(options = {}) {
+  const dshHome = options.dshHome ?? process.env.DSH_HOME ?? join(homedir(), '.dsh')
+  const brain = options.brain ?? dirname(HERE)
+  const relayDir = join(dshHome, 'llama-relay')
+  return {
+    dshHome,
+    brain,
+    config: join(relayDir, 'config.json'),
+    lanConfig: join(dshHome, 'llama-lan.json'),
+    tokens: join(relayDir, 'tokens.json'),
+    targetsDir: join(brain, 'relay', 'llm-targets'),
+    measuredDir: join(brain, 'relay', 'llm-measured'),
+    tokensDir: join(brain, 'relay', 'llama-tokens'),
+    machine: safeHost(options.machine ?? hostname()),
+  }
+}
+
+function readJson(path, fallback) {
+  try { return JSON.parse(readFileSync(path, 'utf8')) } catch { return fallback }
+}
+
+/** Write then rename, so the serving relay's token reload never sees half a file. */
+function writeJson(path, value, mode) {
+  mkdirSync(dirname(path), { recursive: true })
+  const temp = `${path}.tmp-${process.pid}`
+  writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`, mode === undefined ? undefined : { mode })
+  renameSync(temp, path)
+}
+
+function brainKey(p, options) {
+  const found = findBrainKey({ dir: p.brain, claudeHome: options.claudeHome })
+  if (found === null) throw new Error('no brain key on this machine (~/.claude/brain-secrets.key)')
+  return found.key
+}
+
+function safeHost(host) {
+  const name = String(host ?? '').trim().toLowerCase()
+  if (!/^[a-z0-9][a-z0-9.-]{0,62}$/.test(name)) throw new Error(`not a host name: ${host}`)
+  return name
+}
+
+/** This machine's LAN and Tailscale IPv4 addresses. */
+export function addresses(interfaces = networkInterfaces()) {
+  let lan = null
+  let tunnel = null
+  for (const [name, entries] of Object.entries(interfaces)) {
+    for (const entry of entries ?? []) {
+      if (entry.family !== 'IPv4' && entry.family !== 4) continue
+      if (entry.internal) continue
+      const [a, b] = entry.address.split('.').map(Number)
+      if (a === 100 && b >= 64 && b <= 127) { tunnel ??= entry.address; continue }
+      const isPrivate = a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)
+      if (isPrivate && !VIRTUAL_ADAPTER.test(name)) lan ??= entry.address
+    }
+  }
+  return { lan, tunnel }
+}
+
+function readConfig(p, options = {}) {
+  const stored = readJson(p.config, {})
+  const port = Number(options.port ?? stored.port ?? DEFAULT_PORT)
+  if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error(`bad port: ${options.port ?? stored.port}`)
+  return {
+    port,
+    upstream: String(options.upstream ?? stored.upstream ?? DEFAULT_UPSTREAM).replace(/\/+$/, ''),
+    host: String(options.host ?? stored.host ?? '0.0.0.0'),
+  }
+}
+
+/**
+ * The API key the upstream llama router requires, or null.
+ * Read from ~/.dsh/llama-lan.json (option A's config) so the router and the relay
+ * never hold two copies of the key. Re-read per call, so rotating the key file is
+ * picked up without restarting the relay.
+ */
+export function upstreamKey(p) {
+  let config
+  try { config = JSON.parse(readFileSync(p.lanConfig, 'utf8')) } catch { return null }
+  if (config?.enabled !== true || typeof config.apiKeyFile !== 'string') return null
+  let text
+  try { text = readFileSync(config.apiKeyFile, 'utf8') } catch { return null }
+  const key = text.split(/\r?\n/).map(line => line.trim()).find(line => line !== '' && !line.startsWith('#'))
+  return key === undefined ? null : key
+}
+
+const upstreamHeaders = p => {
+  const key = upstreamKey(p)
+  return key === null ? {} : { authorization: `Bearer ${key}` }
+}
+
+const liveHashes = tokens => Object.entries(tokens.machines ?? {}).filter(([, entry]) => !entry.revoked && typeof entry.sha256 === 'string')
+
+// ---------------------------------------------------------------------------
+// Serving host: tokens and the published record
+
+export function issue(client, options = {}) {
+  const p = paths(options)
+  const name = safeHost(client)
+  if (name === p.machine) throw new Error(`${name} is this machine; it reaches its own router on loopback without a token`)
+  const token = randomBytes(32).toString('base64url')
+  const tokens = readJson(p.tokens, { machines: {} })
+  tokens.machines ??= {}
+  const replacedPrevious = tokens.machines[name] !== undefined
+  tokens.machines[name] = { sha256: createHash('sha256').update(token, 'utf8').digest('hex'), revoked: false, issued: new Date().toISOString() }
+  const ref = tokenRefFor(p.machine)
+  const sealedPath = join(p.tokensDir, p.machine, `${name}.enc`)
+  mkdirSync(dirname(sealedPath), { recursive: true })
+  writeFileSync(sealedPath, sealCredentials(brainKey(p, options), { version: 1, refs: { [ref]: token } }))
+  writeJson(p.tokens, tokens, 0o600)
+  return { issued: name, server: p.machine, tokenRef: ref, sealed: `relay/llama-tokens/${p.machine}/${name}.enc`, replacedPrevious }
+}
+
+export function revoke(client, options = {}) {
+  const p = paths(options)
+  const name = safeHost(client)
+  const tokens = readJson(p.tokens, { machines: {} })
+  const entry = tokens.machines?.[name]
+  rmSync(join(p.tokensDir, p.machine, `${name}.enc`), { force: true })
+  if (entry === undefined) return { revoked: name, known: false }
+  entry.revoked = true
+  entry.revokedAt = new Date().toISOString()
+  writeJson(p.tokens, tokens, 0o600)
+  return { revoked: name, known: true }
+}
+
+export function list(options = {}) {
+  const p = paths(options)
+  return Object.entries(readJson(p.tokens, { machines: {} }).machines ?? {}).map(([client, entry]) => ({
+    client, revoked: Boolean(entry.revoked), issued: entry.issued ?? null,
+    sealed: existsSync(join(p.tokensDir, p.machine, `${client}.enc`)),
+  }))
+}
+
+/** Measured figures for a model id: exact key first, then the longest key it starts with. */
+function measuredFor(id, measured) {
+  if (measured[id] !== undefined) return measured[id]
+  const lower = id.toLowerCase()
+  const key = Object.keys(measured).filter(k => lower.startsWith(k.toLowerCase())).sort((a, b) => b.length - a.length)[0]
+  return key === undefined ? {} : measured[key]
+}
+
+/**
+ * Write relay/llm-targets/<host>.json from the router's live model list and
+ * the host's measured figures (relay/llm-measured/<host>.json).
+ */
+export async function publish(options = {}) {
+  const p = paths(options)
+  const config = readConfig(p, options)
+  let ids = options.modelIds
+  if (ids === undefined) {
+    const response = await fetch(`${config.upstream}/v1/models`, { headers: upstreamHeaders(p), signal: AbortSignal.timeout(5000) })
+    if (!response.ok) throw new Error(`router ${config.upstream}/v1/models answered HTTP ${response.status}`)
+    ids = ((await response.json()).data ?? []).map(model => model.id).filter(id => typeof id === 'string')
+  }
+  if (ids.length === 0) throw new Error(`router ${config.upstream} lists no models; nothing to publish`)
+  const measuredFile = readJson(join(p.measuredDir, `${p.machine}.json`), {})
+  const measured = measuredFile.models ?? {}
+  const { lan, tunnel } = options.addresses ?? addresses()
+  const record = {
+    host: p.machine,
+    upstream: config.upstream,
+    maxLoaded: measuredFile.maxLoaded ?? 1,
+    relay: {
+      port: config.port,
+      tokenRef: tokenRefFor(p.machine),
+      routes: {
+        lan: lan === null ? null : `http://${lan}:${config.port}`,
+        tunnel: tunnel === null ? null : `http://${tunnel}:${config.port}`,
+      },
+    },
+    models: ids.map(id => ({ id, ...measuredFor(id, measured) })),
+    updated: new Date().toISOString(),
+  }
+  writeJson(join(p.targetsDir, `${p.machine}.json`), record)
+  return record
+}
+
+/**
+ * One-click setup on a serving host: store the port and upstream, issue a token
+ * to each named client that holds no live sealed one, and publish the record.
+ */
+export async function setup(clients, options = {}) {
+  const p = paths(options)
+  const config = readConfig(p, options)
+  writeJson(p.config, config)
+  const held = new Map(list(options).map(entry => [entry.client, entry]))
+  const issued = []
+  for (const client of clients) {
+    const entry = held.get(safeHost(client))
+    if (entry !== undefined && !entry.revoked && entry.sealed) continue
+    issued.push(issue(client, options).issued)
+  }
+  const record = await publish(options)
+  return { config, issued, kept: clients.filter(client => !issued.includes(safeHost(client))), published: `relay/llm-targets/${p.machine}.json`, models: record.models.map(model => model.id), routes: record.relay.routes }
+}
+
+export function unpublish(options = {}) {
+  const p = paths(options)
+  const path = join(p.targetsDir, `${p.machine}.json`)
+  const existed = existsSync(path)
+  rmSync(path, { force: true })
+  return { unpublished: p.machine, existed }
+}
+
+export async function status(options = {}) {
+  const p = paths(options)
+  const config = readConfig(p, options)
+  const probe = async (url, headers = {}) => {
+    try {
+      const response = await fetch(url, { headers, signal: AbortSignal.timeout(3000) })
+      return { status: response.status, ...(response.headers.get('x-relay-inflight') === null ? {} : { inflight: Number(response.headers.get('x-relay-inflight')) }) }
+    } catch (error) {
+      return { error: error.cause?.code ?? error.message }
+    }
+  }
+  return {
+    machine: p.machine,
+    config,
+    tokens: list(options),
+    published: readJson(join(p.targetsDir, `${p.machine}.json`), null),
+    router: await probe(`${config.upstream}/v1/models`, upstreamHeaders(p)),
+    relay: await probe(`http://127.0.0.1:${config.port}/health`),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Serving host: the relay itself
+
+/** Map a presented Bearer token to the client it was issued to, or null. */
+export function clientFor(header, tokens) {
+  const match = /^Bearer\s+(\S+)\s*$/i.exec(header ?? '')
+  if (match === null) return null
+  const presented = createHash('sha256').update(match[1], 'utf8').digest()
+  let found = null
+  for (const [client, entry] of liveHashes(tokens)) {
+    const held = Buffer.from(entry.sha256, 'hex')
+    if (held.length === presented.length && timingSafeEqual(held, presented)) found = client
+  }
+  return found
+}
+
+/**
+ * Start the relay. Resolves with the listening server.
+ * Refuses a non-loopback bind while no live token exists, so an empty token
+ * file never leaves the router reachable from the network.
+ */
+export function serve(options = {}) {
+  const p = paths(options)
+  const config = readConfig(p, options)
+  const log = options.log ?? (line => console.log(line))
+  const upstream = new URL(config.upstream)
+  let cache = { mtime: -1, tokens: { machines: {} } }
+  const tokens = () => {
+    let mtime = -2
+    try { mtime = statSync(p.tokens).mtimeMs } catch {}
+    if (mtime !== cache.mtime) cache = { mtime, tokens: readJson(p.tokens, { machines: {} }) }
+    return cache.tokens
+  }
+  if (!LOOPBACK.has(config.host) && liveHashes(tokens()).length === 0) {
+    return Promise.reject(new Error(`no live tokens in ${p.tokens}: refusing to bind ${config.host}; issue one first`))
+  }
+  let inflight = 0
+  const server = createServer((req, res) => {
+    const started = Date.now()
+    const path = (req.url ?? '/').split('?')[0]
+    const remote = req.socket.remoteAddress ?? ''
+    let client = '-'
+    const finish = (code, body) => {
+      if (!res.headersSent) res.writeHead(code, { 'content-type': 'application/json', 'x-relay-inflight': String(inflight) })
+      res.end(JSON.stringify(body))
+    }
+    res.on('close', () => log(`${new Date().toISOString()} ${client}@${remote} ${req.method} ${path} ${res.statusCode} ${Date.now() - started}ms`))
+
+    if (req.method === 'GET' && path === '/health') {
+      if (!LOOPBACK.has(remote) && clientFor(req.headers.authorization, tokens()) === null) return finish(401, { error: 'unauthorized' })
+      return finish(200, { status: 'ok', inflight, upstream: config.upstream })
+    }
+    client = clientFor(req.headers.authorization, tokens()) ?? '-'
+    if (client === '-') return finish(401, { error: 'unauthorized' })
+    if (!ALLOWED.has(`${req.method} ${path}`)) return finish(404, { error: `${req.method} ${path} is not relayed` })
+    const declared = Number(req.headers['content-length'] ?? 0)
+    if (declared > MAX_BODY_BYTES) return finish(413, { error: 'request body too large' })
+
+    const headers = {}
+    for (const [name, value] of Object.entries(req.headers)) if (!HOP_HEADERS.has(name)) headers[name] = value
+    headers.host = upstream.host
+    const routerKey = upstreamKey(p)
+    if (routerKey !== null) headers.authorization = `Bearer ${routerKey}`
+    const counted = req.method === 'POST'
+    if (counted) inflight += 1
+    let released = false
+    const release = () => { if (counted && !released) { released = true; inflight -= 1 } }
+
+    const outbound = httpRequest({ hostname: upstream.hostname, port: upstream.port, path: req.url, method: req.method, headers }, (upstreamRes) => {
+      const out = {}
+      for (const [name, value] of Object.entries(upstreamRes.headers)) if (!HOP_HEADERS.has(name)) out[name] = value
+      out['x-relay-inflight'] = String(counted ? inflight - 1 : inflight)
+      res.writeHead(upstreamRes.statusCode ?? 502, out)
+      upstreamRes.pipe(res)
+      upstreamRes.on('end', release)
+      upstreamRes.on('error', release)
+    })
+    outbound.on('error', (error) => {
+      release()
+      finish(502, { error: `router unreachable: ${error.code ?? error.message}` })
+    })
+    // A client that hangs up stops the generation instead of leaving the GPU busy.
+    res.on('close', () => {
+      release()
+      if (!res.writableFinished) outbound.destroy()
+    })
+    let received = 0
+    req.on('data', (chunk) => {
+      received += chunk.length
+      if (received > MAX_BODY_BYTES) {
+        outbound.destroy()
+        finish(413, { error: 'request body too large' })
+        req.destroy()
+      }
+    })
+    req.pipe(outbound)
+  })
+  // Generation on one GPU can run for minutes, cold load included.
+  server.requestTimeout = 0
+  server.timeout = 0
+  return new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(config.port, config.host, () => {
+      log(`llama-relay ${p.machine}: ${config.host}:${config.port} -> ${config.upstream}, ${liveHashes(tokens()).length} live token(s)`)
+      resolve(server)
+    })
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Client machine
+
+function editCredentials(p, apply) {
+  const credsPath = join(p.dshHome, '.credentials.yaml')
+  const text = existsSync(credsPath) ? readFileSync(credsPath, 'utf8') : ''
+  const next = apply(text)
+  if (next === text) return null
+  if (text !== '') writeFileSync(`${credsPath}.pre-llama-relay-${stamp()}`, text, { mode: 0o600 })
+  mkdirSync(dirname(credsPath), { recursive: true })
+  writeFileSync(credsPath, next, { mode: 0o600 })
+  return credsPath
+}
+
+/** Open every token a published serving host sealed for this machine. */
+export function connect(options = {}) {
+  const p = paths(options)
+  let servers = []
+  try { servers = readdirSync(p.targetsDir).filter(name => name.endsWith('.json')).map(name => name.slice(0, -5)) } catch {}
+  const opened = new Map()
+  const results = []
+  let key = null
+  for (const server of servers.sort()) {
+    if (server === p.machine) { results.push({ server, route: 'loopback' }); continue }
+    const sealedPath = join(p.tokensDir, server, `${p.machine}.enc`)
+    if (!existsSync(sealedPath)) { results.push({ server, error: `no token issued; ${server} runs: llama-relay.mjs issue ${p.machine}` }); continue }
+    key ??= brainKey(p, options)
+    const ref = tokenRefFor(server)
+    const token = openCredentials(key, readFileSync(sealedPath, 'utf8'))?.refs?.[ref]
+    if (typeof token !== 'string' || token === '') { results.push({ server, error: `relay/llama-tokens/${server}/${p.machine}.enc does not open with this machine's brain key` }); continue }
+    opened.set(ref, token)
+    results.push({ server, tokenRef: ref })
+  }
+  if (servers.length === 0) throw new Error('no serving host has published a target (relay/llm-targets/ is empty)')
+  const written = opened.size === 0 ? null : editCredentials(p, text => writeCredentialRefs(text, opened))
+  return { machine: p.machine, servers: results, credentials: written }
+}
+
+export function disconnect(options = {}) {
+  const p = paths(options)
+  const removed = []
+  const written = editCredentials(p, (text) => {
+    const eol = text.includes('\r\n') ? '\r\n' : '\n'
+    return text.split(/\r?\n/).filter((line) => {
+      const match = /^\s+([A-Za-z0-9_.-]+):/.exec(line)
+      if (match !== null && match[1].startsWith(TOKEN_REF_PREFIX)) { removed.push(match[1]); return false }
+      return true
+    }).join(eol)
+  })
+  return { disconnected: p.machine, removed, credentials: written }
+}
+
+// ---------------------------------------------------------------------------
+
+function parseArgs(argv) {
+  const positional = []
+  const flags = {}
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i]
+    if (arg.startsWith('--')) {
+      const name = arg.slice(2)
+      const next = argv[i + 1]
+      if (next === undefined || next.startsWith('--')) flags[name] = true
+      else { flags[name] = next; i += 1 }
+    } else positional.push(arg)
+  }
+  return { positional, flags }
+}
+
+const isMain = () => {
+  if (!process.argv[1]) return false
+  const norm = path => path.replace(/\\/g, '/').toLowerCase()
+  return norm(fileURLToPath(import.meta.url)) === norm(process.argv[1])
+}
+
+if (isMain()) {
+  const { positional: [cmd, ...rest], flags } = parseArgs(process.argv.slice(2))
+  const options = {
+    ...(flags['dsh-home'] ? { dshHome: flags['dsh-home'] } : {}),
+    ...(flags.port ? { port: flags.port } : {}),
+    ...(flags.upstream ? { upstream: flags.upstream } : {}),
+    ...(flags.host ? { host: flags.host } : {}),
+  }
+  try {
+    if (cmd === 'serve') {
+      await serve(options)
+    } else {
+      let result
+      if (cmd === 'issue') result = issue(rest[0], options)
+      else if (cmd === 'revoke') result = revoke(rest[0], options)
+      else if (cmd === 'list') result = list(options)
+      else if (cmd === 'status') result = await status(options)
+      else if (cmd === 'publish') result = await publish(options)
+      else if (cmd === 'unpublish') result = unpublish(options)
+      else if (cmd === 'setup') result = await setup(rest, options)
+      else if (cmd === 'connect') result = connect(options)
+      else if (cmd === 'disconnect') result = disconnect(options)
+      else {
+        console.error('usage: llama-relay.mjs serve [--port 8091] [--upstream url] [--host 0.0.0.0] | issue <client> | revoke <client> | list | status | publish | unpublish | setup <client...> | connect | disconnect')
+        process.exit(2)
+      }
+      console.log(JSON.stringify(result, null, 2))
+    }
+  } catch (error) {
+    console.error(`llama-relay: ${error.message}`)
+    process.exit(1)
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "receiver": "ndi2@vmixlaptop2x6",
+  "sessions": {
+    "364f90f3-59d5-4125-8eaf-d8e5b863b8f3": {
+      "state": "OFFERED",
+      "attempts": 1,
+      "at": "2026-09-28T00:43:17.055Z",
+      "chip": {
+        "title": "Show Claude Code usage panel",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-001, source session 364f90f3-59d5-4125-8eaf-d8e5b863b8f3. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-001--364f90f3-59d5-4125-8eaf-d8e5b863b8f3.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip"
+    },
+    "3c7e83fe-5f33-4edf-9893-1cb1377f9876": {
+      "state": "RESTORED",
+      "attempts": 1,
+      "at": "2026-09-28T00:43:17.055Z",
+      "chip": {
+        "title": "Continue vmixer DSH check-in",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-001, source session 3c7e83fe-5f33-4edf-9893-1cb1377f9876. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-001--3c7e83fe-5f33-4edf-9893-1cb1377f9876.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode"
+      },
+      "detail": "spawn_task chip",
+      "receiver_session_id": "919a022e-f8f3-4c6f-89f2-92ec1d8c7814",
+      "confirmed_at": "2026-09-29T00:24:02.851Z"
+    },
+    "fc9cd05e-a738-4eee-a603-4e7d7ae8901f": {
+      "state": "RESTORED",
+      "attempts": 1,
+      "at": "2026-09-28T00:43:17.055Z",
+      "chip": {
+        "title": "Continue AWS seat quota build",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260928-vmixlaptop2x6-001, source session fc9cd05e-a738-4eee-a603-4e7d7ae8901f. Read C:\\Users\\ndi2\\.claude\\quota-guard\\resume-prompts\\H-20260928-vmixlaptop2x6-001--fc9cd05e-a738-4eee-a603-4e7d7ae8901f.md and continue the work it describes.",
+        "cwd": "C:\\Users\\ndi2\\Documents\\claudecode\\deepseek-harness"
+      },
+      "detail": "spawn_task chip",
+      "receiver_session_id": "e2fc9ec3-5d38-483b-9ae6-475c76d6978c",
+      "confirmed_at": "2026-09-28T00:45:15.377Z"
+    }
+  }
+}

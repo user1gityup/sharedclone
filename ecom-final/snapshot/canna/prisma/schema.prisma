@@ -1,0 +1,353 @@
+// canna — Prisma schema (MySQL)
+//
+// Money is stored as integer minor units (cents) per src/lib/units.ts.
+// Weight is stored as integer milligrams for precision.
+// Session identity (`sub`) is minted by the users service; this repo only stores
+// a foreign reference to it and its own role/permission assignment.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  RETAIL_CUSTOMER
+  WHOLESALE_BUYER
+  VENDOR
+  ADMIN
+}
+
+enum OrderState {
+  DRAFT
+  SUBMITTED
+  COMPLIANCE_PENDING
+  COMPLIANCE_FAILED
+  AWAITING_PAYMENT
+  PAID
+  FULFILLING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  DUTCHIE_PAY
+  TREEZ_PAY
+  CRYPTO
+  ACH
+  TERMS
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  SETTLED
+  FAILED
+  REFUNDED
+}
+
+enum ShipmentStatus {
+  PREPARING
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+}
+
+enum ComplianceSystem {
+  METRC
+}
+
+enum ComplianceCheckKind {
+  PRE_RELEASE
+  INVENTORY_SYNC
+  TRANSFER
+  SALE_REPORT
+}
+
+enum LicenceVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  EXPIRED
+  REVOKED
+}
+
+enum VendorApplicationStatus {
+  SUBMITTED
+  LICENCE_CHECK_PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DriverKind {
+  DUTCHIE_POS
+  TREEZ_POS
+  DISTRU_ERP
+  LEAFLINK_ERP
+  METRC_COMPLIANCE
+  DUTCHIE_PAY
+  TREEZ_PAY
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
+model User {
+  id        String   @id // the users service `sub`
+  email     String   @unique
+  role      Role     @default(RETAIL_CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart             Cart?
+  orders           Order[]
+  notifications    Notification[]
+  pushSubscriptions PushSubscription[]
+}
+
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String
+  state     String   @default("CA")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products                   Product[]
+  integrationSettings        IntegrationSetting[]
+  integrationCredentials     VendorIntegrationCredential[]
+  licences                   CannabisLicense[]
+  orders                     Order[]
+  application                VendorApplication?
+}
+
+model CannabisLicense {
+  id                 String                  @id @default(cuid())
+  vendorId           String
+  licenceNumber      String
+  issuingState       String // two-letter uppercase, e.g. "CA"
+  licenceType        String
+  issuedAt           DateTime?
+  expiresAt          DateTime
+  verificationStatus LicenceVerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([licenceNumber, issuingState])
+}
+
+model VendorApplication {
+  id                 String                  @id @default(cuid())
+  vendorId           String                  @unique
+  stateLicenceNumber String
+  issuingState       String                  @default("CA")
+  licenceExpiry      DateTime
+  status             VendorApplicationStatus @default(SUBMITTED)
+  reviewedAt         DateTime?
+  reviewerNote       String?                 @db.Text
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+}
+
+model VendorIntegrationCredential {
+  id         String     @id @default(cuid())
+  vendorId   String
+  driver     DriverKind
+  credential String     @db.Text // encrypted by the IntegrationSetting vault (AES-256-GCM)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, driver])
+}
+
+model IntegrationSetting {
+  id        String   @id @default(cuid())
+  vendorId  String
+  key       String
+  value     String   @db.Text // encrypted at rest (AES-256-GCM)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, key])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  vendorId    String
+  name        String
+  description String?  @db.Text
+  category    String
+  thcPercent  Decimal? @db.Decimal(5, 2)
+  cbdPercent  Decimal? @db.Decimal(5, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vendor   Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  variants Variant[]
+}
+
+model Variant {
+  id               String  @id @default(cuid())
+  productId        String
+  sku              String  @unique
+  name             String
+  weightMilligrams Int
+  unit             String  @default("g")
+  priceCents       BigInt
+  active           Boolean @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  product      Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventory    InventoryItem?
+  orderLines   OrderLine[]
+  cartLines    CartLine[]
+}
+
+model InventoryItem {
+  id           String   @id @default(cuid())
+  variantId    String   @unique
+  quantity     Int
+  reserved     Int      @default(0)
+  lastSyncedAt DateTime @default(now())
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lines CartLine[]
+}
+
+model CartLine {
+  id        String   @id @default(cuid())
+  cartId    String
+  variantId String
+  quantity  Int
+  createdAt DateTime @default(now())
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant Variant @relation(fields: [variantId], references: [id])
+}
+
+model Order {
+  id          String     @id @default(cuid())
+  userId      String
+  vendorId    String?
+  state       OrderState @default(DRAFT)
+  isWholesale Boolean    @default(false)
+  totalCents  BigInt     @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user           User             @relation(fields: [userId], references: [id])
+  vendor         Vendor?          @relation(fields: [vendorId], references: [id])
+  lines          OrderLine[]
+  shipments      Shipment[]
+  payments       PaymentRequest[]
+  complianceRecords ComplianceRecord[]
+}
+
+model OrderLine {
+  id          String @id @default(cuid())
+  orderId     String
+  variantId   String
+  quantity    Int
+  unitPriceCents BigInt
+  lineTotalCents BigInt
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant Variant @relation(fields: [variantId], references: [id])
+}
+
+model Shipment {
+  id        String        @id @default(cuid())
+  orderId   String
+  carrier   String?
+  tracking  String?
+  status    ShipmentStatus @default(PREPARING)
+  shippedAt DateTime?
+  createdAt DateTime      @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model PaymentRequest {
+  id             String        @id @default(cuid())
+  orderId        String
+  method         PaymentMethod
+  amountCents    BigInt
+  status         PaymentStatus @default(PENDING)
+  providerRef    String?
+  settledAt      DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model ComplianceRecord {
+  id            String           @id @default(cuid())
+  orderId       String
+  system        ComplianceSystem
+  kind          ComplianceCheckKind
+  requestBody   Json?
+  responseBody  Json?
+  passed        Boolean
+  failureReason String?          @db.Text
+  checkedAt     DateTime         @default(now())
+  retryCount    Int              @default(0)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String             @db.Text
+  status    NotificationStatus @default(UNREAD)
+  createdAt DateTime           @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationRule {
+  id      String @id @default(cuid())
+  event   String
+  channel String
+  enabled Boolean @default(true)
+
+  @@unique([event, channel])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,36 @@
+{
+    "host":  "VMIXER2O2",
+    "at":  "2026-09-27T09:02:48Z",
+    "ok":  true,
+    "codeDir":  "C:\\Users\\vMixer\\Documents\\claudecode",
+    "remotesDir":  "C:\\Users\\vMixer\\.dsh\\remotes",
+    "repos":  [
+                  {
+                      "repo":  "users",
+                      "status":  "cloned",
+                      "head":  "039842b0408200c225781bfa325af62b803292df",
+                      "aheadBehind":  "0 0",
+                      "porcelain":  0,
+                      "origin":  "C:\\Users\\vMixer\\.dsh\\remotes\\users.git",
+                      "detail":  ""
+                  },
+                  {
+                      "repo":  "canna",
+                      "status":  "cloned",
+                      "head":  "e54c91267cd9814bc95347f2310f4cc7aceec62a",
+                      "aheadBehind":  "0 0",
+                      "porcelain":  0,
+                      "origin":  "C:\\Users\\vMixer\\.dsh\\remotes\\canna.git",
+                      "detail":  ""
+                  },
+                  {
+                      "repo":  "commerce",
+                      "status":  "cloned",
+                      "head":  "34701f74cd8db39376dbd610727cc125dc0eeda1",
+                      "aheadBehind":  "0 0",
+                      "porcelain":  0,
+                      "origin":  "C:\\Users\\vMixer\\.dsh\\remotes\\commerce.git",
+                      "detail":  ""
+                  }
+              ]
+}

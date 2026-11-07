@@ -1,0 +1,43 @@
+{
+  "handoff_id": "H-20260928-vmixer2o2-001",
+  "source_user": "vMixer",
+  "source_machine": "vmixer2o2",
+  "source_session_id": "367e6c89-5409-4e1f-82a9-d33c7db0bd55",
+  "provider": "claude-code",
+  "model": null,
+  "project": "deepseek-harness",
+  "repository": "C:/Users/vMixer/Documents/claudecode/deepseek-harness",
+  "working_directory": "C:\\Users\\vMixer\\Documents\\claudecode\\deepseek-harness\\packages\\council\\tool-council",
+  "branch": "feat/heterogeneous-teammates",
+  "git_head": "5fc8371944d0c8f16a02fda1d283236f2ba6b5ad",
+  "uncommitted_changes": [
+    "M packages/council/tool-council/src/index.ts",
+    "?? .agents/notes/implemented/bug-fix/2026-09-21-antigravity-seat-view-file-stall.md",
+    "?? packages/council/tool-council/src/openclaw-transport.ts",
+    "?? packages/council/tool-council/src/optimize.ts",
+    "?? packages/council/tool-council/tests/settings-api-key-env.spec.ts"
+  ],
+  "task_objective": null,
+  "latest_request": null,
+  "current_status": null,
+  "completed_work": [],
+  "pending_work": [],
+  "next_recommended_action": "Verify the last status against the repository, then continue the objective.",
+  "important_decisions": [],
+  "relevant_files": [],
+  "running_tasks": [],
+  "dependencies": [],
+  "errors_blockers": [],
+  "last_meaningful_session_state": "2026-09-28T02:36:25.723Z",
+  "transcript_records": 9,
+  "settings": {
+    "title": null,
+    "model": null,
+    "effort": null,
+    "permission_mode": null,
+    "desktop_session_id": null,
+    "desktop_account": null
+  },
+  "created_at": "2026-09-28T02:57:08.094Z",
+  "archive": "quota-handoffs/H-20260928-vmixer2o2-001/archive/367e6c89-5409-4e1f-82a9-d33c7db0bd55.jsonl.gz"
+}

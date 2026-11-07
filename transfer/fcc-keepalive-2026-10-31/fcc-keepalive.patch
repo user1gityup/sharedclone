@@ -1,0 +1,390 @@
+diff --git a/src/free_claude_code/api/response_streams.py b/src/free_claude_code/api/response_streams.py
+index 136b469..0c2b0f7 100644
+--- a/src/free_claude_code/api/response_streams.py
++++ b/src/free_claude_code/api/response_streams.py
+@@ -7,7 +7,7 @@ from collections.abc import (
+     Callable,
+     Mapping,
+ )
+-from typing import Literal
++from typing import Literal, cast
+ 
+ from fastapi.responses import JSONResponse, Response, StreamingResponse
+ from starlette.background import BackgroundTask
+@@ -32,6 +32,12 @@ from free_claude_code.core.trace import close_stream_input, trace_event
+ 
+ TERMINAL_EXECUTION_ERROR_HEADERS = {"x-should-retry": "false"}
+ 
++# Providers that buffer whole tool calls (NIM MiniMax native markup) can stay
++# silent for minutes while the model writes a large file. Anthropic clients
++# abort idle streams, so emit the Messages API keepalive frame while waiting.
++ANTHROPIC_PING_FRAME = 'event: ping\ndata: {"type": "ping"}\n\n'
++STREAM_KEEPALIVE_SECONDS = 10.0
++
+ PreStartErrorResponse = Callable[[BaseException], Response]
+ TerminalFrameEmitter = Callable[[str, str, BaseException], str]
+ TerminalFailureObserver = Callable[[BaseException], None]
+@@ -224,6 +230,8 @@ async def _first_chunk_streaming_response(
+     pre_start_error_response: PreStartErrorResponse,
+     terminal_frame: TerminalFrameEmitter | None,
+     terminal_failure_observer: TerminalFailureObserver | None,
++    keepalive_frame: str | None = None,
++    keepalive_seconds: float = STREAM_KEEPALIVE_SECONDS,
+ ) -> Response:
+     try:
+         first_chunk = await anext(body)
+@@ -250,6 +258,8 @@ async def _first_chunk_streaming_response(
+             body,
+             terminal_frame=terminal_frame,
+             terminal_failure_observer=terminal_failure_observer,
++            keepalive_frame=keepalive_frame,
++            keepalive_seconds=keepalive_seconds,
+         ),
+         media_type="text/event-stream",
+         headers=dict(headers),
+@@ -283,6 +293,8 @@ class _PrefetchedStream(AsyncIterator[str]):
+         *,
+         terminal_frame: TerminalFrameEmitter | None,
+         terminal_failure_observer: TerminalFailureObserver | None,
++        keepalive_frame: str | None = None,
++        keepalive_seconds: float = STREAM_KEEPALIVE_SECONDS,
+     ) -> None:
+         self._first_chunk: str | None = first_chunk
+         self._initial_chunk = first_chunk
+@@ -290,6 +302,9 @@ class _PrefetchedStream(AsyncIterator[str]):
+         self._body = body
+         self._terminal_frame = terminal_frame
+         self._terminal_failure_observer = terminal_failure_observer
++        self._keepalive_frame = keepalive_frame
++        self._keepalive_seconds = keepalive_seconds
++        self._pending: asyncio.Future[str] | None = None
+         self._done = False
+         self._closed = False
+ 
+@@ -304,7 +319,9 @@ class _PrefetchedStream(AsyncIterator[str]):
+             self._first_chunk = None
+             return first_chunk
+         try:
+-            chunk = await anext(self._body)
++            chunk = await self._next_body_chunk()
++            if chunk is None:
++                return cast(str, self._keepalive_frame)
+             self._latest_chunk = chunk
+             return chunk
+         except StopAsyncIteration:
+@@ -315,11 +332,41 @@ class _PrefetchedStream(AsyncIterator[str]):
+         except Exception as exc:
+             return self._terminal_chunk(exc)
+ 
++    async def _next_body_chunk(self) -> str | None:
++        """Return the next body chunk, or None when a keepalive is due."""
++        if self._keepalive_frame is None:
++            return await anext(self._body)
++        pending = self._pending
++        if pending is None:
++            pending = asyncio.ensure_future(anext(self._body))
++            self._pending = pending
++        done, _ = await asyncio.wait({pending}, timeout=self._keepalive_seconds)
++        if not done:
++            return None
++        self._pending = None
++        return pending.result()
++
++    async def _cancel_pending(self) -> None:
++        pending = self._pending
++        self._pending = None
++        if pending is None:
++            return
++        if not pending.done():
++            pending.cancel()
++        try:
++            await pending
++        except asyncio.CancelledError, StopAsyncIteration:
++            pass
++        except Exception:
++            # The body is closing; its late failure has no consumer.
++            pass
++
+     async def aclose(self) -> None:
+         if self._closed:
+             return
+         self._closed = True
+         self._done = True
++        await self._cancel_pending()
+         close_error = await try_close_async_iterator(self._body)
+         if close_error is not None:
+             raise close_error
+@@ -350,6 +397,7 @@ async def anthropic_sse_streaming_response(
+             exc,
+             request_id=request_id,
+         ),
++        keepalive_frame=ANTHROPIC_PING_FRAME,
+     )
+ 
+ 
+diff --git a/src/free_claude_code/application/execution.py b/src/free_claude_code/application/execution.py
+index 91f3f1f..9bc4551 100644
+--- a/src/free_claude_code/application/execution.py
++++ b/src/free_claude_code/application/execution.py
+@@ -47,6 +47,38 @@ CandidateStreamOpener = Callable[
+     [int, ProviderModelTarget], Awaitable[AsyncIterator[str]]
+ ]
+ 
++RATE_LIMIT_COOLDOWN_SECONDS = 600.0
++
++
++class _RateLimitCooldowns:
++    """Process-wide record of models whose rate-limit retries were just exhausted.
++
++    While a model cools down, requests with a fallback skip it instead of spending
++    its full retry budget again; the last candidate is always still tried.
++    """
++
++    def __init__(self, seconds: float = RATE_LIMIT_COOLDOWN_SECONDS) -> None:
++        self.seconds = seconds
++        self._until: dict[str, float] = {}
++
++    def start(self, model_ref: str) -> None:
++        self._until[model_ref] = monotonic() + self.seconds
++
++    def clear(self, model_ref: str) -> None:
++        self._until.pop(model_ref, None)
++
++    def active(self, model_ref: str) -> bool:
++        until = self._until.get(model_ref)
++        if until is None:
++            return False
++        if monotonic() >= until:
++            del self._until[model_ref]
++            return False
++        return True
++
++
++_rate_limit_cooldowns = _RateLimitCooldowns()
++
+ 
+ class ProviderExecutor:
+     """Resolve a provider and execute one routed Anthropic Messages stream."""
+@@ -338,6 +370,20 @@ class ProviderExecutor:
+             loop = asyncio.get_running_loop()
+             progress_deadline = loop.time() + self._progress_timeout_seconds
+             for index, target in enumerate(candidates):
++                is_last = index + 1 >= len(candidates)
++                if not is_last and _rate_limit_cooldowns.active(
++                    target.provider_model_ref
++                ):
++                    # A model that just exhausted its 429 retries would spend the
++                    # whole retry budget again before failing; go straight on.
++                    logger.info(
++                        "Model cooldown skip: request_id={} model={} candidate={}/{}",
++                        request_id,
++                        target.provider_model_ref,
++                        index + 1,
++                        len(candidates),
++                    )
++                    continue
+                 provider_stream: AsyncIterator[str] | None = None
+                 candidate_committed = False
+                 candidate_failure: ExecutionFailure | None = None
+@@ -426,7 +472,13 @@ class ProviderExecutor:
+                             ) from exc
+ 
+                 if candidate_failure is None:
++                    _rate_limit_cooldowns.clear(target.provider_model_ref)
+                     return
++                if (
++                    candidate_failure.kind is FailureKind.RATE_LIMIT
++                    and not candidate_committed
++                ):
++                    _rate_limit_cooldowns.start(target.provider_model_ref)
+                 if candidate_committed or index + 1 >= len(candidates):
+                     raise candidate_failure
+                 next_target = candidates[index + 1]
+diff --git a/src/free_claude_code/providers/openai_chat/transport.py b/src/free_claude_code/providers/openai_chat/transport.py
+index c164f24..6a819ce 100644
+--- a/src/free_claude_code/providers/openai_chat/transport.py
++++ b/src/free_claude_code/providers/openai_chat/transport.py
+@@ -1506,6 +1506,9 @@ class _OpenAIChatStreamRunner:
+         )
+         text_suffix = continuation_suffix(partial_text, recovered.text)
+         thinking_suffix = continuation_suffix(partial_thinking, recovered.thinking)
++        if not partial_text and not text_suffix and not recovered.tool_calls:
++            # A thinking-only turn ending in end_turn silently stops agent loops.
++            return None
+         events: list[str] = []
+         if thinking_suffix:
+             events.extend(output.ensure_reasoning_block())
+diff --git a/tests/api/test_model_fallback.py b/tests/api/test_model_fallback.py
+index 082e4eb..7bc11f7 100644
+--- a/tests/api/test_model_fallback.py
++++ b/tests/api/test_model_fallback.py
+@@ -222,3 +222,37 @@ def test_nonstreaming_partial_failure_discards_content_without_fallback() -> Non
+     assert response.headers["x-should-retry"] == "false"
+     assert partial_text not in response.text
+     assert fallback.stream_models == []
++
++
++def test_rate_limited_primary_is_skipped_during_cooldown() -> None:
++    primary = ControlledFallbackProvider(
++        failure=ExecutionFailure(
++            kind=FailureKind.RATE_LIMIT,
++            status_code=429,
++            message="primary rate limited",
++            retryable=True,
++        )
++    )
++    fallback = ControlledFallbackProvider(text="fallback worked")
++
++    with fallback_client(primary, fallback) as client:
++        first = client.post("/v1/messages", json=messages_payload(stream=True))
++        second = client.post("/v1/messages", json=messages_payload(stream=True))
++
++    assert first.status_code == second.status_code == 200
++    assert "fallback worked" in second.text
++    assert primary.stream_models == ["primary-model"]
++    assert fallback.stream_models == ["fallback-model", "fallback-model"]
++
++
++def test_overloaded_primary_is_not_cooled_down() -> None:
++    primary = ControlledFallbackProvider(
++        failure=execution_failure("primary overloaded")
++    )
++    fallback = ControlledFallbackProvider(text="fallback worked")
++
++    with fallback_client(primary, fallback) as client:
++        client.post("/v1/messages", json=messages_payload(stream=True))
++        client.post("/v1/messages", json=messages_payload(stream=True))
++
++    assert primary.stream_models == ["primary-model", "primary-model"]
+diff --git a/tests/api/test_response_streams.py b/tests/api/test_response_streams.py
+index ce71e68..e03a646 100644
+--- a/tests/api/test_response_streams.py
++++ b/tests/api/test_response_streams.py
+@@ -215,6 +215,62 @@ async def test_anthropic_post_start_exception_emits_terminal_error_frame() -> No
+     assert events[-1].data["error"]["message"] == "socket cut"
+ 
+ 
++@pytest.mark.asyncio
++async def test_anthropic_idle_stream_emits_ping_keepalives() -> None:
++    resume = asyncio.Event()
++
++    async def body() -> AsyncGenerator[str]:
++        yield 'event: message_start\ndata: {"type":"message_start"}\n\n'
++        await resume.wait()
++        yield 'event: message_stop\ndata: {"type":"message_stop"}\n\n'
++
++    response = await anthropic_sse_streaming_response(
++        body(),
++        pre_start_error_response=_json_error,
++        request_id="req_test",
++    )
++    assert isinstance(response, StreamingResponse)
++    iterator = cast(Any, response.body_iterator)
++    iterator._keepalive_seconds = 0.01
++    first = await anext(iterator)
++    assert "message_start" in str(first)
++
++    pings = [await anext(iterator), await anext(iterator)]
++    assert all(json.loads(str(p).split("data: ")[1])["type"] == "ping" for p in pings)
++
++    resume.set()
++    tail = [str(chunk) async for chunk in iterator]
++    events = parse_sse_text("".join(tail))
++    assert [e.event for e in events if e.event != "ping"] == ["message_stop"]
++
++
++@pytest.mark.asyncio
++async def test_closing_idle_stream_cancels_pending_body_read() -> None:
++    closed = asyncio.Event()
++
++    async def body() -> AsyncGenerator[str]:
++        try:
++            yield 'event: message_start\ndata: {"type":"message_start"}\n\n'
++            await asyncio.Event().wait()
++            yield "unreachable"
++        finally:
++            closed.set()
++
++    response = await anthropic_sse_streaming_response(
++        body(),
++        pre_start_error_response=_json_error,
++        request_id="req_test",
++    )
++    assert isinstance(response, StreamingResponse)
++    iterator = cast(Any, response.body_iterator)
++    iterator._keepalive_seconds = 0.01
++    await anext(iterator)
++    assert '"ping"' in str(await anext(iterator))
++
++    await iterator.aclose()
++    assert closed.is_set()
++
++
+ @pytest.mark.asyncio
+ async def test_non_streaming_response_releases_resource_before_return() -> None:
+     release = AsyncMock()
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 5f14b40..521829e 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
+ 
+ import pytest
+ 
++from free_claude_code.application import execution
+ from free_claude_code.config import env_migrations, paths
+ from free_claude_code.config.loader import clear_settings_cache
+ from tests.providers.support import (
+@@ -30,6 +31,9 @@ def _isolate_managed_config(monkeypatch, tmp_path):
+     monkeypatch.setattr(paths, "config_dir_path", lambda: config_dir)
+     monkeypatch.setattr(env_migrations, "legacy_env_paths", lambda: ())
+     monkeypatch.setattr(env_migrations, "verified_checkout_env_path", lambda: None)
++    monkeypatch.setattr(
++        execution, "_rate_limit_cooldowns", execution._RateLimitCooldowns()
++    )
+     clear_settings_cache()
+     yield
+     clear_settings_cache()
+diff --git a/tests/providers/test_streaming_errors.py b/tests/providers/test_streaming_errors.py
+index 9c19e95..db30b5f 100644
+--- a/tests/providers/test_streaming_errors.py
++++ b/tests/providers/test_streaming_errors.py
+@@ -2352,6 +2352,38 @@ class TestStreamingExceptionHandling:
+         assert "hidden reasoning" in recovery_body["messages"][-1]["content"]
+         assert mock_collect.await_args.kwargs["include_reasoning"] is True
+ 
++    @pytest.mark.asyncio
++    async def test_thinking_only_recovery_is_not_a_successful_end_turn(self):
++        """A cut-off turn that recovers only thinking must fail, not end the loop."""
++        runner = _make_stream_runner(
++            _make_provider(), request=_make_request(), request_id="req_recovery"
++        )
++        assembler = runner._new_stream_assembler(output_reasoning=True)
++        output = assembler.output
++        output.ensure_reasoning_block()
++        output.emit_reasoning_delta("Let me write index.js now.")
++
++        with patch.object(
++            runner,
++            "_collect_recovery_output",
++            new_callable=AsyncMock,
++            return_value=_recovery_output(
++                text="",
++                thinking="Let me write index.js now. Writing it.",
++            ),
++        ):
++            execution = runner._transport._admission.start_execution()
++            events = await runner._recovery_events(
++                body={"messages": [{"role": "user", "content": "hello"}]},
++                assembler=assembler,
++                error=TimeoutError("cutoff"),
++                tool_argument_alias_buffers={},
++                output_reasoning=True,
++                request_recovery=RequestRecovery(execution),
++            )
++
++        assert events is None
++
+     @pytest.mark.asyncio
+     async def test_primary_stream_closes_when_iteration_fails(self):
+         """OpenAI-chat main streams close after iterator failures."""

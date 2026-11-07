@@ -1,0 +1,43 @@
+--- a/pm/public/index.html
++++ b/pm/public/index.html
+@@ -654,5 +654,6 @@
+ 
+ // ---------- rendering ----------
+-const NAV = [['home', 'Home', 'home'], ['attention', 'Attention', 'alert'], ['order', 'Top order', 'list'], ['projects', 'Projects', 'folder'], ['tasks', 'Tasks', 'list'], ['runs', 'Runs', 'play'], ['machines', 'Machines', 'machine'], ['routines', 'Routines', 'routine']];
++// TODO(access-control unit, Q3/T-a73df977): gate the 'resources' tab and/or its content per role/grant here.
++const NAV = [['home', 'Home', 'home'], ['resources', 'Resources & System', 'machine'], ['attention', 'Attention', 'alert'], ['order', 'Top order', 'list'], ['projects', 'Projects', 'folder'], ['tasks', 'Tasks', 'list'], ['runs', 'Runs', 'play'], ['machines', 'Machines', 'machine'], ['routines', 'Routines', 'routine']];
+ function visibleTasks() { return S.tasks.filter((t) => effRole() !== 'client' || true) }
+ function render() { renderChrome(); renderStrip(); renderMain(); }
+@@ -689,7 +690,7 @@
+ function renderMain() {
+   const m = $('#main');
+   if (!S.loaded) { m.innerHTML = S.loadError ? `<div class="empty err">${escapeHtml(S.loadError)}<br><br><button data-act="refresh">Retry</button></div>` : '<div class="empty">Loading...</div>'; return }
+-  const v = { home: viewHome, attention: viewAttention, order: viewOrder, projects: viewProjects, tasks: viewTasks, runs: viewRuns, machines: viewMachines, routines: viewRoutines }[S.view] || viewHome;
++  const v = { home: viewHome, resources: viewResources, attention: viewAttention, order: viewOrder, projects: viewProjects, tasks: viewTasks, runs: viewRuns, machines: viewMachines, routines: viewRoutines }[S.view] || viewHome;
+   m.innerHTML = v();
+   if (S.view === 'order') bindOrder(m);
+ }
+@@ -930,7 +931,7 @@
+   }).join('')}</div>` : '<div class="card empty">No live or resumable work.</div>';
+-  return `<section class="block"><h2>Continue where you left off</h2>${launch}</section>
+-  <section class="block"><h2>Resources and system</h2>${resourceCards(att)}</section>
++  return `<section class="block"><h2>Resources and system</h2>${resourceCards(att)}</section>
++  <section class="block"><h2>Continue where you left off</h2>${launch}</section>
+   <section class="block"><h2>Projects ${projToggle()}</h2>${projectsList()}</section>
+   <section class="block"><h2>Tasks</h2>${taskToolbar()}${taskBody(S.taskMode === 'list' ? filteredSorted().slice(0, 60) : filteredSorted())}${S.taskMode === 'list' && filteredSorted().length > 60 ? `<div class="muted" style="padding:6px">Showing 60 of ${filteredSorted().length}. <a href="#" data-act="nav" data-v="tasks">Open the full Tasks view</a></div>` : ''}</section>
+   <section class="block"><h2>Routines</h2>${routinesHtml()}</section>`;
+ }
+@@ -953,4 +954,13 @@
+   </div>`;
+ }
+ 
++// Dedicated nav tab for Resources & System (T-a73df977 Q5=C): renders the same resourceCards()
++// section used at the top of Home, as its own standalone view.
++// TODO(quota-adapter unit, T-f06d8373 / P-533695e5): inject live DSH/Weight-Router quota state
++// here, e.g. resourceCards(att, S.quota) -- wiring added by a separate unit, not this one.
++function viewResources() {
++  const att = attentionItems(S.tasks, S.runs);
++  return `<section class="block"><h2>Resources and system</h2>${resourceCards(att)}</section>`;
++}
++
+ function projToggle() { return `<span class="seg"><button data-act="projMode" data-v="rows" class="sm ${S.projMode === 'rows' ? 'on' : ''}">Rows</button><button data-act="projMode" data-v="cards" class="sm ${S.projMode === 'cards' ? 'on' : ''}">Cards</button></span>`; }

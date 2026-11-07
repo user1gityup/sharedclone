@@ -1,0 +1,11 @@
+    dsh/run-recovery:
+      name: DSH run recovery — council + swarm
+      stages: council,swarm,review
+      autoAdvance: false
+      mode: economy
+      query: |-
+        Read ~\Documents\Codex\2026-09-12\i-x20\outputs\dsh-run-recovery-codex-prompt.md in full and treat it as the authoritative specification for this run.
+
+        Run this as a gated council → swarm → final-council pipeline. The first council diagnoses and agrees one implementation plan plus a collision-free swarm DAG. It performs no writes or commands and stops at the approval gate. After the existing two-factor approval, the swarm implements only the approved graph, saves completed units for resume, tests every wave, and stops on failure. The final council reviews the actual diff and built artifacts, creates bounded corrective units if required, and re-reviews before declaring completion.
+
+        Account for both council and swarm failure behavior: prompt size and transport limits, cancellations, process-tree termination, layered deadlines, quorum, explicit partial states, durable resume, observability, and the pipeline UI. Preserve all existing approval gates. Do not make real metered model or provider calls during verification. Do not push or commit unless separately authorized. Preserve unrelated working-tree changes. Every agent names its model in user-visible output.

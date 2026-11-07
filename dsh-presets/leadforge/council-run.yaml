@@ -1,0 +1,671 @@
+    leadforge/council-run:
+      name: LeadForge council run
+      query: |-
+        DSH COUNCIL — PLANNING ONLY. NO FILES WRITTEN, NO CODE EXECUTED, NO SPEND
+        BEYOND CONFIGURED SEAT RESEARCH. Produce a DEV PLAN and a SWARM PLAN. Stop at
+        the approval gate. Do not call swarm, do not spawn workers, do not draft
+        implementation files. If any seat proposes taking an action, the vote must
+        reject it.
+
+        Every seat names its own model in anything the user reads. A seat or role
+        label may accompany the model name, never replace it.
+
+        =============================================================================
+        PROJECT: LEADFORGE — Metro Manila digital-presence gap prospector
+        PILOT SCOPE: 500 qualified businesses. Not 10,000.
+        =============================================================================
+
+        DECIDED BEFORE THIS RUN — do not re-litigate these
+        --------------------------------------------------
+          Starting LGU:      [FILL IN — one of the 16 Metro Manila cities]
+          Starting vertical: [FILL IN — one business category]
+          What we sell:      [FILL IN — either (a) the generated website/asset itself,
+                              or (b) billboard-platform advertising, with the generated
+                              site as the hook]
+
+        If any of the three above is still blank when you read this, choose the most
+        defensible option, state the choice and the reason in one line at the top of
+        your output, and proceed. Do not stop to ask.
+
+        MISSION
+        -------
+        Build a system that (1) identifies businesses in Metro Manila missing one or
+        more digital presence assets — website, Facebook page, Instagram account,
+        WhatsApp business number, Grab listing — (2) qualifies and ranks them into a
+        PILOT COHORT OF 500, (3) auto-generates the missing asset as a working demo
+        (primarily a website), publishes it at a private expiring preview link, and
+        (4) sends a compliant outreach message offering to sell that asset to the
+        business.
+
+        500 is the target for the whole first build. A larger cohort (the eventual
+        10,000) is PHASE 2 and is out of scope for this plan except as one paragraph
+        stating what would have to be true to scale — cost, ToS posture, sender
+        reputation, and operator capacity. Do not design for 10,000 now. Designing for
+        volume is what turns a legitimate integration into bulk extraction.
+
+        SEARCH DISCIPLINE — NARROW AND TIMELY (governs the whole design)
+        ----------------------------------------------------------------
+        Keep searches narrow and timely so query volume and pattern stay clearly
+        inside Google Maps Platform terms. Every seat must design to this. The plan
+        must specify:
+
+        S1. NARROW BY GEOGRAPHY. Work one LGU at a time, and inside it one commercial
+            tile at a time. Nearby Search returns at most 20 results per call, so a
+            tile is a small radius over a dense commercial strip, not a city-wide
+            sweep. State the tile radius, how tiles are chosen (commercial corridors,
+            not uniform grid over residential blocks), and how tile overlap is deduped
+            by place_id before any further call is made.
+
+        S2. NARROW BY VERTICAL. One business category per run — the one named above.
+            Do not query "all businesses near point".
+
+        S3. NARROW BY VOLUME. A hard per-day ceiling on calls per SKU, enforced by a
+            circuit breaker before the call, not after. State the numbers. A run that
+            hits the ceiling stops cleanly and resumes tomorrow at the next tile —
+            that is what resumable ticks are for.
+
+        S4. TIMELY — PACED. The cohort is assembled over days or weeks, not in one
+            burst. Requests spread across the day with jitter. No parallel fan-out
+            across tiles. The traffic shape should be indistinguishable from a
+            normally-used app.
+
+        S5. TIMELY — FRESH, NOT STOCKPILED. Every cached Places field carries an
+            observed_at and a TTL inside the permitted window; expired means refetch
+            on demand or drop, never "keep it, it's probably still right". A prospect
+            already scored is not re-queried before its re-check interval. State the
+            TTL per field class and the re-check interval, and how the scheduler
+            guarantees we never hold a stale corpus.
+
+        S6. STOP CONDITION. Discovery halts the moment 500 qualified prospects exist.
+            It does not keep running to build a reserve. State how the qualified count
+            is computed and where the halt is enforced.
+
+        WHERE IT LIVES
+        --------------
+        Repo: ~\Documents\claudecode\billboard-platform
+
+        The deliverable must live in a subfolder and must be extractable later as a
+        standalone product with no rewrite. Required shape:
+
+          leadforge/                  <- PORTABLE CORE. No Next.js imports anywhere
+                                         under this directory. Plain Node modules.
+            sources/                  <- data acquisition adapters
+            signals/                  <- presence detection per channel
+            scoring/                  <- qualification + ranking
+            generate/                 <- demo site builder
+            outreach/                 <- message composition, send, suppression
+            experiment/               <- arm assignment + metrics readout (section 13)
+            budget/                   <- cost model + live spend meter (Milestone 0)
+            queue/                    <- job/tick runner (see DEPLOY CONSTRAINT)
+            schema.prisma.fragment    <- models, all prefixed Lf*
+            README-STANDALONE.md      <- exact steps to lift this out into its own app
+            __tests__/
+
+          app/api/leadforge/**        <- THIN Next route handlers. Parse, authorise,
+                                         call into leadforge/, serialise. No logic.
+          app/(dashboard)/dashboard/leadforge/**  <- THIN UI adapters.
+
+        Rule the council must enforce: every piece of business logic sits under
+        leadforge/ and is unit-testable with no HTTP and no Next runtime. The adapters
+        are the only files that know this is a Next app. Extraction to standalone =
+        copy leadforge/, write new adapters. Say in the plan which existing repo libs
+        are imported by adapters only vs. re-implemented inside leadforge/ to keep it
+        portable.
+
+        EXISTING STACK — REUSE, DO NOT REINVENT
+        ---------------------------------------
+        Next.js 14.2 App Router, JavaScript (NOT TypeScript), Prisma 5.17 + MySQL,
+        Tailwind, vitest. Existing modules to evaluate for reuse:
+          lib/googleMaps.js      Google Maps/Places calls
+          lib/mapsUsage.js       API usage metering — the quota accounting already exists
+          lib/prospecting.js     existing site-evaluation logic
+          lib/metaAuth.js        Meta OAuth (app id/secret already wired)
+          lib/googleAuth.js      Google OAuth
+          lib/email.js           AWS SES sending
+          lib/ai.js              Anthropic SDK (@anthropic-ai/sdk ^0.117.1)
+          lib/settings.js        runtime-configurable keys, DB value wins over .env
+          lib/rateLimit.js, lib/crypto.js, lib/uploads.js, lib/notifications/
+          lib/businessLocations.js, lib/evCharging.js, lib/relevance.js
+        Read these before planning. State in the plan, per module, whether LeadForge
+        imports it, forks it into leadforge/, or ignores it, with the reason.
+
+        DEPLOY CONSTRAINT — THIS SHAPES THE ARCHITECTURE
+        ------------------------------------------------
+        Target is DreamHost shared hosting. Next.js standalone output mode is NOT
+        available. MySQL, not Postgres. Migrations run through deploy/migrate.php.
+        No long-lived daemon, no worker process, no Redis, no BullMQ.
+
+        Therefore: all long-running work must be a MySQL-backed job table drained by
+        short, idempotent, resumable ticks triggered by cron hitting an authenticated
+        endpoint. Every tick must have a hard wall-clock budget and must checkpoint so
+        a killed tick loses nothing. This is also the mechanism that delivers S3 and
+        S4 — the tick is where the daily ceiling and the pacing live. State the tick
+        budget, the tick frequency, the concurrency limit (expected: 1), and how a
+        poisoned job is quarantined rather than retried forever. Prisma binaryTargets
+        already include debian-openssl-1.1.x for this host — do not change them.
+
+        =============================================================================
+        HARD CONSTRAINTS — VIOLATING ANY OF THESE KILLS THE PRODUCT
+        =============================================================================
+        These are not preferences. Each seat must design around them and the citation
+        audit must confirm the current state of each. Where a seat believes a
+        constraint has changed, it must cite the current provider policy, not memory.
+
+        C1. GOOGLE MAPS PLATFORM TERMS
+            Bulk extraction, scraping, and building a competing/derived dataset from
+            Places content are prohibited. place_id is the only Places field that may
+            be stored indefinitely; other Places content must not be cached beyond the
+            permitted window. Design implication: persist place_id plus OUR OWN
+            derived booleans and scores; treat display fields as fetch-on-view under
+            the S5 TTL. The plan must name every field stored and justify each. A
+            500-record cohort assembled slowly under S1-S6 is ordinary API use; the
+            same 500 pulled in one scripted burst is what the term prohibits. Make the
+            difference explicit in the design, not just in a comment.
+
+            ONE PROVIDER DIFFERENCE WORTH KNOWING. Amazon Location Service offers a
+            "Stored" pricing bucket: setting intendedUse = Stored permits storing
+            Places results indefinitely, which Google forbids outright. That would be a
+            lawful route to a permanent dataset — except that IntendedUse is NOT
+            supported in the GrabMaps regions, so it is unavailable for GrabMaps data
+            specifically. Net effect: both of our discovery sources are fetch-and-
+            expire, and S5's TTL discipline applies to GrabMaps exactly as it does to
+            Google. If a seat believes GrabMaps storage rights differ, it must cite
+            AWS or Grab, not infer it.
+
+        C2. GOOGLE PLACES COST AT PILOT SCALE
+            IMPORTANT — THE PRICING REGIME CHANGED. The $200/month Google Maps
+            Platform credit was discontinued on 2025-03-01 and replaced with per-SKU
+            monthly free call allowances (approximately 10,000 Essentials, 5,000 Pro,
+            1,000 Enterprise calls per SKU per month). Older project documentation in
+            this repo — including CLAUDE.md — still refers to the $200 credit. That
+            reference is stale. Your first costing task is to confirm which regime the
+            billing account is actually on, and to cost against the free-tier model,
+            not the credit.
+
+            Verify current SKU pricing and field-mask tiers before costing — do not
+            cost from memory. A baseline has already been modelled; check your
+            arithmetic against it rather than deriving one from scratch. Reaching ~500
+            qualified prospects needs roughly 72 Nearby Search Pro calls and ~715
+            Place Details Pro calls. Because free tiers are per SKU, both sit inside
+            the ~5,000-call Pro allowance and the Places cost of the pilot is
+            approximately $0. The same funnel at 10,000 businesses costs roughly $500,
+            because Place Details alone overruns its free allowance by ~9,300 calls.
+            If your costing disagrees with these by more than 2x, say so and show the
+            arithmetic.
+
+            Use the cheapest field mask that answers the question at each stage — most
+            prospects are disqualified on cheap fields and never need Details at all.
+            lib/mapsUsage.js already meters; extend it, do not duplicate it. The
+            circuit breaker from S3 reads from it.
+
+            THE OTHER TWO METERS, both with their own free pools:
+
+            GrabMaps via Amazon Location Service. Free trial covers the first three
+            months at roughly 20,000 Places requests per month — about 4x Google's Pro
+            allowance, and enough to run the whole pilot at zero. Places calls fall
+            into four pricing buckets: Label (PlaceId and address text only), Core (a
+            bare call with no additionalFeature — full address components, categories,
+            place details), Advanced (any of Contact, Access, TimeZone or Phonemes),
+            and Stored. Because GrabMaps supports no additionalFeature except TimeZone,
+            ordinary GrabMaps calls sit in Core, the cheap useful bucket — but asking
+            for TimeZone pushes that call to Advanced for a field you do not need, so
+            do not request it. Exact dollar rates per bucket were NOT confirmed; the
+            AWS pricing page renders them dynamically. Get real rates from the console
+            or the pricing calculator before planning past the three-month trial, and
+            do not invent a figure in the meantime — mark it unknown.
+
+            Custom Search JSON (stage 4 of the cascade in section 4): 100 queries per
+            day free, then $5 per 1,000, capped at 10,000/day. At 500 prospects with
+            half reaching stage 4, that is ~250 queries — three days of free quota and
+            $0. THIS, NOT PLACES, IS THE THROUGHPUT BOTTLENECK. Pace the ticks around
+            it and cache negative results with an observed_at, or the quota is spent
+            re-discovering that a business still has no Page.
+
+        C3. WHAT EACH PLATFORM WILL AND WILL NOT TELL YOU
+            Verified against the providers and their SDKs, not recalled. An earlier
+            draft of this prompt claimed Grab had no discovery API at all. That was
+            wrong and is corrected here — do not reintroduce it.
+
+            GRAB HAS TWO SEPARATE SURFACES.
+            - Partner APIs (developer.grab.com — GrabFood, Mart, Express, Pay, POS,
+              Farefeed): merchant-scoped only. Confirmed from the generated SDK
+              github.com/grab/grabfood-api-sdk-go — every endpoint manages the
+              authenticated merchant's own orders, menu, hours and campaigns. OAuth2
+              client_credentials, scope food.partner_api, and a pre-existing merchant
+              ID is required. No search, no discovery, no onboarding endpoint.
+            - GrabMaps: a genuine discovery API, and a different business. Reachable
+              through Amazon Location Service in ap-southeast-1 and ap-southeast-5,
+              covering the Philippines, supporting SearchNearby (with category filter),
+              SearchText, GetPlace, Suggest and ReverseGeocode. Built from Grab's own
+              delivery and ride journeys, so its recall on small, hard-to-find Metro
+              Manila businesses may exceed Google's. USE IT.
+
+            THE GRABMAPS CATCH. In the GrabMaps regions AWS marks Contacts (websites,
+            phones, emails), OpeningHours and FoodTypes as NOT supported, and caps
+            AdditionalFeatures at TimeZone only — which also rules out CrossReferences.
+            GrabMaps therefore returns Title, Address, Position, PlaceId, PlaceType,
+            Categories, BusinessChains, MapView, PlaceAttributes and TimeZone. It
+            cannot tell you whether a business has a website. It is a discovery and
+            cross-check source, not an enrichment source.
+
+            GRABMAPS PRESENCE IS NOT MERCHANT STATUS. GrabMaps is a general basemap of
+            50M+ POIs covering businesses whether or not they sell on Grab. No field
+            flagging GrabFood/GrabMart merchant status was found; its absence is
+            unconfirmed. Before designing around it, run one empirical probe: query
+            five businesses known to be listed on GrabFood and five known not to be,
+            and diff Categories, BusinessChains and PlaceAttributes. State the result.
+
+            "ON GRAB BUT NO MENU" HAS NO SANCTIONED ROUTE. GrabMaps omits menu data,
+            the partner API only sees merchants you already represent, and the
+            consumer GrabFood page cannot be scraped. Either that branch is a manual
+            check on a short list, or it drops out of the automated tree. Say which.
+
+            META AND INSTAGRAM.
+            - Meta: Pages Search API was removed in 2018. There is no geographic
+              search for Facebook Pages, and automated scraping of Pages is not
+              permitted.
+            - Instagram: Business Discovery works but requires a username you already
+              hold — which the stage-3 site crawl or stage-4 search supplies.
+
+            Third-party scrapers for Grab merchant listings exist and are cheap
+            (~$4 per 1,000 listings). Using one breaches Grab's terms of service. Any
+            seat proposing to scrape Grab, Facebook or Instagram must be voted down
+            and the reason recorded.
+
+        C4. MESSAGING PLATFORMS — NEITHER IS A COLD CHANNEL
+            WhatsApp and Facebook Messenger both forbid a business opening a thread.
+
+            - WhatsApp: unsolicited marketing to non-opted-in numbers violates the
+              WhatsApp Business Messaging Policy and gets the sender number banned.
+              Marketing templates require prior opt-in. Meta moved to per-message
+              pricing on 2025-07-01; service messages inside the 24-hour window are
+              free, so billed volume is a function of the reply rate, not cohort size.
+            - Messenger: promotional content is permitted only inside the 24 hours
+              after the person messages the Page first. Message Tags allow contact
+              outside that window but explicitly EXCLUDE promotional content —
+              deals, offers, coupons, discounts.
+
+            High Facebook adoption in Metro Manila does not change this rule. It
+            changes which door you pay to open. The compliant Facebook path is a
+            PAID CLICK-TO-MESSENGER AD: the prospect's own click opens the 24-hour
+            window legitimately. That converts messaging from a per-message fee into
+            ad spend, and it is the line item most able to outgrow every other line
+            combined — at a $0.75 cost-per-conversation placeholder, 200 conversations
+            costs $150 against a rest-of-pilot cost near zero. That placeholder is not
+            a measured Philippine figure; a small test buy must replace it before any
+            budget depends on it.
+
+            Also lawful and free: business contact details the Page publishes
+            publicly. A Page with a phone number and no website is precisely the
+            target profile, and it is reachable without ads and without DMs. Treat
+            this as a first-class discovery signal, not a fallback.
+
+            Cost the WhatsApp setup path too: Meta business verification, a phone
+            number not already registered on WhatsApp, per-template review, and the
+            BSP's own markup or platform fee.
+
+        C5. PHILIPPINES LAW
+            RA 10173 (Data Privacy Act 2012) and NPC rules apply; sole-proprietor
+            business contact data is personal data. RA 8792 (E-Commerce Act) applies.
+            Every outbound message must carry: real sender identity and address, a
+            working one-click opt-out, and how we obtained the contact. A permanent
+            suppression list must be honoured across all channels forever. The plan
+            must state the lawful basis, the retention period, the deletion path on
+            request, and where the DPO/contact details live. Uploading a contact list
+            to Meta as a Custom Audience is a disclosure — if any arm proposes it,
+            state the lawful basis for that specifically.
+
+        C6. CRAWLING THE BUSINESS'S OWN SITE
+            Honour robots.txt and crawl-delay. Identify with a real, resolvable user
+            agent string. Rate limit per host, and pace per S4. Never bypass a block,
+            a login, or a bot check.
+
+        C7. THE GENERATED DEMO SITE
+            It is unaffiliated spec work. It must: be noindex/nofollow, sit behind an
+            expiring random token, carry a visible banner stating it is an unsolicited
+            proposal not affiliated with the business, use the business name only
+            nominatively, not copy the business's own photos or copy without a
+            licensed source, and have a one-click permanent takedown reachable from
+            the outreach message itself. No trademark or logo reproduction.
+
+        C8. OUTREACH — WHAT IS BINDING, AND WHAT IS NOW A HYPOTHESIS
+            BINDING under every arm:
+              - No cold DMs on WhatsApp, Messenger or Instagram, ever. The prospect
+                must open any messaging thread themselves. Paid click-to-Messenger is
+                permitted because the prospect's click opens the window.
+              - Sender warm-up curve, daily send ceiling, per-domain throttle, and
+                bounce/complaint thresholds that pause sending automatically. 500
+                sends from a cold SES identity on day one gets throttled and burns
+                the domain.
+              - Suppression enforced at send time, across all channels.
+
+            NO LONGER BINDING: the channel ORDERING. The previous instruction to
+            prefer email first is now the A arm of the section 13 experiment, not a
+            constraint. Metro Manila Facebook adoption among small businesses exceeds
+            email adoption, which makes email-first an assumption worth testing rather
+            than a settled decision.
+
+        =============================================================================
+        DELIVERABLE 1 — DEV PLAN
+        =============================================================================
+        Produce a plan detailed enough that workers can build from it without further
+        design decisions. Cover, at minimum:
+
+        1. GO / NO-GO TABLE. One row per external API: Grab partner APIs, GrabMaps via
+           Amazon Location Service, Google Maps/Places, Google Custom Search JSON,
+           Meta Graph, Instagram Business Discovery, Messenger Platform, WhatsApp
+           Business, Meta Ads. Columns: what it can actually do for us, what it
+           cannot, cost, policy limit, verdict (use / use-restricted / drop),
+           citation. Be blunt where the answer is "this does not exist" — the user
+           needs that answer, not a workaround that gets an account banned. For Google
+           Search, distinguish the Custom Search JSON API (quota'd, priced, limited to
+           a configured engine) from scraping the results page (prohibited), and say
+           whether its free daily quota alone covers pilot scale.
+
+        2. DATA MODEL. Prisma models, all Lf*-prefixed, MySQL-safe (index lengths,
+           utf8mb4, no Postgres-only types). Cover at least: LfBusiness (place_id as
+           natural key), LfSignal (per-channel presence evidence + confidence +
+           observed_at), LfScore, LfDemoSite, LfOutreach, LfSuppression, LfJob,
+           LfApiSpend, LfTile (tile state, so discovery resumes where it stopped),
+           LfExperimentArm. LfScore must carry the liveness and gap axes separately
+           plus the product, and LfBusiness must carry the routing lane and the
+           entity-match confidence from section 4. LfSignal must record which source
+           produced each signal, so Google/GrabMaps disagreement is queryable. State
+           every field's retention rule and TTL against C1, S5 and C5.
+
+        3. THE FUNNEL, COSTED, TO 500, AND WHAT "QUALIFIED" MEANS.
+           Tile selection -> discovery -> dedupe by place_id -> entity resolution
+           across sources -> cheap disqualify -> the enrichment cascade in section 4
+           -> scoring -> ranking -> the 500. Give expected count, call count, and
+           spend at each stage, plus elapsed days at BOTH ceilings (the S3 per-SKU
+           daily cap and the 100/day Custom Search cap — the second binds first).
+
+           QUALIFICATION IS TWO-AXIS, AND THIS IS A CORRECTION TO THE ORIGINAL BRIEF.
+           Ranking by "missing the most assets" is wrong. It selects for businesses
+           that do not engage digitally at all — the least likely to reply and the
+           least likely to pay. Score every prospect on two independent axes:
+
+             LIVENESS — evidence they are active and will answer:
+               - owner replies to Google reviews (strongest single free signal:
+                 proves reachable, engaged, and checking their listing)
+               - review velocity over the last 90 days
+               - business_status OPERATIONAL and hours actually set
+               - Instagram last-post recency and follower count (Business Discovery)
+               - a Facebook Page's public "typically replies within..." responsiveness
+                 badge — MANUAL spot-check input on the top ranks only, never an
+                 automated crawl, per C3
+               - MX record present on their domain (proves email will land before we
+                 spend sender reputation on it)
+
+             GAP — what we can actually sell:
+               - website absent, or present but stale (last-modified, copyright year)
+               - no Facebook link, no Instagram link, no Grab presence
+               - listing thin or inconsistent between Google and GrabMaps
+
+           Rank on the PRODUCT of the two, not the sum, so that a zero on either axis
+           disqualifies. A large gap on a dead business is worth nothing, and a live
+           business with no gap is already served. State the numeric formula, the
+           weights, and the cutoff that defines the 500.
+
+           Name the A-list explicitly: businesses ACTIVE ON FACEBOOK WITH NO WEBSITE.
+           They have proven digital engagement, they already have an audience, and the
+           gap is exactly the product. Given Metro Manila's Facebook adoption this is
+           likely the largest high-value segment; say what share of the cohort you
+           expect it to be.
+
+           Flag the tension rather than hiding it: the most responsive businesses are
+           often the ones already paying an agency. The target is active-but-under-
+           served, which is why both axes must be high.
+
+           If 500 is not reachable from the chosen vertical and LGU, say what the
+           realistic number is and which second vertical to add.
+
+        4. THE ENRICHMENT CASCADE AND ROUTING.
+           Design signal detection as a progressive cascade seeded by the entity from
+           stage 0, cheapest first, where each stage runs only if earlier stages have
+           not already resolved or disqualified the prospect. Specify per stage: the
+           trigger condition, the call made, the fields harvested, the cost, and the
+           disqualify rule.
+
+             Stage 0  SearchNearby (Google and/or GrabMaps) -> name, coords, category,
+                      place_id. The entity seed.
+             Stage 1  business_status and review count from the search response ->
+                      drop closed and dead. No extra call.
+             Stage 2  Google Place Details -> website field, phone, hours, reviews and
+                      owner replies. Answers the biggest gap question and carries most
+                      of the liveness signal.
+             Stage 3  If a website exists, crawl it under C6 -> outbound FB/IG/Grab
+                      links, email, contact form, last-modified. The business
+                      published these links itself, so this is the cheapest and most
+                      compliant social discovery available. Prefer it over stage 4.
+             Stage 4  If no site, or no links found: Custom Search JSON, queries of
+                      the form "<name>" "<city>" site:facebook.com and the Instagram
+                      equivalent. This is the legitimate replacement for the Pages
+                      Search API Meta removed. 100/day free — the throughput
+                      bottleneck.
+             Stage 5  If an IG username surfaced: Business Discovery -> follower
+                      count, media count, last-post timestamp for the liveness axis.
+
+           ENTITY RESOLUTION IS THE REAL ENGINEERING RISK, not the API calls. Matching
+           one business across GrabMaps, Google Places and a Facebook Page is fuzzy:
+           name variants, Tagalog/English mixing, abbreviations, franchise vs branch,
+           inconsistent address formats. A wrong match means pitching a business an
+           asset it already owns, which ends the conversation and the credibility in
+           one message. Require agreement on at least two of three — name similarity,
+           geo proximity, category match — and route low-confidence matches to manual
+           review instead of auto-pitching. State the thresholds. At 500 that review
+           is affordable; at 10,000 it is not, which is a further argument for the
+           pilot size.
+
+           ROUTING LANES. Every scored prospect exits into exactly one lane, and each
+           lane has its own asset and its own pitch:
+             Lane A  Active on Facebook, no website -> generate a sample site.
+             Lane B  Has a website, no Instagram -> generate a sample 9-post grid.
+                     Cheap to produce and disproportionately persuasive.
+             Lane C  No website, no FB, no IG -> phone or in-person follow-up, using
+                     the phone number stage 2 already returned. This is not a failure
+                     case; these are the least-competed prospects in the cohort. It is
+                     a different sales motion, so say who performs it and at what
+                     volume.
+             Lane D  Everything present and active -> drop. They have an agency.
+
+           The generator in section 5 must therefore produce more than websites — one
+           template family per lane. State them.
+
+           Also state, per channel, the inference rule, its confidence level, the
+           false-positive rate accepted, the C3 manual spot-check sample size, and how
+           a false positive is corrected when a business replies "we do have one".
+
+        5. DEMO SITE GENERATOR. Template system, what the LLM writes vs. what is
+           templated, image sourcing that is actually licensed, build and hosting of
+           the preview under the deploy constraint, token issuance and expiry,
+           takedown path, cost per generated site and total for 500.
+
+           Generation is the only line item that scales with cohort size and costs
+           real money, so treat the ROUTE as a design decision with four options and
+           pick one: (a) metered Anthropic API, ~$16 for 500 at Sonnet tier with
+           caching and batch; (b) the Free Claude Code proxy already running locally,
+           $0 marginal; (c) the council's subscription Claude seat, $0 marginal;
+           (d) ARCHETYPE ROUTE — write ~5 sites properly and fill the remaining ~495
+           by deterministic field substitution, since a small-business page is mostly
+           structure, at roughly $0.16 total. State the quality risk of each and
+           recommend one; the user decides, not you. Baseline assumption for the
+           metered figure: ~8k input / 6k output tokens per site with a cacheable
+           template prefix.
+
+        6. OUTREACH ENGINE. Message composition, personalisation depth, send
+           scheduling and the C8 ramp, bounce and complaint handling, reply detection,
+           opt-out ingestion, suppression enforcement at send time, and the escalation
+           path into WhatsApp/Messenger once the prospect has opened a thread. The
+           engine takes an ARM parameter (section 13) — one code path, not two.
+
+        7. OPERATOR UI under /dashboard/leadforge: pipeline view, cohort progress
+           toward 500, spend meter, tile map, job queue health, per-prospect record
+           with evidence and arm assignment, demo preview, outreach thread, live
+           experiment readout, kill switches per stage and per arm. Match existing
+           dashboard conventions.
+
+        8. SECURITY & ACCESS. Which UserRole may see this. Token scheme for preview
+           links. Where API keys live (lib/settings.js pattern, DB value wins).
+           Rate limiting and auth on the tick endpoint.
+
+        9. TEST PLAN. vitest. Every leadforge/ module unit-tested with no network.
+           Fixture-based tests for each signal rule. Tests that prove the daily
+           ceiling, the TTL expiry, the 500 stop condition, and deterministic arm
+           assignment actually fire. A dry-run mode that executes the entire funnel
+           and outreach path with zero external calls and zero sends, emitting exactly
+           what would have happened.
+
+        10. BUILD ORDER as numbered milestones, each independently shippable and each
+            ending in a state where nothing is sent to any real business.
+
+            MILESTONE 0 — BUDGET MODEL, BUILT FIRST. A standalone cost model already
+            exists as a published artifact and is the specification for this
+            milestone; port it into leadforge/budget/ as (a) a pure estimator that
+            takes cohort size, qualification rate, generation route, model tier,
+            caching/batch flags, ad budget and reply rate and returns projected spend
+            per stage with no API calls, and (b) a live spend meter reading actual
+            consumption from lib/mapsUsage.js and from recorded LLM/SES/WhatsApp/Ads
+            usage, so projected and actual sit side by side. The S3 circuit breaker
+            reads its ceiling from this module. This milestone ships before any
+            discovery code, so the user can price a change before paying for it.
+
+            Then, suggested shape: dry-run funnel on fixtures -> live discovery capped
+            at one tile -> signals + scoring -> generator -> outreach in dry-run ->
+            arm assignment and metrics -> a supervised first batch of ~10 real sends
+            -> the remaining 490 on the ramp. Sending to real recipients must be
+            behind an explicit operator switch defaulting off.
+
+        11. RISK REGISTER. Ranked. Include at minimum: Google ToS/account termination,
+            SES domain reputation loss, WhatsApp number ban, Page restriction, NPC
+            complaint, trademark complaint over a demo site, free-tier overrun, ad
+            spend overrun, and reputational risk.
+
+        12. PHASE 2 NOTE. One paragraph only: what must be true — cost, ToS posture,
+            sender reputation, operator capacity, and the section 13 result — before
+            scaling toward 10,000. No design work for it.
+
+        13. A/B EXPERIMENT DESIGN
+
+            The 500-business pilot is not just a lead run, it is the only experiment
+            we get before deciding how to spend money at scale. Design it as a
+            controlled A/B test, and choose the arms by vote rather than by whoever
+            proposes first.
+
+            13.1 CANDIDATE GENERATION — PROPOSE, THEN PICK
+              Each seat proposes at least TWO candidate ARM A variants and TWO
+              candidate ARM B variants. A and B are defined by ONE variable under
+              test; everything else is held constant across both arms.
+
+              The council then runs its normal confidence-weighted vote TWICE and
+              picks the single strongest A and the single strongest B. Record the
+              losing candidates and why they lost — a rejected variant is the backlog
+              for the second experiment, not waste.
+
+              The variable under test must be the one whose answer changes the most
+              downstream spend. Choose it and defend the choice. Strong candidates,
+              in the order this project's evidence currently favours:
+
+                (a) CHANNEL. Email to publicly listed business email, versus Facebook
+                    — publicly listed Page contact details and/or paid
+                    click-to-Messenger. This is the live question C8 was downgraded
+                    to create.
+                (b) OFFER. Sell the finished asset, versus give the demo free and
+                    charge for hosting/maintenance.
+                (c) DEMO DEPTH. Full multi-page site versus a single landing page —
+                    worth testing because it directly prices the generation step.
+
+              Do not test more than one variable. A 500-record pilot cannot resolve
+              two.
+
+            13.2 THE POWER PROBLEM — CONFRONT IT, DO NOT PAPER OVER IT
+              At a 250/250 split and a plausible 3-8% baseline reply rate, this
+              experiment is UNDERPOWERED for small effects. Roughly: detecting a lift
+              from 5% to 8% at conventional power needs several hundred per arm more
+              than we have; 250 per arm can only resolve a difference of roughly
+              5% versus 12% or larger.
+
+              State the actual numbers for your chosen metric and baseline. Then state
+              plainly what this pilot CAN and CANNOT conclude, and pick one:
+                - accept that it only detects large effects, and say so in the
+                  readout;
+                - widen the cohort for the experiment specifically, and cost it;
+                - or choose a higher-frequency proxy metric with a larger base rate
+                  (open, click, demo-link view) as primary, with reply as secondary.
+              A design that reports a winner it cannot statistically support is worse
+              than no experiment. Any seat producing one must be voted down.
+
+            13.3 ASSIGNMENT
+              Deterministic, reproducible, and resumable across cron ticks: hash the
+              place_id to assign the arm, so a restarted tick never reassigns a
+              business and no randomness lives in memory. State the hash and the split
+              point. One business is contacted on ONE arm only, ever. Enforce it in
+              the suppression check at send time, not by convention.
+
+            13.4 METRICS
+              ONE primary metric, declared before the run and not changed afterwards.
+              Because the arms may have wildly different unit costs — email is
+              effectively free, click-to-Messenger ads are not — the primary metric
+              must be COST PER QUALIFIED REPLY, not raw reply rate. An arm that wins
+              on response rate and loses on cost per reply has lost.
+
+              Guardrail metrics, any of which stops the arm regardless of the primary:
+              bounce rate, spam complaint rate, opt-out rate, Page/number block rate,
+              and any platform warning. State the threshold for each.
+
+            13.5 DISCIPLINE
+              Fixed horizon declared up front — no stopping the moment one arm looks
+              ahead. State the horizon in days and in sends. Define what a non-result
+              looks like and commit to reporting it as a non-result. Both arms must
+              independently satisfy C4, C5, C7 and C8; an arm that only wins by being
+              less compliant is disqualified, not a finding.
+
+            13.6 WHAT THE RESULT DECIDES
+              One paragraph: which Phase 2 decision this experiment unblocks, and what
+              the plan is under each outcome — A wins, B wins, or no detectable
+              difference. If a result would not change what we do next, the experiment
+              is not worth running and you should say so instead of designing it.
+
+        =============================================================================
+        DELIVERABLE 2 — SWARM PLAN
+        =============================================================================
+        Produce a task graph ready for the swarm's execution gate. Workers are the
+        council's own seats (Claude, Free Claude, Kimi, DeepSeek v4 — note
+        OpenAI/codex is not installed on this machine; do not assign work to it).
+
+        Required:
+        - Task graph as a DAG: task id, one-sentence goal, files it may touch, files
+          it must not touch, dependencies, acceptance test, estimated tokens.
+        - Waves. Tasks in the same wave must touch disjoint file sets. Name the
+          shared-file collisions you are avoiding.
+        - Seat assignment with reasoning, preferring subscription/included seats over
+          metered ones for bulk work, and metered seats where quality matters most.
+        - Priced execution estimate per wave and total, against the ~$60/month budget.
+          Note that the LeadForge runtime cost draws on the same budget as the swarm
+          tokens that build it — say what is left.
+        - THE ARMS ARE ONE BUILD. The two experiment arms are configuration over one
+          code path, not two pipelines. The task graph must show a single outreach
+          engine with an arm parameter, plus one task for assignment and one for the
+          metrics readout. Any proposal that builds two parallel pipelines doubles the
+          work and makes the arms non-comparable — reject it.
+        - The verification wave: who runs vitest, who reviews the diff, what blocks a
+          merge.
+        - Explicit statement that no worker may run a real API call against Google,
+          Meta, or SES; workers build against fixtures and the dry-run harness only.
+
+        =============================================================================
+        OUTPUT FORMAT
+        =============================================================================
+        1. GO/NO-GO TABLE
+        2. DEV PLAN (sections 1-13 above)
+        3. ARM SELECTION — the chosen A, the chosen B, the variable under test, the
+           candidates that lost, and the power statement from 13.2
+        4. SWARM PLAN (task graph, waves, assignment, cost)
+        5. OPEN QUESTIONS FOR THE USER — decisions the council could not make alone.
+           Keep this short and specific; each item must be a question with options,
+           not a request for guidance.
+        6. DISSENT — any seat that disagreed with the majority, its position, and why
+           it lost. Every seat names its own model in anything the user reads.
+
+        Stop after output. Wait for the approval gate.
+      autoAdvance: false

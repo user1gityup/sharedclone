@@ -1,0 +1,20 @@
+{
+  "receiver": "vMixer@vmixer2o2",
+  "sessions": {
+    "ac49e8ee-da4c-4ba8-a020-9870e6a9581e": {
+      "state": "RESTORED",
+      "attempts": 1,
+      "at": "2026-09-27T09:52:07.365Z",
+      "chip": {
+        "title": "Continue quota handoff v2 receiver",
+        "tldr": "Continues a session handed off from vmixlaptop2x6 when its account ran out of quota.",
+        "prompt": "Resume quota handoff H-20260926-vmixlaptop2x6-001, source session ac49e8ee-da4c-4ba8-a020-9870e6a9581e. Read C:\\Users\\vMixer\\.claude\\quota-guard\\resume-prompts\\H-20260926-vmixlaptop2x6-001--ac49e8ee-da4c-4ba8-a020-9870e6a9581e.md and continue the work it describes.",
+        "cwd": "C:\\Users\\vMixer"
+      },
+      "detail": "spawn_task chip",
+      "note": "source cwd C:\\Users\\ndi2\\Documents\\claudecode absent here; launched in C:\\Users\\vMixer",
+      "receiver_session_id": "7e48a281-ae10-40a4-8e67-86c9638360e8",
+      "confirmed_at": "2026-09-27T10:33:53.364Z"
+    }
+  }
+}

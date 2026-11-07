@@ -1,0 +1,7 @@
+# Q78 guardrails and provenance — 2026-11-02
+
+Append-only supplement to reports/pm/qa-101-q78-audit-2026-11-02.md. User selected GROUPED Q78=D. The original Council records remain individually owned and unchanged, with PM comments: T-d27c90d8 #1206 (historically partial), T-6b131af3 #1205 (historically canceled), T-f626045a #1207 (historically canceled). Before archival: check actual available run evidence, completion/duplication with a successor task, preserved histories and owner approval. No archival performed or approved yet.
+
+Retain historical LinkedIn Q1–Q35 and Event Manager E1–E15/F1–F29. PM Q1–Q77 preserved without changing the canonical ledger; Q61 still unanswered pending three dashboard screenshots. Q71 Claude Opus Ecom lane T-fea51534 still blocked (#1199). Q77 LinkedIn report T-e8fcdd7b #1204: original scratchpad report still needs byte-level recovery; the preserved bridge transcript is only provisional evidence. Keep independent permissions for agent roster, provider expense, queue ownership, source changes, review, Git synchronization and production deployment.
+
+Q79 next distinct decision relates to T-feaf702f physical verification of isolated VIZIO V51 Home Assistant controller; prior instruction requires real soundbar proof before Android TV integration.

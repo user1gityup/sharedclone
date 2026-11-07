@@ -1,0 +1,9 @@
+{
+ "adm": {
+  "provider": "unlimitedchat",
+  "model": "deepseek-web"
+ },
+ "env": {
+  "env": {}
+ }
+}
